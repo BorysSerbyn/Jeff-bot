@@ -8,7 +8,6 @@ public enum BoardState {
     CASTLING_LONG,
     PROMOTING_PAWN,
     PROMOTING_AND_EATING,
-    STALE_MATE,
-    CHECK_MATE,
-    CHECK,
+    STALEMATE,
+    CHECKMATE,
 }

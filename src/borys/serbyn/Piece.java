@@ -1,6 +1,7 @@
 package borys.serbyn;
 
 import java.awt.*;
+import java.util.Objects;
 
 public class Piece implements Cloneable{
     private Color color;
@@ -11,6 +12,16 @@ public class Piece implements Cloneable{
         this.color = color;
         this.pieceName = pieceName;
         this.tile = tile;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Piece piece = (Piece) o;
+        return Objects.equals(color, piece.color) &&
+                pieceName == piece.pieceName &&
+                Objects.equals(tile, piece.tile);
     }
 
     @Override

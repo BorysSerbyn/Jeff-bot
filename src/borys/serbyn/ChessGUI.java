@@ -3,16 +3,14 @@ package borys.serbyn;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 
 public class ChessGUI{
     private Board board;
     private PieceButton originButton;
+    private boolean isGameOver;
 
     private final JPanel gui = new JPanel(new BorderLayout(3, 3));
     private PieceButton[][] chessBoardSquares = new PieceButton[8][8];
@@ -39,6 +37,9 @@ public class ChessGUI{
 
     //Handles pieces/squares being clicked.
     public void clickTile(ActionEvent e){
+        if(isGameOver){
+            return;
+        }
         PieceButton selectedButton = (PieceButton)e.getSource();
         Piece selectedPiece = selectedButton.getPiece();
         if(originButton == null && selectedPiece != null){ //is there a piece in the selected square and was a piece already selected
@@ -56,7 +57,7 @@ public class ChessGUI{
         }
     }
 
-    //Handles piece movement in the gui and in the logic of the board.
+    //Handles piece movement in the gui and calls it in the logic of the board.
     public void movePiece(PieceButton selectedButton){
         if(board.isMoveLegal(originButton.getPiece(), selectedButton.getTile())){ //is the move legal
             Piece selectedPiece = selectedButton.getPiece();
@@ -82,6 +83,18 @@ public class ChessGUI{
             board.isPieceThreatened(selectedButton.getPiece());
         }
         originButton = null;
+        endGameMessage();
+    }
+
+    //handles end game detection
+    public void endGameMessage(){
+        isGameOver = board.isGameOver();
+        if(board.getState() == BoardState.CHECKMATE){
+            JOptionPane.showMessageDialog(gui,"Checkmate!");
+        }else if(board.getState() == BoardState.STALEMATE){
+            JOptionPane.showMessageDialog(gui,"Stalemate!");
+
+        }
     }
 
     //Popup that lets you choose which piece to promote a back rank pawn to
@@ -133,6 +146,7 @@ public class ChessGUI{
      */
     public final void initializeGui() {
         // set up the main GUI
+        isGameOver = false;
         gui.setBorder(new EmptyBorder(5, 5, 5, 5));
         JToolBar tools = new JToolBar();
         tools.setFloatable(false);
@@ -163,11 +177,7 @@ public class ChessGUI{
             for (int jj = 0; jj < chessBoardSquares[ii].length; jj++) {
                 PieceButton b = new PieceButton(board.getTileByPosition(jj, ii));
                 b.setMargin(buttonMargin);
-                b.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        clickTile(e);
-                    }
-                } );
+                b.addActionListener(this::clickTile);
                 // our chess pieces are 64x64 px in size, so we'll
                 // 'fill this in' using a transparent icon..
                 ImageIcon icon = new ImageIcon(
@@ -186,10 +196,13 @@ public class ChessGUI{
 
         //add the pieces to the board
         for(Piece piece:board.getPieces()){
-            int x = piece.getTile().getX();
-            int y = piece.getTile().getY();
-            chessBoardSquares[x][y].setPiece(piece);
-            chessBoardSquares[x][y].repaint();
+            if(piece.getTile() != board.getGraveyard()){
+
+                int x = piece.getTile().getX();
+                int y = piece.getTile().getY();
+                chessBoardSquares[x][y].setPiece(piece);
+                chessBoardSquares[x][y].repaint();
+            }
         }
 
         //fill the chess board
