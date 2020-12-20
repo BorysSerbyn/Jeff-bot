@@ -1,14 +1,14 @@
-package borys.serbyn;
+package ca.borysserbyn;
 
 import java.awt.*;
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toCollection;
 
-public class Board implements Cloneable {
+public class Board implements Cloneable, Serializable {
+    private static final long serialVersionUID = 1L;
+
     private ArrayList<Piece> pieces;
     private final int orientation; //1 if white on the first row
     private Color turn;
@@ -77,11 +77,15 @@ public class Board implements Cloneable {
             }
         }
 
+        Tile clonedGraveyard = (Tile) this.graveyard.clone();
+
         for (Piece piece : board.getPieces()) {
             Piece clonedPiece = (Piece) piece.clone();
             Tile clonedTile = clonedPiece.getTile();
             if (clonedTile.getX() != -1) { //check if the piece isnt in the graveyard
                 clonedTiles[clonedTile.getX()][clonedTile.getY()] = clonedTile;
+            }else{
+                clonedPiece.setTile(clonedGraveyard);
             }
             clonedPieces.add(clonedPiece);
         }
@@ -99,7 +103,7 @@ public class Board implements Cloneable {
         board.enPassantConditionsBlack = copyArrayOfBools(enPassantConditionsBlack);
         board.pieces = clonedPieces;
         board.tiles = clonedTiles;
-        board.graveyard = (Tile) this.graveyard.clone();
+        board.graveyard = clonedGraveyard;
 
         return board;
     }
@@ -207,6 +211,46 @@ public class Board implements Cloneable {
         moveHistory.add((Piece) piece.clone());
     }
 
+
+    /*
+    The following methods are useful for the AI
+     */
+    public ArrayList<Piece> getLegalMovesByColor(Color color){
+        ArrayList<Piece> legalMovesList = new ArrayList<>();
+        for (Piece piece: getUneatenPiecesByColor(color)) {
+            legalMovesList.addAll(getLegalMovesByPiece(piece));
+        }
+        return legalMovesList;
+    }
+
+    public ArrayList<Piece> getLegalMovesByPiece(Piece piece) {
+        ArrayList<Piece> legalMovesList = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (isMoveLegal(piece, getTileByPosition(i, j))) {
+                    Piece clonedPiece = (Piece) piece.clone();
+                    Tile clonedTile = (Tile) getTileByPosition(i, j).clone();
+                    clonedPiece.setTile(clonedTile);
+                    legalMovesList.add(clonedPiece);
+                }
+            }
+        }
+        return legalMovesList;
+    }
+
+    public double getBoardValueByColor(Color color){
+        double value = 0d;
+        for (Piece piece:getUneatenPieces()) {
+            if(piece.getColor() == color){
+                value += piece.getValue();
+            }else{
+                value -= piece.getValue();
+            }
+        }
+        return value;
+    }
+
+
     /*
     End game detection.
      */
@@ -224,8 +268,8 @@ public class Board implements Cloneable {
         if (!isPieceThreatened(king)) {
             return false;
         }
-        for (Piece piece: getUneatenPieces()) {
-            if(canPieceMove(piece)){
+        for (Piece piece : getUneatenPieces()) {
+            if (canPieceMove(piece)) {
                 return false;
             }
         }
@@ -422,6 +466,7 @@ public class Board implements Cloneable {
         /*
         The next few condition apply to any piece
          */
+
         if (piece.getColor() != turn) {//is it the colors turn to move?
             return false;
         }
@@ -738,6 +783,7 @@ public class Board implements Cloneable {
 
     //checks if king is allowed to castle
     public boolean isCastlingLegal(Piece piece, Tile tile) {
+
         int x = piece.getTile().getX();
         int y = piece.getTile().getY();
         int signedYMove = tile.getY() - y;
@@ -861,6 +907,7 @@ public class Board implements Cloneable {
         Piece pieceDeepCopy = boardDeepCopy.getPieceByTile(tileDeepCopy);
         boardDeepCopy.movePiece(pieceDeepCopy, destinationTileDC);
         Piece kingDeepCopy = boardDeepCopy.getPieceByName(PieceName.KING, piece.getColor());
+
         if (boardDeepCopy.isPieceThreatened(kingDeepCopy)) {
             return true;
         }

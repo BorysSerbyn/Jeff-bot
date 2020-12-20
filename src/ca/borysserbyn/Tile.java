@@ -1,8 +1,12 @@
-package borys.serbyn;
+package ca.borysserbyn;
 
 import java.awt.*;
+import java.io.Serializable;
+import java.util.Objects;
 
-public class Tile implements Cloneable{
+public class Tile implements Cloneable, Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int x;
     private int y;
     private Color color;
@@ -11,6 +15,16 @@ public class Tile implements Cloneable{
         this.x = x;
         this.y = y;
         this.color = color;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Tile tile = (Tile) o;
+        return x == tile.x &&
+                y == tile.y &&
+                Objects.equals(color, tile.color);
     }
 
     @Override

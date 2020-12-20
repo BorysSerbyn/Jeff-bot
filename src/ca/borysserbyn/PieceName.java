@@ -1,4 +1,4 @@
-package borys.serbyn;
+package ca.borysserbyn;
 
 public enum PieceName {
     PAWN,

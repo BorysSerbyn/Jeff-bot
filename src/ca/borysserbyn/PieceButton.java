@@ -1,4 +1,4 @@
-package borys.serbyn;
+package ca.borysserbyn;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;

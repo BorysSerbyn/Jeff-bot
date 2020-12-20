@@ -1,4 +1,4 @@
-package borys.serbyn;
+package ca.borysserbyn;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -140,6 +140,19 @@ public class ChessGUI{
         graveyardPanel.repaint();
     }
 
+    //saves game to file
+    public void clickSaveButton(ActionEvent e){
+        FileUtils.writeToFile(board);
+        JOptionPane.showMessageDialog(gui,"Save successful.");
+    }
+
+    public void clickLoadButton(ActionEvent e){
+        board = FileUtils.readFile();
+        initializeGui();
+    }
+
+
+
 
     /*
     Initializes the gui with a new board
@@ -152,8 +165,12 @@ public class ChessGUI{
         tools.setFloatable(false);
         gui.add(tools, BorderLayout.PAGE_START);
         tools.add(new JButton("New")); // TODO - add functionality!
-        tools.add(new JButton("Save")); // TODO - add functionality!
-        tools.add(new JButton("Restore")); // TODO - add functionality!
+        JButton saveButton = new JButton("Save");
+        saveButton.addActionListener(this::clickSaveButton);
+        tools.add(saveButton);
+        JButton loadButton = new JButton("Load");
+        loadButton.addActionListener(this::clickLoadButton);
+        tools.add(loadButton);
         tools.addSeparator();
         tools.add(new JButton("Resign")); // TODO - add functionality!
         tools.addSeparator();

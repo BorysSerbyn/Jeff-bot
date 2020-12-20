@@ -1,11 +1,10 @@
-package borys.serbyn;
+package ca.borysserbyn;
 
 import java.awt.*;
 import java.awt.image.*;
 import javax.imageio.*;
 import java.net.*;
 import java.io.*;
-import java.nio.Buffer;
 import java.util.*;
 import java.util.List;
 

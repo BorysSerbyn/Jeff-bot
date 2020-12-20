@@ -1,9 +1,12 @@
-package borys.serbyn;
+package ca.borysserbyn;
 
 import java.awt.*;
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Piece implements Cloneable{
+public class Piece implements Cloneable, Serializable {
+    private static final long serialVersionUID = 1L;
+
     private Color color;
     private PieceName pieceName;
     private Tile tile;
@@ -66,6 +69,25 @@ public class Piece implements Cloneable{
 
     public void discardPiece(Tile tile){
         this.tile = tile;
+    }
+
+    public int getValue(){
+        switch (pieceName) {
+            case PAWN:
+                return 1;
+            case KNIGHT:
+                return 3;
+            case BISHOP:
+                return 3;
+            case ROOK:
+                return 5;
+            case KING:
+                return 0;
+            case QUEEN:
+                return 9;
+            default:
+                return 0;
+        }
     }
 
 }
