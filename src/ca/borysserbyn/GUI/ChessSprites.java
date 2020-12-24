@@ -1,4 +1,6 @@
-package ca.borysserbyn;
+package ca.borysserbyn.GUI;
+
+import ca.borysserbyn.Piece;
 
 import java.awt.*;
 import java.awt.image.*;

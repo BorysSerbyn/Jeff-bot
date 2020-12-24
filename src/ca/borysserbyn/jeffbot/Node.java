@@ -4,29 +4,43 @@ import ca.borysserbyn.*;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toCollection;
 
 public class Node implements Comparable{
     private int maxDepth;
     private int maxBreadth;
-    private static final Color SIDE = Color.WHITE;
+    private  Color color = Color.WHITE;
     private int turnCount;
-    Piece movedPiece;
-    double pieceValue;
-    double checkmateProb;
-    double stalemateProb;
-    ArrayList<Node> childrenNodes;
-    Node parentNode;
+    private Move move;
+    private double pieceValue;
+    private double checkmateProb;
+    private double stalemateProb;
+    private ArrayList<Node> childrenNodes;
+    private Node parentNode;
 
-    public Node(int turnCount, Piece movedPiece, Node parentNode, int maxDepth, int maxBreadth) {
+
+    public Node(int turnCount, Move move, Node parentNode, int maxDepth, int maxBreadth, Color color) {
+        this.color = color;
         this.maxBreadth = maxBreadth;
         this.maxDepth = maxDepth;
         this.turnCount = turnCount;
-        this.movedPiece = movedPiece;
+        this.move = move;
         this.parentNode = parentNode;
         pieceValue = 0;
         checkmateProb = 0;
         stalemateProb = 0;
         childrenNodes = new ArrayList<>();
+    }
+
+    @Override
+    public String toString() {
+        return "Node{" +
+                "turnCount=" + turnCount +
+                ", move=" + move.toString() +
+                '}';
     }
 
     //not final at all
@@ -39,15 +53,50 @@ public class Node implements Comparable{
         return totalIncrease > 0 ? 0 : 1;
     }
 
+    public Move getMove() {
+        return move;
+    }
+
+    public double getPieceValue() {
+        return pieceValue;
+    }
+
+    public double getCheckmateProb() {
+        return checkmateProb;
+    }
+
+    public double getStalemateProb() {
+        return stalemateProb;
+    }
+
+    public ArrayList<Node> getChildrenNodes(){return childrenNodes;}
+
+    public void setPieceValue(double pieceValue) {
+        this.pieceValue = pieceValue;
+    }
+
+    public void setCheckmateProb(double checkmateProb) {
+        this.checkmateProb = checkmateProb;
+    }
+
+    public void setStalemateProb(double stalemateProb) {
+        this.stalemateProb = stalemateProb;
+    }
+
     public void addChild(Node childNode) {
         childrenNodes.add(childNode);
     }
 
+    public void removeAllChildren(){
+        childrenNodes = new ArrayList<Node>();
+    }
+
     //recusively populates board tree with outcomes
-    public double[] addNodes(Board board) {
+    public double[] addNodes(Board board, int depth) {
+
         boolean isGameOver = board.isGameOver();
-        if (isGameOver || turnCount >= maxDepth) {
-            pieceValue = board.getBoardValueByColor(SIDE);
+        if (isGameOver || depth > maxDepth) {//is game over or desired depth reached?
+            pieceValue = board.getBoardValueByColor(color);
             if (board.getState() == BoardState.CHECKMATE) {
                 checkmateProb = 1;
             } else if (board.getState() == BoardState.STALEMATE) {
@@ -56,34 +105,52 @@ public class Node implements Comparable{
             return new double[]{pieceValue, checkmateProb, stalemateProb};
         }
 
-        /*
-        if (turnCount >= maxDepth) {
-            return new double[]{pieceValue, checkmateProb, stalemateProb};
-        }
-        */
         int childCount = 0;
         double[] weightedOutcome = new double[3];
-        Color color = turnCount % 2 == 0 ? Color.WHITE : Color.BLACK;
-        for (Piece piece : board.getLegalMovesByColor(color)) {
-            Node childNode = new Node(turnCount + 1, piece, parentNode, maxDepth, maxBreadth);
-            this.addChild(childNode);
-            Board clonedBoard = (Board) board.clone();
-            Piece clonedPiece = clonedBoard.getPieceByName(piece.getPieceName(), piece.getColor());
-            Tile clonedTile = clonedBoard.getTileByPosition(piece.getTile().getX(), piece.getTile().getY());
-            board.movePiece(clonedPiece, clonedTile);
-            Piece deadPiece = clonedBoard.getPieceByTile(clonedBoard.getGraveyard());
-            double[] gameOutcome = childNode.addNodes(clonedBoard);
-            for (int i = 0; i < 3; i++) {
-                weightedOutcome[i] += gameOutcome[i];
+        Color turnColor = turnCount % 2 == 0 ? Color.WHITE : Color.BLACK;
+
+        if(!this.getChildrenNodes().isEmpty()){//does this node already have children?
+            for (Node childNode : this.getChildrenNodes()) {
+                Board clonedBoard = (Board) board.clone();
+                double[] gameOutcome = childNode.addNodes(clonedBoard, depth + 1);
+                for (int i = 0; i < 3; i++) {
+                    weightedOutcome[i] += gameOutcome[i];
+                }
             }
-            childCount++;
-            if(maxBreadth != -1 &&  childCount >= maxBreadth){
-                break;
+        }else{
+            ArrayList<Move> allLegalMoves = board.getLegalMovesByColor(turnColor);
+            //Collections.shuffle(allLegalMoves);
+            int adjustedMaxBreadth = maxBreadth < allLegalMoves.size()  ? maxBreadth : allLegalMoves.size();
+
+            if(maxBreadth == -1){
+                adjustedMaxBreadth = allLegalMoves.size();
+            }
+            for (int i = 0; i < adjustedMaxBreadth; i++) {
+                Move move = allLegalMoves.get(i);
+                Move clonedMove = (Move) move.clone();
+                Board clonedBoard = (Board) board.clone();
+                Piece clonedPiece = clonedBoard.getPieceByClone(move.getPiece());
+                Tile clonedTile = clonedBoard.getTileByClone(move.getTile());
+                clonedBoard.movePiece(clonedPiece, clonedTile);
+
+                Node childNode = new Node(turnCount + 1, clonedMove, parentNode, maxDepth, maxBreadth, color);
+                this.addChild(childNode);
+
+                double[] gameOutcome = childNode.addNodes(clonedBoard, depth + 1);
+                for (int ii = 0; ii < 3; ii++) {
+                    weightedOutcome[ii] += gameOutcome[ii];
+                }
+                childCount++;
             }
         }
+
         for (int i = 0; i < 3; i++) {
             weightedOutcome[i] = weightedOutcome[i] / childCount;
         }
+
+        this.setPieceValue(weightedOutcome[0]);
+        this.setCheckmateProb(weightedOutcome[1]);
+        this.setStalemateProb(weightedOutcome[2]);
         return weightedOutcome;
     }
 }

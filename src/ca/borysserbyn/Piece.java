@@ -22,9 +22,9 @@ public class Piece implements Cloneable, Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Piece piece = (Piece) o;
-        return Objects.equals(color, piece.color) &&
+        return color == piece.getColor() &&
                 pieceName == piece.pieceName &&
-                Objects.equals(tile, piece.tile);
+                tile.equals(piece.getTile());
     }
 
     @Override

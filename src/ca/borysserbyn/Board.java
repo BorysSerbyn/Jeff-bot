@@ -3,6 +3,8 @@ package ca.borysserbyn;
 import java.awt.*;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import static java.util.stream.Collectors.toCollection;
 
@@ -19,7 +21,7 @@ public class Board implements Cloneable, Serializable {
     private boolean[] castlingConditionsBlack;
     private boolean[] enPassantConditionsWhite;
     private boolean[] enPassantConditionsBlack;
-    private ArrayList<Piece> moveHistory;
+    private ArrayList<Move> moveHistory;
     private BoardState state;
 
 
@@ -43,7 +45,7 @@ public class Board implements Cloneable, Serializable {
         this.enPassantConditionsBlack = new boolean[]{false, false, false, false, false, false, false, false};
     }
 
-    public Board(ArrayList<Piece> pieces, int orientation, Color turn, int turnCounter, Tile[][] tiles, Tile graveyard, boolean[] castlingConditionsWhite, boolean[] castlingConditionsBlack, boolean[] enPassantConditionsWhite, boolean[] enPassantConditionsBlack, ArrayList<Piece> moveHistory, BoardState state) {
+    public Board(ArrayList<Piece> pieces, int orientation, Color turn, int turnCounter, Tile[][] tiles, Tile graveyard, boolean[] castlingConditionsWhite, boolean[] castlingConditionsBlack, boolean[] enPassantConditionsWhite, boolean[] enPassantConditionsBlack, ArrayList<Move> moveHistory, BoardState state) {
         this.pieces = pieces;
         this.orientation = orientation;
         this.turn = turn;
@@ -90,9 +92,9 @@ public class Board implements Cloneable, Serializable {
             clonedPieces.add(clonedPiece);
         }
 
-        ArrayList<Piece> clonedMoveHistory = new ArrayList<Piece>();
+        ArrayList<Move> clonedMoveHistory = new ArrayList<>();
         for (int i = 0; i < moveHistory.size(); i++) {
-            Piece clonedMove = (Piece) moveHistory.get(i).clone();
+            Move clonedMove = (Move) moveHistory.get(i).clone();
             clonedMoveHistory.add(clonedMove);
         }
 
@@ -107,6 +109,8 @@ public class Board implements Cloneable, Serializable {
 
         return board;
     }
+
+
 
     //copys an array of bools (conditions) for the clone function
     public boolean[] copyArrayOfBools(boolean[] targetArray) {
@@ -171,15 +175,16 @@ public class Board implements Cloneable, Serializable {
                 .collect(toCollection(ArrayList::new));
     }
 
-    public ArrayList<Piece> getUneatenPiecesByColor(Color color) {
-        return pieces.stream()
-                .filter(piece -> piece.getTile() != graveyard && piece.getColor() == color)
-                .collect(toCollection(ArrayList::new));
-    }
-
     public Piece getPieceByTile(Tile tile) {
         return pieces.stream()
                 .filter(piece -> piece.getTile() == tile)
+                .findFirst()
+                .orElse(null);
+    }
+
+    public Piece getPieceByClone(Piece clonedPiece){
+        return pieces.stream()
+                .filter(piece -> piece.equals(clonedPiece))
                 .findFirst()
                 .orElse(null);
     }
@@ -196,6 +201,10 @@ public class Board implements Cloneable, Serializable {
         return tiles[x][y];
     }
 
+    public Tile getTileByClone(Tile clonedTile){
+        return tiles[clonedTile.getX()][clonedTile.getY()];
+    }
+
     public ArrayList<Piece> getPieces() {
         return pieces;
     }
@@ -206,32 +215,44 @@ public class Board implements Cloneable, Serializable {
                 .collect(toCollection(ArrayList::new));
     }
 
+    public ArrayList<Piece> getEatenPieces() {
+        return pieces.stream()
+                .filter(piece -> piece.getTile() == graveyard)
+                .collect(toCollection(ArrayList::new));
+    }
+
+    public ArrayList<Piece> getUneatenPiecesByColor(Color color) {
+        return pieces.stream()
+                .filter(piece -> piece.getTile() != graveyard && piece.getColor() == color)
+                .collect(toCollection(ArrayList::new));
+    }
+
     //adds last move to appropriate array to track threefold repetitions
-    public void addLastMove(Piece piece) {
-        moveHistory.add((Piece) piece.clone());
+    public void addLastMove(Piece piece, Tile tile) {
+        Move move = new Move(piece, tile);
+        Move archivedMove = (Move) move.clone();
+        moveHistory.add(archivedMove);
     }
 
 
     /*
     The following methods are useful for the AI
      */
-    public ArrayList<Piece> getLegalMovesByColor(Color color){
-        ArrayList<Piece> legalMovesList = new ArrayList<>();
+    public ArrayList<Move> getLegalMovesByColor(Color color){
+        ArrayList<Move> legalMovesList = new ArrayList<>();
         for (Piece piece: getUneatenPiecesByColor(color)) {
             legalMovesList.addAll(getLegalMovesByPiece(piece));
         }
         return legalMovesList;
     }
 
-    public ArrayList<Piece> getLegalMovesByPiece(Piece piece) {
-        ArrayList<Piece> legalMovesList = new ArrayList<>();
+    public ArrayList<Move> getLegalMovesByPiece(Piece piece) {
+        ArrayList<Move> legalMovesList = new ArrayList<>();
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 if (isMoveLegal(piece, getTileByPosition(i, j))) {
-                    Piece clonedPiece = (Piece) piece.clone();
-                    Tile clonedTile = (Tile) getTileByPosition(i, j).clone();
-                    clonedPiece.setTile(clonedTile);
-                    legalMovesList.add(clonedPiece);
+                    Move move = new Move(piece, getTileByPosition(i, j));
+                    legalMovesList.add(move);
                 }
             }
         }
@@ -348,11 +369,11 @@ public class Board implements Cloneable, Serializable {
         }
 
         int firstMoveIndex = moveHistory.size() < 8 ? 0 : moveHistory.size() - 8;
-        Piece whiteFirst = moveHistory.get(firstMoveIndex);
-        Piece blackFirst = moveHistory.get(firstMoveIndex + 1);
+        Move whiteFirst = moveHistory.get(firstMoveIndex);
+        Move blackFirst = moveHistory.get(firstMoveIndex + 1);
 
 
-        for (int i = firstMoveIndex; i < moveHistory.size(); i = i + 2) {
+        for (int i = firstMoveIndex; i < moveHistory.size(); i = i + 4) {
             if (!moveHistory.get(i).equals(whiteFirst)) {
                 return false;
             }
@@ -380,20 +401,23 @@ public class Board implements Cloneable, Serializable {
      */
     public void movePiece(Piece piece, Tile tile) {
         Piece targetPiece = getPieceByTile(tile);
-
         setState(BoardState.NEUTRAL);
+        updateEnPassantConditions(piece.getColor());
+
+
         if (targetPiece != null) {//if a piece is to be eaten
             targetPiece.discardPiece(graveyard);
-
             setState(BoardState.PIECE_EATEN);
 
             if (piece.getPieceName() == PieceName.PAWN && isPawnPromotionLegal(piece, tile)) {
                 setState(BoardState.PROMOTING_AND_EATING);
             }
         }
-        if (piece.getPieceName() == PieceName.PAWN && isPawnEnPassantLegal(piece, tile)) {//is this piece a pawn moving up 2?
+        if (piece.getPieceName() == PieceName.PAWN && isPawnMove2Legal(piece, tile)) {//is this piece a pawn moving up 2?
             boolean[] targetConditions = piece.getColor() == Color.WHITE ? enPassantConditionsWhite : enPassantConditionsBlack;
             targetConditions[piece.getTile().getX()] = true;
+        }
+        if (piece.getPieceName() == PieceName.PAWN && isPawnEnPassantLegal(piece, tile)) {//is en passant legal?
             getPieceByTile(getTileByPosition(tile.getX(), piece.getTile().getY())).discardPiece(graveyard);
             setState(BoardState.EN_PASSANT);
         }
@@ -404,8 +428,8 @@ public class Board implements Cloneable, Serializable {
             castlingMove(piece, tile);
         }
         updateCastlingConditions(piece);
+        addLastMove(piece, tile);
         piece.setTile(tile);
-        addLastMove(piece);
         toggleTurn();
     }
 
@@ -453,6 +477,16 @@ public class Board implements Cloneable, Serializable {
             }
         }
     }
+
+    //updates castling condition based on the movement of a given piece (did rooks or king move)
+    public void updateEnPassantConditions(Color color) {
+        boolean[] enPassantConditions = color == Color.WHITE ? enPassantConditionsWhite : enPassantConditionsBlack;
+
+        for (int i = 0; i < 8; i++) {
+            enPassantConditions[i] = false;
+        }
+    }
+
 
     public void promotingPawn(Piece piece, PieceName pieceName) {
         piece.setPieceName(pieceName);
@@ -663,6 +697,9 @@ public class Board implements Cloneable, Serializable {
         if (xMove != 0) {
             return false;
         }
+        if(!isRookMoveLegal(piece,tile)){
+            return false;
+        }
         if (orientation == 1) {
             if (piece.getColor() == Color.WHITE) {
                 if (piece.getTile().getY() != 1) {
@@ -731,41 +768,27 @@ public class Board implements Cloneable, Serializable {
         int xMove = Math.abs(signedXMove);
         int yMove = Math.abs(signedYMove);
 
-        Color targetColor = orientation == 1 ? Color.WHITE : Color.BLACK;
+        int expectedY = !(orientation == 1 ^ piece.getColor() == Color.WHITE) ? 4 : 3; //orientation 1 xnor white
         boolean[] targetConditions = piece.getColor() == Color.WHITE ? enPassantConditionsBlack : enPassantConditionsWhite;
+        boolean targetCondition = targetConditions[tile.getX()];
+        Piece targetPiece = getPieceByTile(getTileByPosition(tile.getX(), y));
 
-        if (getPieceByTile(tile) != null) {
+        if (getPieceByTile(tile) != null) { //is there a piece at the destination tile
             return false;
         }
-
-        if (isBishopMoveLegal(piece, tile)) {
-            if (xMove != 1 || yMove != 1) {
-                return false;
-            }
-        } else {
+        if (xMove != 1 || yMove != 1) { //is the move 1 square in each direction
             return false;
         }
-
-        if (piece.getColor() == targetColor) {
-            if (y == 4) {
-                if (getPieceByTile(getTileByPosition(tile.getX(), y)) == null) {
-                    if (!targetConditions[tile.getX()]) {
-                        return false;
-                    }
-                }
-            } else {
-                return false;
-            }
-        } else {
-            if (y == 3) {
-                if (getPieceByTile(getTileByPosition(tile.getX(), y)) == null) {
-                    if (!targetConditions[tile.getX()]) {
-                        return false;
-                    }
-                }
-            } else {
-                return false;
-            }
+        if(!targetCondition){ //has the target pawn moved 2 squares last turn
+            return false;
+        }
+        if(expectedY != y){ //is the piece at its expected y position
+            return false;
+        }
+        if(targetPiece == null){
+            return false;
+        }else if(targetPiece.getPieceName() != PieceName.PAWN){
+            return false;
         }
 
         return true;

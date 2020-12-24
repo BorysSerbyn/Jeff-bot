@@ -1,4 +1,7 @@
-package ca.borysserbyn;
+package ca.borysserbyn.GUI;
+
+import ca.borysserbyn.*;
+import ca.borysserbyn.jeffbot.Jeffbot;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -7,24 +10,23 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 
-public class ChessGUI{
-    private Board board;
-    private PieceButton originButton;
-    private boolean isGameOver;
-
+public class OverTheBoardGUI {
     private final JPanel gui = new JPanel(new BorderLayout(3, 3));
-    private PieceButton[][] chessBoardSquares = new PieceButton[8][8];
     private JPanel chessBoard;
     private JPanel graveyardPanel;
+    private PieceButton originButton;
+    private PieceButton[][] pieceButtonArray = new PieceButton[8][8];
     private JScrollPane graveyardScroll;
-    private final JLabel message = new JLabel(
-            "Jeff bot is not ready yet.");
-    private static final String COLS = "ABCDEFGH";
+    private Board board;
+    private boolean isGameOver;
+    private final JLabel message = new JLabel("Have fun!");
 
-    ChessGUI() {
+    OverTheBoardGUI() {
         board = new Board(1);
+        System.out.println("Main board: " + board);
         initializeGui();
     }
+
     public final JComponent getChessBoard() {
         return chessBoard;
     }
@@ -48,41 +50,28 @@ public class ChessGUI{
             }
         }else if(originButton != null){ //is there a piece to be moved
             if(selectedPiece == null){
-                movePiece(selectedButton);
+                movePiece(selectedButton, originButton);
             }else if(selectedPiece.getColor() == originButton.getPiece().getColor()){
                 originButton = selectedButton;
             }else{
-                movePiece(selectedButton);
+                movePiece(selectedButton, originButton);
             }
         }
     }
 
     //Handles piece movement in the gui and calls it in the logic of the board.
-    public void movePiece(PieceButton selectedButton){
+    public void movePiece(PieceButton selectedButton, PieceButton originButton){
+        Piece originPiece = originButton.getPiece();
+        Tile destinationTile = selectedButton.getTile();
         if(board.isMoveLegal(originButton.getPiece(), selectedButton.getTile())){ //is the move legal
-            Piece selectedPiece = selectedButton.getPiece();
-            selectedButton.setAndMovePiece(board, originButton.getPiece());
-            originButton.removePiece();
-
-            System.out.println(board.getState());
-            if(board.getState() == BoardState.PIECE_EATEN || board.getState() == BoardState.PROMOTING_AND_EATING){ //add normaly eaten piece to graveyard.
-                sendPieceToGraveyard(selectedPiece);
-            }else if(board.getState() == BoardState.EN_PASSANT){//remove enpassanted pieces and add to the graveyard.
-                PieceButton deadPieceButton = chessBoardSquares[selectedButton.getTile().getX()][originButton.getTile().getY()];
-                sendPieceToGraveyard(deadPieceButton.getPiece());
-                deadPieceButton.removePiece();
-            }else if(board.getState() == BoardState.CASTLING_SHORT || board.getState() == BoardState.CASTLING_LONG){//move castle if castling short
-                castleMovement(selectedButton);
-            }
-
+            board.movePiece(originPiece, destinationTile);
             if(board.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN){
                 displayPromotionWindow(selectedButton);
             }
+            initializePieces();
         }
-        if(selectedButton.getPiece() != null){
-            board.isPieceThreatened(selectedButton.getPiece());
-        }
-        originButton = null;
+
+        this.originButton = null;
         endGameMessage();
     }
 
@@ -108,27 +97,16 @@ public class ChessGUI{
 
     }
 
-    //Handles castling in the gui.
-    public void castleMovement(PieceButton selectedButton){
-        PieceButton rookButton;
-        PieceButton moveButton;
-        int rookMove;
-        int x = selectedButton.getTile().getX();
+    // TODO - file utils exports giberish and overrites previous saves automaticaly.
+    public void clickSaveButton(ActionEvent e){
+        FileUtils.writeToFile(board);
+        JOptionPane.showMessageDialog(gui,"Save successful.");
+    }
 
-        if(board.getOrientation() == 1){
-            rookMove = board.getState() == BoardState.CASTLING_SHORT ? 2 : -3;
-            rookButton = board.getState() == BoardState.CASTLING_SHORT ? chessBoardSquares[0][selectedButton.getTile().getY()] : chessBoardSquares[7][selectedButton.getTile().getY()];
-        }else{
-
-            rookMove = board.getState() == BoardState.CASTLING_SHORT ? -2 : 3;
-            rookButton = board.getState() == BoardState.CASTLING_LONG ? chessBoardSquares[0][selectedButton.getTile().getY()] : chessBoardSquares[7][selectedButton.getTile().getY()];
-        }
-
-        Piece rook = rookButton.getPiece();
-        System.out.println(board.getState());
-        moveButton = chessBoardSquares[rookButton.getTile().getX()+rookMove][rookButton.getTile().getY()];
-        moveButton.setPiece(rook);
-        rookButton.removePiece();
+    // TODO - file utils exports giberish and overrites previous saves automaticaly.
+    public void clickLoadButton(ActionEvent e){
+        board = FileUtils.readFile();
+        initializeGui();
     }
 
     //Sends piece to the gui graveyard (not the boards)
@@ -138,17 +116,6 @@ public class ChessGUI{
         graveyardPanel.add(deadPieceLabel);
         graveyardPanel.revalidate();
         graveyardPanel.repaint();
-    }
-
-    //saves game to file
-    public void clickSaveButton(ActionEvent e){
-        FileUtils.writeToFile(board);
-        JOptionPane.showMessageDialog(gui,"Save successful.");
-    }
-
-    public void clickLoadButton(ActionEvent e){
-        board = FileUtils.readFile();
-        initializeGui();
     }
 
 
@@ -188,10 +155,15 @@ public class ChessGUI{
         chessBoard.setBorder(new LineBorder(Color.BLACK));
         gui.add(chessBoard);
 
-        // create the chess board squares
+        initializeBoardSquares();
+
+        initializePieces();
+    }
+
+    public final void initializeBoardSquares(){
         Insets buttonMargin = new Insets(0,0,0,0);
-        for (int ii = 0; ii < chessBoardSquares.length; ii++) {
-            for (int jj = 0; jj < chessBoardSquares[ii].length; jj++) {
+        for (int ii = 0; ii < pieceButtonArray.length; ii++) {
+            for (int jj = 0; jj < pieceButtonArray[ii].length; jj++) {
                 PieceButton b = new PieceButton(board.getTileByPosition(jj, ii));
                 b.setMargin(buttonMargin);
                 b.addActionListener(this::clickTile);
@@ -207,27 +179,18 @@ public class ChessGUI{
                 } else {
                     b.setBackground(Color.BLACK);
                 }
-                chessBoardSquares[jj][ii] = b;
+                pieceButtonArray[jj][ii] = b;
             }
         }
 
-        //add the pieces to the board
-        for(Piece piece:board.getPieces()){
-            if(piece.getTile() != board.getGraveyard()){
 
-                int x = piece.getTile().getX();
-                int y = piece.getTile().getY();
-                chessBoardSquares[x][y].setPiece(piece);
-                chessBoardSquares[x][y].repaint();
-            }
-        }
 
         //fill the chess board
         chessBoard.add(new JLabel(""));
         // fill the top row
         for (int ii = 0; ii < 8; ii++) {
             chessBoard.add(
-                    new JLabel(COLS.substring(ii, ii + 1),
+                    new JLabel("" + (ii),
                             SwingConstants.CENTER));
         }
         // fill the black non-pawn piece row
@@ -235,37 +198,32 @@ public class ChessGUI{
             for (int jj = 0; jj < 8; jj++) {
                 switch (jj) {
                     case 0:
-                        chessBoard.add(new JLabel("" + (ii + 1),
+                        chessBoard.add(new JLabel("" + (ii),
                                 SwingConstants.CENTER));
                     default:
-                        chessBoard.add(chessBoardSquares[jj][ii]);
+                        chessBoard.add(pieceButtonArray[jj][ii]);
                         chessBoard.repaint();
                 }
             }
         }
     }
 
-    public static void main(String[] args) {
-        Runnable r = new Runnable() {
-
-            @Override
-            public void run() {
-                ChessGUI cb =
-                        new ChessGUI();
-
-                JFrame f = new JFrame("Jeff Bot");
-                f.add(cb.getGui());
-                f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                f.setLocationByPlatform(true);
-
-                // ensures the frame is the minimum size it needs to be
-                // in order display the components within it
-                f.pack();
-                // ensures the minimum size is enforced.
-                f.setMinimumSize(f.getSize());
-                f.setVisible(true);
+    public final void initializePieces(){
+        for (int i = 0; i < pieceButtonArray.length; i++) {
+            for (int j = 0; j < pieceButtonArray[i].length; j++) {
+                PieceButton pieceButton = pieceButtonArray[i][j];
+                Tile tile = pieceButton.getTile();
+                Piece piece = board.getPieceByTile(tile);
+                if(piece != null){
+                    pieceButton.setPiece(piece);
+                }else{
+                    pieceButton.removePiece();
+                }
             }
-        };
-        SwingUtilities.invokeLater(r);
+        }
+        graveyardPanel.removeAll();
+        for(Piece deadPiece : board.getEatenPieces()){
+            sendPieceToGraveyard(deadPiece);
+        }
     }
 }

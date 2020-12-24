@@ -1,4 +1,8 @@
-package ca.borysserbyn;
+package ca.borysserbyn.GUI;
+
+import ca.borysserbyn.Board;
+import ca.borysserbyn.Piece;
+import ca.borysserbyn.Tile;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
