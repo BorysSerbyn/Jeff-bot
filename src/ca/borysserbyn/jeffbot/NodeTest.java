@@ -13,9 +13,9 @@ public class NodeTest {
     public static void main(String args[]){
         for (int i = 2; i <= maxTestDepth; i++) {
             Board board = new Board(1);
-            Node baseNode = new Node(0, null, null, i, testBreadth, Color.WHITE);
+            Node baseNode = new Node(board, null, i, testBreadth, Color.WHITE);
             long start_time = System.nanoTime();
-            baseNode.addNodes(board, 0);
+            baseNode.addNodes(0);
             long end_time = System.nanoTime();
             System.out.println((end_time - start_time) / 1e6);
         }

@@ -1,4 +1,4 @@
-package ca.borysserbyn.GUI;
+package ca.borysserbyn.gui;
 
 import ca.borysserbyn.*;
 import ca.borysserbyn.jeffbot.Jeffbot;
@@ -10,7 +10,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 
-public class OverTheBoardGUI {
+public class JeffGUI {
+    private StaticGUI staticGUI;
     private final JPanel gui = new JPanel(new BorderLayout(3, 3));
     private JPanel chessBoard;
     private JPanel graveyardPanel;
@@ -19,11 +20,17 @@ public class OverTheBoardGUI {
     private JScrollPane graveyardScroll;
     private Board board;
     private boolean isGameOver;
-    private final JLabel message = new JLabel("Have fun!");
+    private Jeffbot jeff;
+    private Color jeffColor;
+    private final JLabel message = new JLabel("Jeff is ready");
 
-    OverTheBoardGUI() {
+    JeffGUI() {
         board = new Board(1);
         System.out.println("Main board: " + board);
+        jeffColor = Color.WHITE;
+        jeff = new Jeffbot(jeffColor);
+        this.staticGUI = new StaticGUI(jeff.getBoard());
+        System.out.println("Jeff's board" + jeff.getBoard());
         initializeGui();
     }
 
@@ -35,11 +42,16 @@ public class OverTheBoardGUI {
         return gui;
     }
 
-
+    public StaticGUI getStaticGUI() {
+        return staticGUI;
+    }
 
     //Handles pieces/squares being clicked.
     public void clickTile(ActionEvent e){
         if(isGameOver){
+            return;
+        }
+        if(jeffColor == board.getTurn()){
             return;
         }
         PieceButton selectedButton = (PieceButton)e.getSource();
@@ -51,10 +63,16 @@ public class OverTheBoardGUI {
         }else if(originButton != null){ //is there a piece to be moved
             if(selectedPiece == null){
                 movePiece(selectedButton, originButton);
+                if(!isGameOver){
+                    jeffMove();
+                }
             }else if(selectedPiece.getColor() == originButton.getPiece().getColor()){
                 originButton = selectedButton;
             }else{
                 movePiece(selectedButton, originButton);
+                if(!isGameOver){
+                    jeffMove();
+                }
             }
         }
     }
@@ -63,16 +81,41 @@ public class OverTheBoardGUI {
     public void movePiece(PieceButton selectedButton, PieceButton originButton){
         Piece originPiece = originButton.getPiece();
         Tile destinationTile = selectedButton.getTile();
+        Move move = new Move(originPiece, destinationTile);
+        Move clonedMove = (Move) move.clone();
+
         if(board.isMoveLegal(originButton.getPiece(), selectedButton.getTile())){ //is the move legal
+            initializePieces();
             board.movePiece(originPiece, destinationTile);
             if(board.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN){
                 displayPromotionWindow(selectedButton);
             }
-            initializePieces();
         }
 
         this.originButton = null;
         endGameMessage();
+
+        long start_time = System.nanoTime();
+        jeff.updateTree(clonedMove);
+        long end_time = System.nanoTime();
+        System.out.println(board.getTurnCounter() + " " +(end_time - start_time) / 1e6);
+    }
+
+    //Handles bot movement.
+    public void jeffMove(){
+        message.setText("Jeff is thinking.");
+        Move bestMove = jeff.findBestMove();
+        Piece piece = board.getPieceByClone(bestMove.getPiece());
+        Tile destinationTile =  board.getTileByClone(bestMove.getTile());
+        board.movePiece(piece, destinationTile);
+
+        if(board.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN){
+            Piece jeffPiece = jeff.getBoard().getPieceByClone(piece);
+            board.promotingPawn(piece, PieceName.QUEEN);
+            jeff.getBoard().promotingPawn(jeffPiece, PieceName.QUEEN);
+        }
+        initializePieces();
+        message.setText("Jeff is ready.");
     }
 
     //handles end game detection
@@ -125,7 +168,7 @@ public class OverTheBoardGUI {
     Initializes the gui with a new board
      */
     public final void initializeGui() {
-        // set up the main GUI
+        // set up the main gui
         isGameOver = false;
         gui.setBorder(new EmptyBorder(5, 5, 5, 5));
         JToolBar tools = new JToolBar();
@@ -158,6 +201,11 @@ public class OverTheBoardGUI {
         initializeBoardSquares();
 
         initializePieces();
+
+        //jeff makes the first move
+        if(jeffColor == board.getTurn()){
+            jeffMove();
+        }
     }
 
     public final void initializeBoardSquares(){
@@ -225,5 +273,7 @@ public class OverTheBoardGUI {
         for(Piece deadPiece : board.getEatenPieces()){
             sendPieceToGraveyard(deadPiece);
         }
+
+        staticGUI.initializePieces();
     }
 }

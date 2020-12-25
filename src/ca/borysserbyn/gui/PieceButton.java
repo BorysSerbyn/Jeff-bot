@@ -1,4 +1,4 @@
-package ca.borysserbyn.GUI;
+package ca.borysserbyn.gui;
 
 import ca.borysserbyn.Board;
 import ca.borysserbyn.Piece;

@@ -234,6 +234,10 @@ public class Board implements Cloneable, Serializable {
         moveHistory.add(archivedMove);
     }
 
+    public Move getLastMove(){
+        return moveHistory.get(moveHistory.size()-1);
+    }
+
 
     /*
     The following methods are useful for the AI
@@ -694,6 +698,12 @@ public class Board implements Cloneable, Serializable {
         int xMove = Math.abs(signedXMove);
         int yMove = Math.abs(signedYMove);
 
+        for(Piece anyPiece: getUneatenPieces()){
+            if(anyPiece.getTile().equals(tile)){
+                return false;
+            }
+        }
+
         if (xMove != 0) {
             return false;
         }
@@ -828,7 +838,9 @@ public class Board implements Cloneable, Serializable {
             castleTile = signedXMove > 0 ? getTileByPosition(0, piece.getTile().getY()) : getTileByPosition(7, piece.getTile().getY());
         }
 
-
+        if(yMove != 0){
+            return false;
+        }
         if (isPieceThreatened(piece)) { //is king checked
             return false;
         }

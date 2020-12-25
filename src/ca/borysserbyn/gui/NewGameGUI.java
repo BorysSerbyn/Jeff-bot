@@ -1,4 +1,4 @@
-package ca.borysserbyn.GUI;
+package ca.borysserbyn.gui;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

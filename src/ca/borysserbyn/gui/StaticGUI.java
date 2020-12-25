@@ -1,7 +1,6 @@
-package ca.borysserbyn.GUI;
+package ca.borysserbyn.gui;
 
 import ca.borysserbyn.*;
-import ca.borysserbyn.GUI.PieceButton;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -46,7 +45,7 @@ public class StaticGUI {
     Initializes the gui with a new board
      */
     public final void initializeGui() {
-        // set up the main GUI
+        // set up the main gui
         gui.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         //add the graveyard to the gui
