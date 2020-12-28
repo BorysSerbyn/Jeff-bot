@@ -91,7 +91,7 @@ public class OverTheBoardGUI {
         String choice = (String) JOptionPane.showInputDialog(gui, "Choose a piece to promote to.",
                 "Pawn promotion", JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
         PieceName chosenPieceName = PieceName.valueOf(choice);
-        board.promotingPawn(selectedButton.getPiece(), chosenPieceName);
+        board.promotePawn(selectedButton.getPiece(), chosenPieceName);
         selectedButton.updateIcon();
 
     }

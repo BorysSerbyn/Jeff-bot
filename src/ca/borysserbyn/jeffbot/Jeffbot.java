@@ -6,8 +6,9 @@ import java.awt.*;
 import java.util.Collections;
 
 public class Jeffbot {
-    private static int maxDepth = 2;
-    private static int maxBreadth = -1;
+    private static int maxDepth = 4;
+    private static int maxBreadth = 5;
+    private static int maxRetries = 2;
     private Board board;
     private Color color;
     private Node currentNode;
@@ -32,13 +33,35 @@ public class Jeffbot {
                 .orElse(null);
     }
 
+    public Node getCurrentNode() {
+        return currentNode;
+    }
+
     public Move findBestMove() {
         Collections.sort(currentNode.getChildNodes());
         Node bestMoveNode = currentNode.getChildNodes().get(0);
+
+        currentNode.getChildNodes().forEach(System.out::println);
+        System.out.println();
+        bestMoveNode.getChildNodes().forEach(System.out::println);
+
         Move clonedMove = (Move) bestMoveNode.getLastMove().clone();
-        System.out.println("Jeffs move: " + clonedMove + " with value: " + bestMoveNode.getCascadedPieceValue() + " (pieces:) " + bestMoveNode.getBoard().getPieces().size());
+        System.out.println("Jeffs move: " + bestMoveNode);
         updateTree(clonedMove);
         return clonedMove;
+    }
+
+    public void promotePawn(Piece piece, PieceName pieceName){
+        board.promotePawn(piece, pieceName);
+        Piece currentNodePiece = currentNode.getBoard().getPieceByClone(piece);
+        currentNode.getBoard().promotePawn(currentNodePiece, pieceName);
+    }
+
+    public void resetTree(){
+        System.out.println("Reseting the tree, no good moves found");
+        currentNode.removeAllChildren();
+        currentNode.addNodes(0);
+        Collections.sort(currentNode.getChildNodes());
     }
 
     public void updateTree(Move move) {
@@ -55,8 +78,9 @@ public class Jeffbot {
             currentNode.addChild(moveNode);
         }
 
-        moveNode.addNodes(0);
         currentNode = moveNode;
+        currentNode.addNodes(0);
+
         System.out.println("Updated current node: " + clonedMove + " which has " + currentNode.getChildNodes().size() + " children.");
     }
 

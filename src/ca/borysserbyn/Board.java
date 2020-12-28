@@ -8,7 +8,7 @@ import java.beans.PropertyChangeListener;
 
 import static java.util.stream.Collectors.toCollection;
 
-public class Board implements Cloneable, Serializable {
+public class Board implements Cloneable, Serializable, Comparable {
     private static final long serialVersionUID = 1L;
 
     private ArrayList<Piece> pieces;
@@ -33,6 +33,7 @@ public class Board implements Cloneable, Serializable {
         this.turn = Color.WHITE;
         initializeTiles();
         initializePieces();
+        //initializeJeff();
         //initializePromotingTest();
         //initializeStalemateTest();
         //initializeinsufficientMatTest();
@@ -58,6 +59,16 @@ public class Board implements Cloneable, Serializable {
         this.enPassantConditionsBlack = enPassantConditionsBlack;
         this.moveHistory = moveHistory;
         this.state = state;
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        Board boardToCompare = (Board) o;
+
+
+        int boardToCompareState = boardToCompare.getState() != BoardState.NEUTRAL || boardToCompare.isKingChecked() ? 1 : -1;
+        int boardState = this.getState() != BoardState.NEUTRAL || this.isKingChecked() ? -1 : 1;
+        return boardState + boardToCompareState;
     }
 
     @Override
@@ -242,6 +253,19 @@ public class Board implements Cloneable, Serializable {
     /*
     The following methods are useful for the AI
      */
+    public ArrayList<Board> getLegalBoardsByColor(Color color){
+        ArrayList<Move> allLegalMoves = this.getLegalMovesByColor(this.getTurn());
+        ArrayList<Board> allLegalBoards = new ArrayList<>();
+        for (Move legalMove : allLegalMoves) {
+            Board clonedBoard = (Board) this.clone();
+            Piece clonedPiece = clonedBoard.getPieceByClone(legalMove.getPiece());
+            Tile clonedTile = clonedBoard.getTileByClone(legalMove.getTile());
+            clonedBoard.movePiece(clonedPiece, clonedTile);
+            allLegalBoards.add(clonedBoard);
+        }
+        return allLegalBoards;
+    }
+
     public ArrayList<Move> getLegalMovesByColor(Color color){
         ArrayList<Move> legalMovesList = new ArrayList<>();
         for (Piece piece: getUneatenPiecesByColor(color)) {
@@ -492,7 +516,7 @@ public class Board implements Cloneable, Serializable {
     }
 
 
-    public void promotingPawn(Piece piece, PieceName pieceName) {
+    public void promotePawn(Piece piece, PieceName pieceName) {
         piece.setPieceName(pieceName);
     }
 
@@ -934,6 +958,14 @@ public class Board implements Cloneable, Serializable {
         return false;
     }
 
+    public boolean isKingChecked(){
+        Piece king = this.getPieceByName(PieceName.KING, turn);
+        if (this.isPieceThreatened(king)) {
+            return true;
+        }
+        return false;
+    }
+
     //checks if a move will cause its own king to be checked.
     public boolean willKingBeChecked(Piece piece, Tile tile) {
         Board boardDeepCopy = (Board) this.clone();
@@ -991,6 +1023,16 @@ public class Board implements Cloneable, Serializable {
         pieces.add(new Piece(Color.BLACK, PieceName.BISHOP, getTileByPosition(5, 7)));
         pieces.add(new Piece(Color.BLACK, PieceName.KNIGHT, getTileByPosition(6, 7)));
         pieces.add(new Piece(Color.BLACK, PieceName.ROOK, getTileByPosition(7, 7)));
+    }
+
+    public void initializeJeff() {
+        pieces = new ArrayList<Piece>();
+        pieces.add(new Piece(Color.WHITE, PieceName.KING, getTileByPosition(3, 0)));
+        pieces.add(new Piece(Color.BLACK, PieceName.KING, getTileByPosition(3, 7)));
+        pieces.add(new Piece(Color.WHITE, PieceName.PAWN, getTileByPosition(0, 1)));
+        pieces.add(new Piece(Color.BLACK, PieceName.PAWN, getTileByPosition(7, 6)));
+        pieces.add(new Piece(Color.BLACK, PieceName.ROOK, getTileByPosition(5, 6)));
+        pieces.add(new Piece(Color.WHITE, PieceName.ROOK, getTileByPosition(4, 1)));
     }
 
     public void initializePromotingTest() {

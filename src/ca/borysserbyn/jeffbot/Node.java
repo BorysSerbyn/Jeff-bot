@@ -26,6 +26,7 @@ public class Node implements Comparable {
         this.maxDepth = maxDepth;
         this.board = board;
         this.parentNode = parentNode;
+        cascadedPieceValue = 0;
         currentPieceValue = 0;
         checkmateProb = 0;
         stalemateProb = 0;
@@ -37,6 +38,7 @@ public class Node implements Comparable {
         return "Node{" +
                 "turnCount=" + board.getTurnCounter() +
                 ", move=" + getLastMove().toString() +
+                ", value=" + getCascadedPieceValue() +
                 '}';
     }
 
@@ -44,14 +46,14 @@ public class Node implements Comparable {
     @Override
     public int compareTo(Object o) {
         Node nodeToCompare = (Node) o;
-        double checkmateIncrease = (this.checkmateProb - nodeToCompare.checkmateProb) / 1;
-        double pieceValueIncrease = (this.cascadedPieceValue - nodeToCompare.cascadedPieceValue) / 38;
-        double totalIncrease = checkmateIncrease + pieceValueIncrease;
-        if (totalIncrease == 0) {
-            return 0;
-        } else {
-            return totalIncrease > 0 ? -1 : 1;
-        }
+        //double checkmateIncrease = (this.checkmateProb - nodeToCompare.checkmateProb) / 1;
+        //double pieceValueIncrease = (this.cascadedPieceValue - nodeToCompare.cascadedPieceValue) / 38;
+        double totalIncrease = nodeToCompare.cascadedPieceValue - this.cascadedPieceValue;
+        return (int) totalIncrease;
+    }
+
+    public double getCurrentPieceValue() {
+        return currentPieceValue;
     }
 
     public Board getBoard() {
@@ -62,18 +64,8 @@ public class Node implements Comparable {
         return board.getLastMove();
     }
 
-    public double getCurrentPieceValue() {
-        return currentPieceValue;
-    }
-
     public ArrayList<Node> getChildNodes() {
         return childNodes;
-    }
-
-    public void setChildMaxPieceValue(){
-        for (Node childNode : childNodes) {
-
-        }
     }
 
     public void addChild(Node childNode) {
@@ -89,6 +81,7 @@ public class Node implements Comparable {
     }
 
     public void setCascadedPieceValue(){
+        cascadedPieceValue = childNodes.get(0).getCascadedPieceValue();
         for (Node childNode : childNodes) {
             double childPieceValue = childNode.getCascadedPieceValue();
             if(board.getTurn() == color){ //if its your turn; choose the best outcome
@@ -102,7 +95,6 @@ public class Node implements Comparable {
     //recusively populates board tree with outcomes
     public void addNodes(int depth) {
         currentPieceValue = board.getBoardValueByColor(color);
-
         if (board.isGameOver() || depth >= maxDepth) {//is game over or desired depth reached?
             cascadedPieceValue = currentPieceValue;
             if (board.getState() == BoardState.CHECKMATE) {
@@ -110,7 +102,7 @@ public class Node implements Comparable {
             } else if (board.getState() == BoardState.STALEMATE) {
                 stalemateProb = 1;
             }
-            return;
+            return; // exits before it can try to extend the branch infinitely
         }
 
         if (!this.getChildNodes().isEmpty()) {//does this node already have children?
@@ -118,21 +110,20 @@ public class Node implements Comparable {
                 childNode.addNodes(depth + 1);
             }
         } else {
-            ArrayList<Move> allLegalMoves = board.getLegalMovesByColor(board.getTurn());
-            Collections.shuffle(allLegalMoves);
+            ArrayList<Board> legalBoards = board.getLegalBoardsByColor(board.getTurn());
+            Collections.shuffle(legalBoards);
+            Collections.sort(legalBoards);
+
             int adjustedMaxBreadth;
-            if (maxBreadth < allLegalMoves.size() && maxBreadth != -1) { //is maximum breadth smaller than number of legal moves?
+            if (maxBreadth < legalBoards.size() && maxBreadth != -1) { //is maximum breadth smaller than number of legal moves?
                 adjustedMaxBreadth = maxBreadth;
             } else {
-                adjustedMaxBreadth = allLegalMoves.size();
+                adjustedMaxBreadth = legalBoards.size();
             }
+
             for (int i = 0; i < adjustedMaxBreadth; i++) {
-                Move move = allLegalMoves.get(i);
-                Board clonedBoard = (Board) board.clone();
-                Piece clonedPiece = clonedBoard.getPieceByClone(move.getPiece());
-                Tile clonedTile = clonedBoard.getTileByClone(move.getTile());
-                clonedBoard.movePiece(clonedPiece, clonedTile);
-                Node childNode = new Node(clonedBoard, parentNode, maxDepth, maxBreadth, color);
+                Board legalBoard = legalBoards.get(i);
+                Node childNode = new Node(legalBoard, this, maxDepth, maxBreadth, color);
                 childNode.addNodes(depth + 1);
                 this.addChild(childNode);
             }

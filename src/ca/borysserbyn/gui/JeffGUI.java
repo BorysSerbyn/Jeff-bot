@@ -63,16 +63,10 @@ public class JeffGUI {
         }else if(originButton != null){ //is there a piece to be moved
             if(selectedPiece == null){
                 movePiece(selectedButton, originButton);
-                if(!isGameOver){
-                    jeffMove();
-                }
             }else if(selectedPiece.getColor() == originButton.getPiece().getColor()){
                 originButton = selectedButton;
             }else{
                 movePiece(selectedButton, originButton);
-                if(!isGameOver){
-                    jeffMove();
-                }
             }
         }
     }
@@ -85,20 +79,21 @@ public class JeffGUI {
         Move clonedMove = (Move) move.clone();
 
         if(board.isMoveLegal(originButton.getPiece(), selectedButton.getTile())){ //is the move legal
-            initializePieces();
             board.movePiece(originPiece, destinationTile);
             if(board.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN){
                 displayPromotionWindow(selectedButton);
             }
+            initializePieces();
+            endGameMessage();
+            System.out.println(board.getState());
+            long start_time = System.nanoTime();
+            jeff.updateTree(clonedMove);
+            jeffMove();
+            long end_time = System.nanoTime();
+            System.out.println(board.getTurnCounter() + " " +(end_time - start_time) / 1e6);
         }
 
         this.originButton = null;
-        endGameMessage();
-
-        long start_time = System.nanoTime();
-        jeff.updateTree(clonedMove);
-        long end_time = System.nanoTime();
-        System.out.println(board.getTurnCounter() + " " +(end_time - start_time) / 1e6);
     }
 
     //Handles bot movement.
@@ -111,10 +106,13 @@ public class JeffGUI {
 
         if(board.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN){
             Piece jeffPiece = jeff.getBoard().getPieceByClone(piece);
-            board.promotingPawn(piece, PieceName.QUEEN);
-            jeff.getBoard().promotingPawn(jeffPiece, PieceName.QUEEN);
+            board.promotePawn(piece, PieceName.QUEEN);
+            jeff.promotePawn(jeffPiece, PieceName.QUEEN);
         }
+
+        System.out.println(board.getState());
         initializePieces();
+        endGameMessage();
         message.setText("Jeff is ready.");
     }
 
@@ -135,7 +133,7 @@ public class JeffGUI {
         String choice = (String) JOptionPane.showInputDialog(gui, "Choose a piece to promote to.",
                 "Pawn promotion", JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
         PieceName chosenPieceName = PieceName.valueOf(choice);
-        board.promotingPawn(selectedButton.getPiece(), chosenPieceName);
+        board.promotePawn(selectedButton.getPiece(), chosenPieceName);
         selectedButton.updateIcon();
 
     }
