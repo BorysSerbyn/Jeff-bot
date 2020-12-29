@@ -8,7 +8,7 @@ import java.util.Collections;
 public class Jeffbot {
     private static int maxDepth = 4;
     private static int maxBreadth = 5;
-    private static int maxRetries = 2;
+    private static int maxRetries = 5;
     private Board board;
     private Color color;
     private Node currentNode;
@@ -17,7 +17,7 @@ public class Jeffbot {
     public Jeffbot(Color color) {
         this.color = color;
         this.board = new Board(1);
-        this.baseNode = new Node(board, null, maxDepth, maxBreadth, color);
+        this.baseNode = new Node(board, null, maxDepth, maxBreadth, color, maxRetries);
         currentNode = baseNode;
         initializeTree();
     }
@@ -47,6 +47,7 @@ public class Jeffbot {
 
         Move clonedMove = (Move) bestMoveNode.getLastMove().clone();
         System.out.println("Jeffs move: " + bestMoveNode);
+
         updateTree(clonedMove);
         return clonedMove;
     }
@@ -68,13 +69,14 @@ public class Jeffbot {
         Move clonedMove = (Move) move.clone();
         Piece jeffPiece = board.getPieceByClone(move.getPiece());
         Tile jeffDestinationTile = board.getTileByClone(move.getTile());
+
         board.movePiece(jeffPiece, jeffDestinationTile);
         Node moveNode = getNodeByMove(currentNode, clonedMove);
 
         if (moveNode == null) {//is there a node in the tree corresponding the the move?
             System.out.println("Couldnt find node: " + move);
             Board clonedBoard = (Board) board.clone();
-            moveNode = new Node(clonedBoard, currentNode, maxDepth, maxBreadth, color);
+            moveNode = new Node(clonedBoard, currentNode, maxDepth, maxBreadth, color, maxRetries);
             currentNode.addChild(moveNode);
         }
 

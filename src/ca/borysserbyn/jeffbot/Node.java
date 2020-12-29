@@ -13,6 +13,7 @@ public class Node implements Comparable {
     private Board board;
     private double currentPieceValue;
     private double cascadedPieceValue;
+    private int maxRetries;
 
     private double checkmateProb;
     private double stalemateProb;
@@ -20,7 +21,7 @@ public class Node implements Comparable {
     private Node parentNode;
 
 
-    public Node(Board board, Node parentNode, int maxDepth, int maxBreadth, Color color) {
+    public Node(Board board, Node parentNode, int maxDepth, int maxBreadth, Color color, int maxRetries) {
         this.color = color;
         this.maxBreadth = maxBreadth;
         this.maxDepth = maxDepth;
@@ -28,6 +29,7 @@ public class Node implements Comparable {
         this.parentNode = parentNode;
         cascadedPieceValue = 0;
         currentPieceValue = 0;
+        this.maxRetries = maxRetries;
         checkmateProb = 0;
         stalemateProb = 0;
         childNodes = new ArrayList<>();
@@ -46,10 +48,14 @@ public class Node implements Comparable {
     @Override
     public int compareTo(Object o) {
         Node nodeToCompare = (Node) o;
-        //double checkmateIncrease = (this.checkmateProb - nodeToCompare.checkmateProb) / 1;
-        //double pieceValueIncrease = (this.cascadedPieceValue - nodeToCompare.cascadedPieceValue) / 38;
         double totalIncrease = nodeToCompare.cascadedPieceValue - this.cascadedPieceValue;
-        return (int) totalIncrease;
+        if(checkmateProb == nodeToCompare.checkmateProb){
+            return (int) totalIncrease;
+        }else if(checkmateProb > nodeToCompare.checkmateProb){
+            return -1;
+        }else{
+            return 1;
+        }
     }
 
     public double getCurrentPieceValue() {
@@ -80,21 +86,45 @@ public class Node implements Comparable {
         return cascadedPieceValue;
     }
 
-    public void setCascadedPieceValue(){
+    public void cascadeGameOutcome(){
         cascadedPieceValue = childNodes.get(0).getCascadedPieceValue();
+        checkmateProb = childNodes.get(0).checkmateProb;
+        stalemateProb = childNodes.get(0).stalemateProb;
         for (Node childNode : childNodes) {
             double childPieceValue = childNode.getCascadedPieceValue();
+            double childCheckmateProb = childNode.checkmateProb;
+            double childStalemateProb = childNode.stalemateProb;
+
+
             if(board.getTurn() == color){ //if its your turn; choose the best outcome
                 cascadedPieceValue = childPieceValue > cascadedPieceValue ? childPieceValue : cascadedPieceValue;
+                checkmateProb = childCheckmateProb > checkmateProb ? childCheckmateProb : checkmateProb;
+                stalemateProb = childStalemateProb > stalemateProb ? childStalemateProb : stalemateProb;
             }else{// if not; choose the worst one
                 cascadedPieceValue = childPieceValue < cascadedPieceValue ? childPieceValue : cascadedPieceValue;
+                checkmateProb = childCheckmateProb < checkmateProb ? childCheckmateProb : checkmateProb;
+                stalemateProb = childStalemateProb < stalemateProb ? childStalemateProb : stalemateProb;
             }
         }
     }
 
-    //recusively populates board tree with outcomes
+    //recusively populates tree with outcomes
     public void addNodes(int depth) {
         currentPieceValue = board.getBoardValueByColor(color);
+
+        if(depth == 2){ //filter out branches with bad outcomes at depth 2 to optimize computing time.
+            double rootPieceValue = parentNode.parentNode.getCurrentPieceValue();
+            if(currentPieceValue+1 < rootPieceValue){
+                cascadedPieceValue = currentPieceValue;
+                if (board.getState() == BoardState.CHECKMATE) {
+                    checkmateProb = board.getTurn() == color ? -1 : 1;
+                } else if (board.getState() == BoardState.STALEMATE) {
+                    stalemateProb = 1;
+                }
+                return;
+            }
+        }
+
         if (board.isGameOver() || depth >= maxDepth) {//is game over or desired depth reached?
             cascadedPieceValue = currentPieceValue;
             if (board.getState() == BoardState.CHECKMATE) {
@@ -102,9 +132,8 @@ public class Node implements Comparable {
             } else if (board.getState() == BoardState.STALEMATE) {
                 stalemateProb = 1;
             }
-            return; // exits before it can try to extend the branch infinitely
+            return;
         }
-
         if (!this.getChildNodes().isEmpty()) {//does this node already have children?
             for (Node childNode : this.getChildNodes()) {
                 childNode.addNodes(depth + 1);
@@ -114,20 +143,33 @@ public class Node implements Comparable {
             Collections.shuffle(legalBoards);
             Collections.sort(legalBoards);
 
+            int adjustedMaxRetries = maxRetries;
             int adjustedMaxBreadth;
+            int numberOfRecalcs = 0;
             if (maxBreadth < legalBoards.size() && maxBreadth != -1) { //is maximum breadth smaller than number of legal moves?
                 adjustedMaxBreadth = maxBreadth;
             } else {
                 adjustedMaxBreadth = legalBoards.size();
             }
 
-            for (int i = 0; i < adjustedMaxBreadth; i++) {
-                Board legalBoard = legalBoards.get(i);
-                Node childNode = new Node(legalBoard, this, maxDepth, maxBreadth, color);
+            if(depth == 0){ // only choose 1 branch at a time for starter move until good one is found.
+                adjustedMaxBreadth = 1;
+                adjustedMaxRetries += 5;
+            }
+
+            for (int i = 0; i < adjustedMaxBreadth + numberOfRecalcs; i++) {
+                Board legalBoard = i < adjustedMaxBreadth ? legalBoards.get(i) : legalBoards.get(legalBoards.size() - numberOfRecalcs); //pick from neutral board position if eating doesnt seem to help
+                Node childNode = new Node(legalBoard, this, maxDepth, maxBreadth, color, maxRetries);
                 childNode.addNodes(depth + 1);
                 this.addChild(childNode);
+
+                boolean branchFails = (board.getTurn() == color ^ childNode.getCascadedPieceValue() > currentPieceValue) && childNode.getCascadedPieceValue() != currentPieceValue;
+
+                if(branchFails && adjustedMaxRetries > numberOfRecalcs) { //if the outcome of the child is bad and there is still room for retries, try again.
+                    numberOfRecalcs = adjustedMaxBreadth + numberOfRecalcs < legalBoards.size() ? numberOfRecalcs + 1 : numberOfRecalcs;
+                }
             }
         }
-        setCascadedPieceValue();
+        cascadeGameOutcome();
     }
 }

@@ -86,11 +86,13 @@ public class JeffGUI {
             initializePieces();
             endGameMessage();
             System.out.println(board.getState());
-            long start_time = System.nanoTime();
-            jeff.updateTree(clonedMove);
-            jeffMove();
-            long end_time = System.nanoTime();
-            System.out.println(board.getTurnCounter() + " " +(end_time - start_time) / 1e6);
+            if(!isGameOver){
+                long start_time = System.nanoTime();
+                jeff.updateTree(clonedMove);
+                jeffMove();
+                long end_time = System.nanoTime();
+                System.out.println(board.getTurnCounter() + " " +(end_time - start_time) / 1e6);
+            }
         }
 
         this.originButton = null;
