@@ -36,7 +36,6 @@ public class Piece implements Cloneable, Serializable {
         }
     }
 
-
     @Override
     public String toString() {
         String pieceString = new String();
@@ -61,7 +60,6 @@ public class Piece implements Cloneable, Serializable {
     public Tile getTile() {
         return tile;
     }
-
 
     public void setTile(Tile tile) {
         this.tile = tile;

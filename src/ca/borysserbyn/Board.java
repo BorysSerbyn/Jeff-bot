@@ -1,10 +1,10 @@
 package ca.borysserbyn;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import java.awt.*;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 import static java.util.stream.Collectors.toCollection;
 
@@ -63,12 +63,16 @@ public class Board implements Cloneable, Serializable, Comparable {
 
     @Override
     public int compareTo(Object o) {
-        Board boardToCompare = (Board) o;
+        Board otherBoard = (Board) o;
 
+        int centerPieceValue = (int) Math.signum(otherBoard.getCenterPieceValue() - this.getCenterPieceValue());
 
-        int boardToCompareState = boardToCompare.getState() != BoardState.NEUTRAL || boardToCompare.isKingChecked() ? 1 : -1;
-        int boardState = this.getState() != BoardState.NEUTRAL || this.isKingChecked() ? -1 : 1;
-        return boardState + boardToCompareState;
+        int otherBoardCheckState = otherBoard.isKingChecked() ? 1 : -1;
+        int otherBoardState = otherBoard.getState() != BoardState.NEUTRAL ? 1 : -1;
+        int boardCheckState = this.isKingChecked() ? -1 : 1;
+        int boardState = this.getState() != BoardState.NEUTRAL? -1 : 1;
+
+        return 2*(boardState + boardCheckState + otherBoardState + otherBoardCheckState) + centerPieceValue;
     }
 
     @Override
@@ -121,6 +125,15 @@ public class Board implements Cloneable, Serializable, Comparable {
         return board;
     }
 
+    public int getCenterPieceValue(){
+        Color targetColor = getTurn() == Color.WHITE ? Color.BLACK : Color.WHITE;
+        int[] inclusionSquare = new int[]{2,3,4,5};
+        ArrayList<Piece> centerPieces = pieces.stream()
+                .filter(piece -> ArrayUtils.contains(inclusionSquare, piece.getTile().getX()) && ArrayUtils.contains(inclusionSquare, piece.getTile().getY()))
+                .collect(toCollection(ArrayList::new));
+        int centerBoardValue = getSubsetValueByColor(targetColor, centerPieces);
+        return centerBoardValue;
+    }
 
 
     //copys an array of bools (conditions) for the clone function
@@ -287,8 +300,8 @@ public class Board implements Cloneable, Serializable, Comparable {
         return legalMovesList;
     }
 
-    public double getBoardValueByColor(Color color){
-        double value = 0d;
+    public int getBoardValueByColor(Color color){
+        int value = 0;
         for (Piece piece:getUneatenPieces()) {
             if(piece.getColor() == color){
                 value += piece.getValue();
@@ -298,6 +311,19 @@ public class Board implements Cloneable, Serializable, Comparable {
         }
         return value;
     }
+
+    public int getSubsetValueByColor(Color color, ArrayList<Piece> pieces){
+        int value = 0;
+        for (Piece piece:pieces) {
+            if(piece.getColor() == color){
+                value += piece.getValue();
+            }else{
+                value -= piece.getValue();
+            }
+        }
+        return value;
+    }
+
 
 
     /*

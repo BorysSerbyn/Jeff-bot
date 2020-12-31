@@ -11,12 +11,12 @@ public class Node implements Comparable {
     private int maxBreadth;
     private Color color;
     private Board board;
-    private double currentPieceValue;
-    private double cascadedPieceValue;
+    private int currentPieceValue;
+    private int cascadedPieceValue;
     private int maxRetries;
 
-    private double checkmateProb;
-    private double stalemateProb;
+    private int checkmateProb;
+    private int stalemateProb;
     private ArrayList<Node> childNodes;
     private Node parentNode;
 
@@ -40,25 +40,35 @@ public class Node implements Comparable {
         return "Node{" +
                 "turnCount=" + board.getTurnCounter() +
                 ", move=" + getLastMove().toString() +
-                ", value=" + getCascadedPieceValue() +
+                ", value=" + scoreNode() +
                 '}';
     }
 
     //not final at all
     @Override
     public int compareTo(Object o) {
-        Node nodeToCompare = (Node) o;
-        double totalIncrease = nodeToCompare.cascadedPieceValue - this.cascadedPieceValue;
-        if(checkmateProb == nodeToCompare.checkmateProb){
-            return (int) totalIncrease;
-        }else if(checkmateProb > nodeToCompare.checkmateProb){
-            return -1;
-        }else{
-            return 1;
-        }
+        Node node = (Node) o;
+        double scoreDifference = node.scoreNode() - this.scoreNode();
+        return (int) scoreDifference;
     }
 
-    public double getCurrentPieceValue() {
+    public Node getParentNode() {
+        return parentNode;
+    }
+
+    public void setParentNode(Node parentNode) {
+        this.parentNode = parentNode;
+    }
+
+    public int getMaxDepth() {
+        return maxDepth;
+    }
+
+    public void setMaxDepth(int maxDepth) {
+        this.maxDepth = maxDepth;
+    }
+
+    public int getCurrentPieceValue() {
         return currentPieceValue;
     }
 
@@ -82,53 +92,69 @@ public class Node implements Comparable {
         childNodes = new ArrayList<Node>();
     }
 
-    public double getCascadedPieceValue() {
+    public int getCascadedPieceValue() {
         return cascadedPieceValue;
     }
 
-    public void cascadeGameOutcome(){
+    public double scoreNode(){
+        return cascadedPieceValue+checkmateProb*20;
+    }
+
+    public void inheritGameOutcome(){
         cascadedPieceValue = childNodes.get(0).getCascadedPieceValue();
         checkmateProb = childNodes.get(0).checkmateProb;
         stalemateProb = childNodes.get(0).stalemateProb;
-        for (Node childNode : childNodes) {
-            double childPieceValue = childNode.getCascadedPieceValue();
-            double childCheckmateProb = childNode.checkmateProb;
-            double childStalemateProb = childNode.stalemateProb;
+        int valueSign = board.getTurn() == color ? 1 : -1;
 
-
-            if(board.getTurn() == color){ //if its your turn; choose the best outcome
-                cascadedPieceValue = childPieceValue > cascadedPieceValue ? childPieceValue : cascadedPieceValue;
-                checkmateProb = childCheckmateProb > checkmateProb ? childCheckmateProb : checkmateProb;
-                stalemateProb = childStalemateProb > stalemateProb ? childStalemateProb : stalemateProb;
-            }else{// if not; choose the worst one
-                cascadedPieceValue = childPieceValue < cascadedPieceValue ? childPieceValue : cascadedPieceValue;
-                checkmateProb = childCheckmateProb < checkmateProb ? childCheckmateProb : checkmateProb;
-                stalemateProb = childStalemateProb < stalemateProb ? childStalemateProb : stalemateProb;
-            }
+        for (Node childNode : childNodes) {//find minmaxed outcome
+            int childPieceValue = childNode.getCascadedPieceValue();
+            int childCheckmateProb = childNode.checkmateProb;
+            int childStalemateProb = childNode.stalemateProb;
+            cascadedPieceValue = childPieceValue*valueSign > cascadedPieceValue*valueSign ? childPieceValue : cascadedPieceValue;
+            checkmateProb = childCheckmateProb*valueSign > checkmateProb*valueSign ? valueSign : checkmateProb;
+            stalemateProb = childStalemateProb > stalemateProb ? childStalemateProb : stalemateProb;
         }
     }
 
-    //recusively populates tree with outcomes
-    public void addNodes(int depth) {
-        currentPieceValue = board.getBoardValueByColor(color);
 
-        if(depth == 2){ //filter out branches with bad outcomes at depth 2 to optimize computing time.
-            double rootPieceValue = parentNode.parentNode.getCurrentPieceValue();
-            if(currentPieceValue+1 < rootPieceValue){
-                cascadedPieceValue = currentPieceValue;
-                if (board.getState() == BoardState.CHECKMATE) {
-                    checkmateProb = board.getTurn() == color ? -1 : 1;
-                } else if (board.getState() == BoardState.STALEMATE) {
-                    stalemateProb = 1;
-                }
-                return;
-            }
+    //min-nax algorithm
+    public void addNodes(int depth, int adjustedMaxDepth) {
+        /**
+         * Min Max values
+         * the following variable definitions will make sure that each layer will properly alternate between minimizing and maximizing the value.
+         */
+        currentPieceValue = board.getBoardValueByColor(color);
+        int valueSign = board.getTurn() == color ? -1 : 1;
+        int signedCurrentPieceValue = currentPieceValue*valueSign;
+        int checkmateValue = valueSign;
+        int signedCascadedPieceValue = 0;
+        if(!this.childNodes.isEmpty()){
+            signedCascadedPieceValue = valueSign*cascadedPieceValue;
         }
 
-        if (board.isGameOver() || depth >= maxDepth) {//is game over or desired depth reached?
+        /**
+         * Alpha-Beta pruner
+         * prunes branch if a better alternative has already been calculated (compares cascaded piece value of sibling to currentpiece value)
+         */
+        if(depth > 1){//root node doesnt need to be pruned
+            for (Node siblingNode : parentNode.getChildNodes()) {
+                int siblingSignedCascadedPieceValue = signedCascadedPieceValue*valueSign;
+                int adjustedPieceValue = this.childNodes.isEmpty() ? signedCurrentPieceValue : siblingSignedCascadedPieceValue;
+                if(siblingSignedCascadedPieceValue > adjustedPieceValue+1){//prunes branches if better one was already found
+                    cascadedPieceValue = currentPieceValue;
+                    if (board.getState() == BoardState.CHECKMATE) {
+                        checkmateProb = checkmateValue;
+                    } else if (board.getState() == BoardState.STALEMATE) {
+                        stalemateProb = 1;
+                    }
+                    return;
+                }
+            }
+        }
+        if (board.isGameOver() || depth >= adjustedMaxDepth) {//is game over or desired depth reached?
             cascadedPieceValue = currentPieceValue;
             if (board.getState() == BoardState.CHECKMATE) {
-                checkmateProb = 1;
+                checkmateProb = checkmateValue;
             } else if (board.getState() == BoardState.STALEMATE) {
                 stalemateProb = 1;
             }
@@ -136,7 +162,7 @@ public class Node implements Comparable {
         }
         if (!this.getChildNodes().isEmpty()) {//does this node already have children?
             for (Node childNode : this.getChildNodes()) {
-                childNode.addNodes(depth + 1);
+                childNode.addNodes(depth + 1, adjustedMaxDepth);
             }
         } else {
             ArrayList<Board> legalBoards = board.getLegalBoardsByColor(board.getTurn());
@@ -146,30 +172,33 @@ public class Node implements Comparable {
             int adjustedMaxRetries = maxRetries;
             int adjustedMaxBreadth;
             int numberOfRecalcs = 0;
+            int childValueSign = valueSign * -1;
+
             if (maxBreadth < legalBoards.size() && maxBreadth != -1) { //is maximum breadth smaller than number of legal moves?
                 adjustedMaxBreadth = maxBreadth;
             } else {
                 adjustedMaxBreadth = legalBoards.size();
             }
 
-            if(depth == 0){ // only choose 1 branch at a time for starter move until good one is found.
-                adjustedMaxBreadth = 1;
-                adjustedMaxRetries += 5;
-            }
-
             for (int i = 0; i < adjustedMaxBreadth + numberOfRecalcs; i++) {
                 Board legalBoard = i < adjustedMaxBreadth ? legalBoards.get(i) : legalBoards.get(legalBoards.size() - numberOfRecalcs); //pick from neutral board position if eating doesnt seem to help
+                if(legalBoard.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN){//promote pawns
+                    legalBoard.promotePawn(legalBoard.getPieceByClone(getLastMove().moveToPiece()), PieceName.QUEEN);
+                }
                 Node childNode = new Node(legalBoard, this, maxDepth, maxBreadth, color, maxRetries);
-                childNode.addNodes(depth + 1);
+                childNode.addNodes(depth + 1, adjustedMaxDepth);
                 this.addChild(childNode);
+                int signedChildCascadedPieceValue = childNode.getCascadedPieceValue() *childValueSign;
 
-                boolean branchFails = (board.getTurn() == color ^ childNode.getCascadedPieceValue() > currentPieceValue) && childNode.getCascadedPieceValue() != currentPieceValue;
-
-                if(branchFails && adjustedMaxRetries > numberOfRecalcs) { //if the outcome of the child is bad and there is still room for retries, try again.
-                    numberOfRecalcs = adjustedMaxBreadth + numberOfRecalcs < legalBoards.size() ? numberOfRecalcs + 1 : numberOfRecalcs;
+                if(signedChildCascadedPieceValue+1 < signedCurrentPieceValue) { //does this move have a significant negative value compared to the current board position?
+                    if(adjustedMaxBreadth + numberOfRecalcs < legalBoards.size()){ //are there enough possible moves to try again?
+                        if(adjustedMaxRetries > numberOfRecalcs){ //have we already reached the maximum amount of retries?
+                            numberOfRecalcs++;
+                        }
+                    }
                 }
             }
         }
-        cascadeGameOutcome();
+        inheritGameOutcome(); //cascade best or worst outcome from children
     }
 }

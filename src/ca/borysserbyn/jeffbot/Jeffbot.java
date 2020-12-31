@@ -4,22 +4,21 @@ import ca.borysserbyn.*;
 
 import java.awt.*;
 import java.util.Collections;
+import java.util.concurrent.ForkJoinPool;
 
 public class Jeffbot {
     private static int maxDepth = 4;
-    private static int maxBreadth = 5;
-    private static int maxRetries = 5;
+    private static int maxBreadth = 20;
+    private static int maxRetries = 10;
     private Board board;
     private Color color;
     private Node currentNode;
-    private Node baseNode;
 
     public Jeffbot(Color color) {
         this.color = color;
         this.board = new Board(1);
-        this.baseNode = new Node(board, null, maxDepth, maxBreadth, color, maxRetries);
-        currentNode = baseNode;
-        initializeTree();
+        currentNode = new Node(board, null, maxDepth, maxBreadth, color, maxRetries);
+        buildTree(currentNode);
     }
 
     public Board getBoard() {
@@ -44,24 +43,15 @@ public class Jeffbot {
         currentNode.getChildNodes().forEach(System.out::println);
         System.out.println();
         bestMoveNode.getChildNodes().forEach(System.out::println);
-
-        Move clonedMove = (Move) bestMoveNode.getLastMove().clone();
         System.out.println("Jeffs move: " + bestMoveNode);
 
-        updateTree(clonedMove);
-        return clonedMove;
-    }
-
-    public void promotePawn(Piece piece, PieceName pieceName){
-        board.promotePawn(piece, pieceName);
-        Piece currentNodePiece = currentNode.getBoard().getPieceByClone(piece);
-        currentNode.getBoard().promotePawn(currentNodePiece, pieceName);
+        return bestMoveNode.getLastMove();
     }
 
     public void resetTree(){
         System.out.println("Reseting the tree, no good moves found");
         currentNode.removeAllChildren();
-        currentNode.addNodes(0);
+        buildTree(currentNode);
         Collections.sort(currentNode.getChildNodes());
     }
 
@@ -74,20 +64,25 @@ public class Jeffbot {
         Node moveNode = getNodeByMove(currentNode, clonedMove);
 
         if (moveNode == null) {//is there a node in the tree corresponding the the move?
-            System.out.println("Couldnt find node: " + move);
+            System.out.println("Couldnt find node: " + move + " in tree.");
             Board clonedBoard = (Board) board.clone();
             moveNode = new Node(clonedBoard, currentNode, maxDepth, maxBreadth, color, maxRetries);
             currentNode.addChild(moveNode);
         }
 
         currentNode = moveNode;
-        currentNode.addNodes(0);
-
-        System.out.println("Updated current node: " + clonedMove + " which has " + currentNode.getChildNodes().size() + " children.");
+        buildTree(currentNode);
+        //System.out.println("Updated current node: " + clonedMove + " which has " + currentNode.getChildNodes().size() + " children.");
     }
 
-
-    public void initializeTree() {
-        baseNode.addNodes(0);
+    public void buildTree(Node node){
+        TreeTask rootTask = new TreeTask(node, 0);
+        ForkJoinPool pool = new ForkJoinPool();
+        pool.invoke(rootTask);
+        for (Node childNode : node.getChildNodes()) {
+            childNode.inheritGameOutcome();
+        }
+        node.setParentNode(null);
+        //node.inheritGameOutcome();
     }
 }

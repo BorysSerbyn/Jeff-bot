@@ -77,15 +77,16 @@ public class JeffGUI {
         Tile destinationTile = selectedButton.getTile();
         Move move = new Move(originPiece, destinationTile);
         Move clonedMove = (Move) move.clone();
+        Piece clonedPiece = clonedMove.getPiece();
 
         if(board.isMoveLegal(originButton.getPiece(), selectedButton.getTile())){ //is the move legal
             board.movePiece(originPiece, destinationTile);
-            if(board.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN){
-                displayPromotionWindow(selectedButton);
-            }
             initializePieces();
             endGameMessage();
             System.out.println(board.getState());
+            if(board.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN){
+                displayPromotionWindow(selectedButton, clonedPiece);
+            }
             if(!isGameOver){
                 long start_time = System.nanoTime();
                 jeff.updateTree(clonedMove);
@@ -105,17 +106,17 @@ public class JeffGUI {
         Piece piece = board.getPieceByClone(bestMove.getPiece());
         Tile destinationTile =  board.getTileByClone(bestMove.getTile());
         board.movePiece(piece, destinationTile);
-
         if(board.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN){
-            Piece jeffPiece = jeff.getBoard().getPieceByClone(piece);
+            Piece jeffPiece = jeff.getBoard().getPieceByClone(bestMove.getPiece());
             board.promotePawn(piece, PieceName.QUEEN);
-            jeff.promotePawn(jeffPiece, PieceName.QUEEN);
+            jeff.getBoard().promotePawn(jeffPiece, PieceName.QUEEN);
+            bestMove.getPiece().setPieceName(PieceName.QUEEN);
         }
-
         System.out.println(board.getState());
         initializePieces();
         endGameMessage();
         message.setText("Jeff is ready.");
+        jeff.updateTree(bestMove);
     }
 
     //handles end game detection
@@ -130,14 +131,16 @@ public class JeffGUI {
     }
 
     //Popup that lets you choose which piece to promote a back rank pawn to
-    public void displayPromotionWindow(PieceButton selectedButton){
+    public void displayPromotionWindow(PieceButton selectedButton, Piece clonedPiece){
         String[] choices = { "QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"};
         String choice = (String) JOptionPane.showInputDialog(gui, "Choose a piece to promote to.",
                 "Pawn promotion", JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
         PieceName chosenPieceName = PieceName.valueOf(choice);
         board.promotePawn(selectedButton.getPiece(), chosenPieceName);
+        Piece jeffPiece = jeff.getBoard().getPieceByClone(clonedPiece);
+        jeff.getBoard().promotePawn(jeffPiece, chosenPieceName);
+        clonedPiece.setPieceName(chosenPieceName);
         selectedButton.updateIcon();
-
     }
 
     // TODO - file utils exports giberish and overrites previous saves automaticaly.
@@ -275,5 +278,6 @@ public class JeffGUI {
         }
 
         staticGUI.initializePieces();
+        gui.revalidate();
     }
 }

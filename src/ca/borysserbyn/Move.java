@@ -37,6 +37,12 @@ public class Move implements Cloneable{
                 this.tile.equals(move.tile);
     }
 
+    public Piece moveToPiece(){
+        Piece clonedPiece = (Piece) piece.clone();
+        clonedPiece.setTile((Tile)tile.clone());
+        return clonedPiece;
+    }
+
     public Piece getPiece() {
         return piece;
     }
