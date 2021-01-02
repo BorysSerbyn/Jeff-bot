@@ -64,14 +64,16 @@ public class OverTheBoardGUI {
         Tile destinationTile = selectedButton.getTile();
         if(board.isMoveLegal(originButton.getPiece(), selectedButton.getTile())){ //is the move legal
             board.movePiece(originPiece, destinationTile);
+            initializePieces();
+
             if(board.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN){
                 displayPromotionWindow(selectedButton);
             }
-            initializePieces();
+            endGameMessage();
+            board.getLegalMovesByColor(board.getTurn()).forEach(System.out::println);
         }
-
+        System.out.println(board.getState());
         this.originButton = null;
-        endGameMessage();
     }
 
     //handles end game detection

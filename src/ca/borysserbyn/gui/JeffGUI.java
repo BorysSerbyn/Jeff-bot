@@ -83,6 +83,7 @@ public class JeffGUI {
             board.movePiece(originPiece, destinationTile);
             initializePieces();
             endGameMessage();
+
             System.out.println(board.getState());
             if(board.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN){
                 displayPromotionWindow(selectedButton, clonedPiece);

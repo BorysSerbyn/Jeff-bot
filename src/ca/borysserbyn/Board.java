@@ -65,14 +65,14 @@ public class Board implements Cloneable, Serializable, Comparable {
     public int compareTo(Object o) {
         Board otherBoard = (Board) o;
 
-        int centerPieceValue = (int) Math.signum(otherBoard.getCenterPieceValue() - this.getCenterPieceValue());
+        //int centerPieceValue = (int) Math.signum(otherBoard.getCenterPieceValue() - this.getCenterPieceValue());
 
         int otherBoardCheckState = otherBoard.isKingChecked() ? 1 : -1;
         int otherBoardState = otherBoard.getState() != BoardState.NEUTRAL ? 1 : -1;
         int boardCheckState = this.isKingChecked() ? -1 : 1;
-        int boardState = this.getState() != BoardState.NEUTRAL? -1 : 1;
+        int boardState = this.getState() != BoardState.NEUTRAL ? -1 : 1;
 
-        return 2*(boardState + boardCheckState + otherBoardState + otherBoardCheckState) + centerPieceValue;
+        return boardState + boardCheckState + otherBoardState + otherBoardCheckState;
     }
 
     @Override
@@ -101,7 +101,7 @@ public class Board implements Cloneable, Serializable, Comparable {
             Tile clonedTile = clonedPiece.getTile();
             if (clonedTile.getX() != -1) { //check if the piece isnt in the graveyard
                 clonedTiles[clonedTile.getX()][clonedTile.getY()] = clonedTile;
-            }else{
+            } else {
                 clonedPiece.setTile(clonedGraveyard);
             }
             clonedPieces.add(clonedPiece);
@@ -125,14 +125,35 @@ public class Board implements Cloneable, Serializable, Comparable {
         return board;
     }
 
-    public int getCenterPieceValue(){
-        Color targetColor = getTurn() == Color.WHITE ? Color.BLACK : Color.WHITE;
-        int[] inclusionSquare = new int[]{2,3,4,5};
-        ArrayList<Piece> centerPieces = pieces.stream()
-                .filter(piece -> ArrayUtils.contains(inclusionSquare, piece.getTile().getX()) && ArrayUtils.contains(inclusionSquare, piece.getTile().getY()))
+    public int centerPieceValueByColor(Color targetColor) {
+        int[] centerPawnCoords = new int[]{3, 4};
+        int[] centerPieceCoords = new int[]{2, 5};
+        ArrayList<Piece> centerPawns = pieces.stream()
+                .filter(piece -> ArrayUtils.contains(centerPawnCoords, piece.getTile().getX()) && ArrayUtils.contains(centerPawnCoords, piece.getTile().getY()))
                 .collect(toCollection(ArrayList::new));
-        int centerBoardValue = getSubsetValueByColor(targetColor, centerPieces);
+       /* ArrayList<Piece> centerPieces = pieces.stream()
+                .filter(piece -> ArrayUtils.contains(centerPieceCoords, piece.getTile().getX()) && ArrayUtils.contains(centerPieceCoords, piece.getTile().getY()))
+                .collect(toCollection(ArrayList::new));
+        int centerBoardValue = 4*getSubsetValueByColor(targetColor, centerPawns) + getSubsetValueByColor(targetColor, centerPieces);*/
+        int centerBoardValue = 4*getSubsetValueByColor(targetColor, centerPawns);
         return centerBoardValue;
+    }
+
+    public int kingProtectionValueByColor(Color targetColor){
+        Piece king = getPieceByName(PieceName.KING, targetColor);
+        int kingProtectionValue = 0;
+        for (int i = 0; i < 1; i++) {
+            for (int j = 0; j > -1; j--) {
+                int x = king.getTile().getX() + i;
+                int y = king.getTile().getY() + j;
+                if(x > 7 || x < 0 || y > 7 || y < 0){
+                    kingProtectionValue++;
+                }else if(getPieceByTile(getTileByPosition(x, y)) != null && getPieceByTile(getTileByPosition(x, y)).getColor() == targetColor){
+                    kingProtectionValue++;
+                }
+            }
+        }
+        return kingProtectionValue;
     }
 
 
@@ -206,7 +227,7 @@ public class Board implements Cloneable, Serializable, Comparable {
                 .orElse(null);
     }
 
-    public Piece getPieceByClone(Piece clonedPiece){
+    public Piece getPieceByClone(Piece clonedPiece) {
         return pieces.stream()
                 .filter(piece -> piece.equals(clonedPiece))
                 .findFirst()
@@ -225,7 +246,7 @@ public class Board implements Cloneable, Serializable, Comparable {
         return tiles[x][y];
     }
 
-    public Tile getTileByClone(Tile clonedTile){
+    public Tile getTileByClone(Tile clonedTile) {
         return tiles[clonedTile.getX()][clonedTile.getY()];
     }
 
@@ -258,30 +279,34 @@ public class Board implements Cloneable, Serializable, Comparable {
         moveHistory.add(archivedMove);
     }
 
-    public Move getLastMove(){
-        return moveHistory.get(moveHistory.size()-1);
+    public ArrayList<Move> getMoveHistory() {
+        return moveHistory;
+    }
+
+    public Move getLastMove() {
+        return moveHistory.get(moveHistory.size() - 1);
     }
 
 
     /*
     The following methods are useful for the AI
      */
-    public ArrayList<Board> getLegalBoardsByColor(Color color){
-        ArrayList<Move> allLegalMoves = this.getLegalMovesByColor(this.getTurn());
-        ArrayList<Board> allLegalBoards = new ArrayList<>();
-        for (Move legalMove : allLegalMoves) {
+    public ArrayList<Board> getLegalBoardsByColor(Color color) {
+        ArrayList<Move> legalMoves = this.getLegalMovesByColor(color);
+        ArrayList<Board> legalBoards = new ArrayList<>();
+        for (Move legalMove : legalMoves) {
             Board clonedBoard = (Board) this.clone();
             Piece clonedPiece = clonedBoard.getPieceByClone(legalMove.getPiece());
             Tile clonedTile = clonedBoard.getTileByClone(legalMove.getTile());
             clonedBoard.movePiece(clonedPiece, clonedTile);
-            allLegalBoards.add(clonedBoard);
+            legalBoards.add(clonedBoard);
         }
-        return allLegalBoards;
+        return legalBoards;
     }
 
-    public ArrayList<Move> getLegalMovesByColor(Color color){
+    public ArrayList<Move> getLegalMovesByColor(Color color) {
         ArrayList<Move> legalMovesList = new ArrayList<>();
-        for (Piece piece: getUneatenPiecesByColor(color)) {
+        for (Piece piece : getUneatenPiecesByColor(color)) {
             legalMovesList.addAll(getLegalMovesByPiece(piece));
         }
         return legalMovesList;
@@ -300,30 +325,29 @@ public class Board implements Cloneable, Serializable, Comparable {
         return legalMovesList;
     }
 
-    public int getBoardValueByColor(Color color){
+    public int getBoardValueByColor(Color color) {
         int value = 0;
-        for (Piece piece:getUneatenPieces()) {
-            if(piece.getColor() == color){
+        for (Piece piece : getUneatenPieces()) {
+            if (piece.getColor() == color) {
                 value += piece.getValue();
-            }else{
+            } else {
                 value -= piece.getValue();
             }
         }
         return value;
     }
 
-    public int getSubsetValueByColor(Color color, ArrayList<Piece> pieces){
+    public int getSubsetValueByColor(Color color, ArrayList<Piece> pieces) {
         int value = 0;
-        for (Piece piece:pieces) {
-            if(piece.getColor() == color){
+        for (Piece piece : pieces) {
+            if (piece.getColor() == color) {
                 value += piece.getValue();
-            }else{
+            } else {
                 value -= piece.getValue();
             }
         }
         return value;
     }
-
 
 
     /*
@@ -355,17 +379,17 @@ public class Board implements Cloneable, Serializable, Comparable {
     public boolean isBoardInStaleMate() {
         if (noLegalMovesCheck()) {
             setState(BoardState.STALEMATE);
-            System.out.println("no legal moves");
+            //System.out.println("no legal moves");
             return true;
         }
         if (insufficientMaterialCheck()) {
             setState(BoardState.STALEMATE);
-            System.out.println("insufficient material");
+            //System.out.println("insufficient material");
             return true;
         }
         if (threefoldRepetitionCheck()) {
             setState(BoardState.STALEMATE);
-            System.out.println("threefold repetition");
+            //System.out.println("threefold repetition");
             return true;
         }
         return false;
@@ -458,11 +482,12 @@ public class Board implements Cloneable, Serializable, Comparable {
         setState(BoardState.NEUTRAL);
         updateEnPassantConditions(piece.getColor());
 
-
+        if (piece.getPieceName() == PieceName.PAWN && isPawnPromotionLegal(piece, tile)) {
+            setState(BoardState.PROMOTING_PAWN);
+        }
         if (targetPiece != null) {//if a piece is to be eaten
             targetPiece.discardPiece(graveyard);
             setState(BoardState.PIECE_EATEN);
-
             if (piece.getPieceName() == PieceName.PAWN && isPawnPromotionLegal(piece, tile)) {
                 setState(BoardState.PROMOTING_AND_EATING);
             }
@@ -474,9 +499,6 @@ public class Board implements Cloneable, Serializable, Comparable {
         if (piece.getPieceName() == PieceName.PAWN && isPawnEnPassantLegal(piece, tile)) {//is en passant legal?
             getPieceByTile(getTileByPosition(tile.getX(), piece.getTile().getY())).discardPiece(graveyard);
             setState(BoardState.EN_PASSANT);
-        }
-        if (piece.getPieceName() == PieceName.PAWN && isPawnPromotionLegal(piece, tile)) {
-            setState(BoardState.PROMOTING_PAWN);
         }
         if (piece.getPieceName() == PieceName.KING && isCastlingLegal(piece, tile)) {//is the piece a king and castling?
             castlingMove(piece, tile);
@@ -541,7 +563,6 @@ public class Board implements Cloneable, Serializable, Comparable {
         }
     }
 
-
     public void promotePawn(Piece piece, PieceName pieceName) {
         piece.setPieceName(pieceName);
     }
@@ -558,8 +579,12 @@ public class Board implements Cloneable, Serializable, Comparable {
         if (piece.getColor() != turn) {//is it the colors turn to move?
             return false;
         }
-        for (Piece boardPiece : pieces) {//is the piece trying to eat its own color? (includes himself)
-            if (boardPiece.getTile() == tile && boardPiece.getColor() == piece.getColor()) {
+        Piece targetPiece = getPieceByTile(tile);
+        if (targetPiece != null) {
+            if (targetPiece.getColor() == piece.getColor()) { //is it trying to eat its own color?
+                return false;
+            }
+            if (targetPiece.getPieceName() == PieceName.KING) { //is it trying to eat a king?
                 return false;
             }
         }
@@ -583,7 +608,7 @@ public class Board implements Cloneable, Serializable, Comparable {
             case QUEEN:
                 return isQueenMoveLegal(piece, tile);
             default:
-                return true;
+                return false;
         }
     }
 
@@ -748,8 +773,8 @@ public class Board implements Cloneable, Serializable, Comparable {
         int xMove = Math.abs(signedXMove);
         int yMove = Math.abs(signedYMove);
 
-        for(Piece anyPiece: getUneatenPieces()){
-            if(anyPiece.getTile().equals(tile)){
+        for (Piece anyPiece : getUneatenPieces()) {
+            if (anyPiece.getTile().equals(tile)) {
                 return false;
             }
         }
@@ -757,7 +782,7 @@ public class Board implements Cloneable, Serializable, Comparable {
         if (xMove != 0) {
             return false;
         }
-        if(!isRookMoveLegal(piece,tile)){
+        if (!isRookMoveLegal(piece, tile)) {
             return false;
         }
         if (orientation == 1) {
@@ -839,15 +864,15 @@ public class Board implements Cloneable, Serializable, Comparable {
         if (xMove != 1 || yMove != 1) { //is the move 1 square in each direction
             return false;
         }
-        if(!targetCondition){ //has the target pawn moved 2 squares last turn
+        if (!targetCondition) { //has the target pawn moved 2 squares last turn
             return false;
         }
-        if(expectedY != y){ //is the piece at its expected y position
+        if (expectedY != y) { //is the piece at its expected y position
             return false;
         }
-        if(targetPiece == null){
+        if (targetPiece == null) {
             return false;
-        }else if(targetPiece.getPieceName() != PieceName.PAWN){
+        } else if (targetPiece.getPieceName() != PieceName.PAWN) {
             return false;
         }
 
@@ -866,7 +891,6 @@ public class Board implements Cloneable, Serializable, Comparable {
 
     //checks if king is allowed to castle
     public boolean isCastlingLegal(Piece piece, Tile tile) {
-
         int x = piece.getTile().getX();
         int y = piece.getTile().getY();
         int signedYMove = tile.getY() - y;
@@ -888,7 +912,7 @@ public class Board implements Cloneable, Serializable, Comparable {
             castleTile = signedXMove > 0 ? getTileByPosition(0, piece.getTile().getY()) : getTileByPosition(7, piece.getTile().getY());
         }
 
-        if(yMove != 0){
+        if (yMove != 0) {
             return false;
         }
         if (isPieceThreatened(piece)) { //is king checked
@@ -932,59 +956,32 @@ public class Board implements Cloneable, Serializable, Comparable {
 
     //checks if a piece is threatened
     public boolean isPieceThreatened(Piece piece) {
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                Tile targetTile = getTileByPosition(i, j);
-                if (isQueenMoveLegal(piece, targetTile)) {
-                    Piece targetPiece = getPieceByTile(targetTile);
-                    if (targetPiece != null && targetPiece.getPieceName() == PieceName.QUEEN && targetPiece.getColor() != piece.getColor()) {
-                        //System.out.println(piece.toString() + " is threatened by :" + targetPiece.toString());
-                        return true;
-                    }
-                }
-                if (isBishopMoveLegal(piece, targetTile)) {
-                    Piece targetPiece = getPieceByTile(targetTile);
-                    if (targetPiece != null && targetPiece.getPieceName() == PieceName.BISHOP && targetPiece.getColor() != piece.getColor()) {
-                        //System.out.println(piece.toString() + " is threatened by :" + targetPiece.toString());
-                        return true;
-                    }
-                }
-                if (isRookMoveLegal(piece, targetTile)) {
-                    if (targetTile.getY() == 7 && targetTile.getX() == 0) {
-                    }
-                    Piece targetPiece = getPieceByTile(targetTile);
-                    if (targetPiece != null && targetPiece.getPieceName() == PieceName.ROOK && targetPiece.getColor() != piece.getColor()) {
-                        //System.out.println(piece.toString() + " is threatened by :" + targetPiece.toString());
-                        return true;
-                    }
-                }
-                if (isKnightMoveLegal(piece, targetTile)) {
-                    Piece targetPiece = getPieceByTile(targetTile);
-                    if (targetPiece != null && targetPiece.getPieceName() == PieceName.KNIGHT && targetPiece.getColor() != piece.getColor()) {
-                        //System.out.println(piece.toString() + " is threatened by :" + targetPiece.toString());
-                        return true;
-                    }
-                }
-                if (isKingMoveLegal(piece, targetTile)) {
-                    Piece targetPiece = getPieceByTile(targetTile);
-                    if (targetPiece != null && targetPiece.getPieceName() == PieceName.KING && targetPiece.getColor() != piece.getColor()) {
-                        //System.out.println(piece.toString() + " is threatened by :" + targetPiece.toString());
-                        return true;
-                    }
-                }
-                if (isPawnEatLegal(piece, targetTile) && isPawnOrientationLegal(piece, targetTile)) {
-                    Piece targetPiece = getPieceByTile(targetTile);
-                    if (targetPiece != null && targetPiece.getPieceName() == PieceName.PAWN && targetPiece.getColor() != piece.getColor()) {
-                        //System.out.println(piece.toString() + " is threatened by :" + targetPiece.toString());
-                        return true;
-                    }
-                }
+        Color color = piece.getColor() == Color.WHITE ? Color.BLACK : Color.WHITE;
+        Tile destinationTile = piece.getTile();
+        for (Piece enemyPiece : getUneatenPiecesByColor(color)) {
+            if (enemyPiece.getPieceName() == PieceName.QUEEN && isQueenMoveLegal(enemyPiece, destinationTile)) {
+                return true;
+            }
+            if (enemyPiece.getPieceName() == PieceName.BISHOP && isBishopMoveLegal(enemyPiece, destinationTile)) {
+                return true;
+            }
+            if (enemyPiece.getPieceName() == PieceName.ROOK && isRookMoveLegal(enemyPiece, destinationTile)) {
+                return true;
+            }
+            if (enemyPiece.getPieceName() == PieceName.KNIGHT && isKnightMoveLegal(enemyPiece, destinationTile)) {
+                return true;
+            }
+            if (enemyPiece.getPieceName() == PieceName.KING && isKingMoveLegal(enemyPiece, destinationTile)) {
+                return true;
+            }
+            if (enemyPiece.getPieceName() == PieceName.PAWN && isPawnEatLegal(enemyPiece, destinationTile) && isPawnOrientationLegal(enemyPiece, destinationTile)) {
+                return true;
             }
         }
         return false;
     }
 
-    public boolean isKingChecked(){
+    public boolean isKingChecked() {
         Piece king = this.getPieceByName(PieceName.KING, turn);
         if (this.isPieceThreatened(king)) {
             return true;
@@ -994,17 +991,12 @@ public class Board implements Cloneable, Serializable, Comparable {
 
     //checks if a move will cause its own king to be checked.
     public boolean willKingBeChecked(Piece piece, Tile tile) {
-        Board boardDeepCopy = (Board) this.clone();
-        Tile tileDeepCopy = boardDeepCopy.getTileByPosition(piece.getTile().getX(), piece.getTile().getY());
-        Tile destinationTileDC = boardDeepCopy.getTileByPosition(tile.getX(), tile.getY());
-        Piece pieceDeepCopy = boardDeepCopy.getPieceByTile(tileDeepCopy);
-        boardDeepCopy.movePiece(pieceDeepCopy, destinationTileDC);
-        Piece kingDeepCopy = boardDeepCopy.getPieceByName(PieceName.KING, piece.getColor());
-
-        if (boardDeepCopy.isPieceThreatened(kingDeepCopy)) {
-            return true;
-        }
-        return false;
+        Board clonedBoard = (Board) this.clone();
+        Tile clonedDestTile = clonedBoard.getTileByClone(tile);
+        Piece clonedPiece = clonedBoard.getPieceByClone(piece);
+        clonedBoard.movePiece(clonedPiece, clonedDestTile);
+        Piece clonedKing = clonedBoard.getPieceByName(PieceName.KING, piece.getColor());
+        return clonedBoard.isPieceThreatened(clonedKing);
     }
 
 

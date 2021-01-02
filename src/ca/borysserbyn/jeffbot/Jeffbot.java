@@ -8,8 +8,9 @@ import java.util.concurrent.ForkJoinPool;
 
 public class Jeffbot {
     private static int maxDepth = 4;
-    private static int maxBreadth = 20;
+    private static int maxBreadth = 15;
     private static int maxRetries = 10;
+    private static final ForkJoinPool pool = new ForkJoinPool();
     private Board board;
     private Color color;
     private Node currentNode;
@@ -76,13 +77,10 @@ public class Jeffbot {
     }
 
     public void buildTree(Node node){
+        //node.addNodes(0, maxDepth);
         TreeTask rootTask = new TreeTask(node, 0);
-        ForkJoinPool pool = new ForkJoinPool();
         pool.invoke(rootTask);
-        for (Node childNode : node.getChildNodes()) {
-            childNode.inheritGameOutcome();
-        }
         node.setParentNode(null);
-        //node.inheritGameOutcome();
+        System.gc();
     }
 }

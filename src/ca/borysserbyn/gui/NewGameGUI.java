@@ -55,7 +55,6 @@ public class NewGameGUI extends JFrame{
 
     public static void main(String[] args) {
         Runnable r = new Runnable() {
-
             @Override
             public void run() {
                 NewGameGUI newGame = new NewGameGUI("New Game");

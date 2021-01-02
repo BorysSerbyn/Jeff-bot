@@ -48,8 +48,10 @@ public class Node implements Comparable {
     @Override
     public int compareTo(Object o) {
         Node node = (Node) o;
-        double scoreDifference = node.scoreNode() - this.scoreNode();
-        return (int) scoreDifference;
+        int valueSign = board.getTurn() == color ? -1 : 1;
+
+        double scoreDifference = (node.scoreNode() - this.scoreNode())*valueSign;
+        return (int) Math.signum(scoreDifference);
     }
 
     public Node getParentNode() {
@@ -97,10 +99,28 @@ public class Node implements Comparable {
     }
 
     public double scoreNode(){
-        return cascadedPieceValue+checkmateProb*20;
+        double score = cascadedPieceValue+
+                checkmateProb*20+
+                Math.signum(board.centerPieceValueByColor(color))/4+
+                board.kingProtectionValueByColor(color)/9;
+        if(board.getTurnCounter() < 10 && getLastMove().getPiece().getPieceName() == PieceName.QUEEN){
+            score += board.getTurn() != color ? -0.125 : 0.01;
+        }
+        return score;
     }
 
+
+
     public void inheritGameOutcome(){
+        if(this.childNodes.isEmpty()){
+            return;
+        }
+
+        /*Collections.sort(childNodes);
+        cascadedPieceValue = childNodes.get(0).getCascadedPieceValue();
+        checkmateProb = childNodes.get(0).checkmateProb;
+        stalemateProb = childNodes.get(0).stalemateProb;*/
+
         cascadedPieceValue = childNodes.get(0).getCascadedPieceValue();
         checkmateProb = childNodes.get(0).checkmateProb;
         stalemateProb = childNodes.get(0).stalemateProb;
@@ -127,10 +147,6 @@ public class Node implements Comparable {
         int valueSign = board.getTurn() == color ? -1 : 1;
         int signedCurrentPieceValue = currentPieceValue*valueSign;
         int checkmateValue = valueSign;
-        int signedCascadedPieceValue = 0;
-        if(!this.childNodes.isEmpty()){
-            signedCascadedPieceValue = valueSign*cascadedPieceValue;
-        }
 
         /**
          * Alpha-Beta pruner
@@ -138,8 +154,8 @@ public class Node implements Comparable {
          */
         if(depth > 1){//root node doesnt need to be pruned
             for (Node siblingNode : parentNode.getChildNodes()) {
-                int siblingSignedCascadedPieceValue = signedCascadedPieceValue*valueSign;
-                int adjustedPieceValue = this.childNodes.isEmpty() ? signedCurrentPieceValue : siblingSignedCascadedPieceValue;
+                double siblingSignedCascadedPieceValue = siblingNode.scoreNode()*valueSign;
+                int adjustedPieceValue = this.childNodes.isEmpty() ? signedCurrentPieceValue : cascadedPieceValue*valueSign;
                 if(siblingSignedCascadedPieceValue > adjustedPieceValue+1){//prunes branches if better one was already found
                     cascadedPieceValue = currentPieceValue;
                     if (board.getState() == BoardState.CHECKMATE) {
@@ -151,6 +167,7 @@ public class Node implements Comparable {
                 }
             }
         }
+
         if (board.isGameOver() || depth >= adjustedMaxDepth) {//is game over or desired depth reached?
             cascadedPieceValue = currentPieceValue;
             if (board.getState() == BoardState.CHECKMATE) {
@@ -160,6 +177,7 @@ public class Node implements Comparable {
             }
             return;
         }
+
         if (!this.getChildNodes().isEmpty()) {//does this node already have children?
             for (Node childNode : this.getChildNodes()) {
                 childNode.addNodes(depth + 1, adjustedMaxDepth);
@@ -182,9 +200,11 @@ public class Node implements Comparable {
 
             for (int i = 0; i < adjustedMaxBreadth + numberOfRecalcs; i++) {
                 Board legalBoard = i < adjustedMaxBreadth ? legalBoards.get(i) : legalBoards.get(legalBoards.size() - numberOfRecalcs); //pick from neutral board position if eating doesnt seem to help
-                if(legalBoard.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN){//promote pawns
-                    legalBoard.promotePawn(legalBoard.getPieceByClone(getLastMove().moveToPiece()), PieceName.QUEEN);
+
+                if(legalBoard.getState() == BoardState.PROMOTING_AND_EATING || legalBoard.getState() == BoardState.PROMOTING_PAWN){//promote pawns
+                    legalBoard.promotePawn(legalBoard.getPieceByClone(legalBoard.getLastMove().moveToPiece()), PieceName.QUEEN);
                 }
+
                 Node childNode = new Node(legalBoard, this, maxDepth, maxBreadth, color, maxRetries);
                 childNode.addNodes(depth + 1, adjustedMaxDepth);
                 this.addChild(childNode);
