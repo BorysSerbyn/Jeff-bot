@@ -70,9 +70,8 @@ public class OverTheBoardGUI {
                 displayPromotionWindow(selectedButton);
             }
             endGameMessage();
-            board.getLegalMovesByColor(board.getTurn()).forEach(System.out::println);
         }
-        System.out.println(board.getState());
+        System.out.println(Math.signum(board.centerPawnValue(Color.WHITE) - board.centerPawnValue(Color.BLACK)));
         this.originButton = null;
     }
 

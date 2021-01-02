@@ -65,14 +65,14 @@ public class Board implements Cloneable, Serializable, Comparable {
     public int compareTo(Object o) {
         Board otherBoard = (Board) o;
 
-        //int centerPieceValue = (int) Math.signum(otherBoard.getCenterPieceValue() - this.getCenterPieceValue());
+        int centerPawnValue = (int) Math.signum(this.centerPawnValue(turn) - otherBoard.centerPawnValue(turn));
 
         int otherBoardCheckState = otherBoard.isKingChecked() ? 1 : -1;
         int otherBoardState = otherBoard.getState() != BoardState.NEUTRAL ? 1 : -1;
         int boardCheckState = this.isKingChecked() ? -1 : 1;
         int boardState = this.getState() != BoardState.NEUTRAL ? -1 : 1;
 
-        return boardState + boardCheckState + otherBoardState + otherBoardCheckState;
+        return 2*(boardState + boardCheckState + otherBoardState + otherBoardCheckState) + centerPawnValue;
     }
 
     @Override
@@ -125,35 +125,44 @@ public class Board implements Cloneable, Serializable, Comparable {
         return board;
     }
 
-    public int centerPieceValueByColor(Color targetColor) {
+    //evaluates control of the center for a given color
+    public int centerPawnValue(Color targetColor) {
         int[] centerPawnCoords = new int[]{3, 4};
-        int[] centerPieceCoords = new int[]{2, 5};
         ArrayList<Piece> centerPawns = pieces.stream()
+                .filter(piece -> piece.getPieceName() == PieceName.PAWN)
                 .filter(piece -> ArrayUtils.contains(centerPawnCoords, piece.getTile().getX()) && ArrayUtils.contains(centerPawnCoords, piece.getTile().getY()))
                 .collect(toCollection(ArrayList::new));
-       /* ArrayList<Piece> centerPieces = pieces.stream()
-                .filter(piece -> ArrayUtils.contains(centerPieceCoords, piece.getTile().getX()) && ArrayUtils.contains(centerPieceCoords, piece.getTile().getY()))
-                .collect(toCollection(ArrayList::new));
-        int centerBoardValue = 4*getSubsetValueByColor(targetColor, centerPawns) + getSubsetValueByColor(targetColor, centerPieces);*/
-        int centerBoardValue = 4*getSubsetValueByColor(targetColor, centerPawns);
+        int centerBoardValue = getSubsetValueByColor(targetColor, centerPawns);
         return centerBoardValue;
     }
 
-    public int kingProtectionValueByColor(Color targetColor){
-        Piece king = getPieceByName(PieceName.KING, targetColor);
-        int kingProtectionValue = 0;
-        for (int i = 0; i < 1; i++) {
-            for (int j = 0; j > -1; j--) {
-                int x = king.getTile().getX() + i;
-                int y = king.getTile().getY() + j;
-                if(x > 7 || x < 0 || y > 7 || y < 0){
-                    kingProtectionValue++;
-                }else if(getPieceByTile(getTileByPosition(x, y)) != null && getPieceByTile(getTileByPosition(x, y)).getColor() == targetColor){
-                    kingProtectionValue++;
-                }
-            }
+    //evaluates the positioning of the nights for a given color
+    public int centerKnightValue(Color targetColor) {
+        int[] centerPieceCoords = new int[]{2, 5};
+        ArrayList<Piece> centerPieces = pieces.stream()
+                .filter(piece -> piece.getPieceName() == PieceName.KNIGHT)
+                .filter(piece -> ArrayUtils.contains(centerPieceCoords, piece.getTile().getX()) && ArrayUtils.contains(centerPieceCoords, piece.getTile().getY()))
+                .collect(toCollection(ArrayList::new));
+        int centerBoardValue = getSubsetValueByColor(targetColor, centerPieces);
+        return centerBoardValue;
+    }
+
+    //evaluates the protection of the king for a given color
+    public int kingProtectionValue(Color targetColor){
+        return targetColor != turn && (state == BoardState.CASTLING_LONG || state == BoardState.CASTLING_SHORT) ? 1 : 0;
+    }
+
+    //evaluates whether the queen moved too early for a given color
+    public int queenProtectionValue(Color targetColor){
+        Piece queen = getPieceByName(PieceName.QUEEN, targetColor);
+        Tile queenTile;
+        if(orientation == 1){//initialize queenTile based on orientation
+            queenTile = targetColor == Color.WHITE ? getTileByPosition(4,0) : getTileByPosition(4,7);
+        }else{
+            queenTile = targetColor == Color.WHITE ? getTileByPosition(3,7) : getTileByPosition(3,0);
         }
-        return kingProtectionValue;
+        //if turn count is inferior to 10, you probably shouldnt move your queen
+        return turnCounter < 10 && queen.getTile() != queenTile ? -1 : 0;
     }
 
 

@@ -9,7 +9,7 @@ import java.util.concurrent.ForkJoinPool;
 public class Jeffbot {
     private static int maxDepth = 4;
     private static int maxBreadth = 15;
-    private static int maxRetries = 10;
+    private static int maxRetries = 5;
     private static final ForkJoinPool pool = new ForkJoinPool();
     private Board board;
     private Color color;
@@ -73,13 +73,15 @@ public class Jeffbot {
 
         currentNode = moveNode;
         buildTree(currentNode);
-        //System.out.println("Updated current node: " + clonedMove + " which has " + currentNode.getChildNodes().size() + " children.");
     }
 
     public void buildTree(Node node){
         //node.addNodes(0, maxDepth);
         TreeTask rootTask = new TreeTask(node, 0);
         pool.invoke(rootTask);
+
+        node.getChildNodes().forEach(Node::inheritBestChildScore);
+
         node.setParentNode(null);
         System.gc();
     }
