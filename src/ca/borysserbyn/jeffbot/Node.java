@@ -12,7 +12,6 @@ public class Node implements Comparable {
     private Color color;
     private Color opponentColor;
     private Board board;
-    private int maxRetries;
     private float cascadedScore;
     private float currentScore;
     private int pieceValue;
@@ -23,13 +22,12 @@ public class Node implements Comparable {
     private Node parentNode;
 
 
-    public Node(Board board, Node parentNode, int maxDepth, int maxBreadth, Color color, int maxRetries) {
+    public Node(Board board, Node parentNode, int maxDepth, int maxBreadth, Color color) {
         this.color = color;
         this.maxBreadth = maxBreadth;
         this.maxDepth = maxDepth;
         this.board = board;
         this.parentNode = parentNode;
-        this.maxRetries = maxRetries;
         currentScore = 0;
         cascadedScore = 0;
         pieceValue = 0;
@@ -109,10 +107,14 @@ public class Node implements Comparable {
         float centerPawnValue = Math.signum(board.centerPawnValue(color) - board.centerPawnValue(opponentColor));
         float kingProtectionValue = Math.signum(board.kingProtectionValue(color) - board.kingProtectionValue(opponentColor));
         float queenProtectionValue = Math.signum(board.queenProtectionValue(color) - board.queenProtectionValue(opponentColor));
+        float centerKnightValue = Math.signum(board.centerKnightValue(color) - board.centerKnightValue(opponentColor));
+
         float score = pieceValue +
                 checkmateValue * 20 +
                 centerPawnValue / 4 +
-                kingProtectionValue/4;
+                kingProtectionValue/4+
+                centerKnightValue/5+
+                queenProtectionValue/8;
         //substract stalemate value if you are winning, do nothing if you are losing.
         score -= score > 0 ? stalemateValue * 20 : 0;
         this.currentScore = score;
@@ -142,12 +144,11 @@ public class Node implements Comparable {
             cascadedScore = currentScore;
             return;
         }
-
         scoreNode();
 
         /**
          * Alpha-Beta pruner
-         * prunes branch if a better alternative has already been calculated (compares cascaded piece value of sibling to currentpiece value)
+         * prunes branch if a better alternative has already been calculated
          */
         if (depth > 1) {//single threading starts at depth of 2, which means we can take cascading score into account.
             //if this node already has children, use the cascaded score instead of the current one.
@@ -155,13 +156,12 @@ public class Node implements Comparable {
             for (Node siblingNode : parentNode.getChildNodes()) {
                 double siblingCascadedScore = siblingNode.cascadedScore;
                 //add the value to the adjusted score to keep investigating small losses.
-                if (siblingCascadedScore * valueSign > adjustedScore * valueSign + valueSign) {//is the current score worse than a siblings
+                if (siblingCascadedScore * valueSign > adjustedScore * valueSign) {//is the current score worse than a siblings
                     cascadedScore = adjustedScore;
                     return;
                 }
             }
         }
-
         if (!this.getChildNodes().isEmpty()) {//does this node already have children?
             for (Node childNode : this.getChildNodes()) {
                 childNode.addNodes(depth + 1, adjustedMaxDepth);
@@ -173,31 +173,19 @@ public class Node implements Comparable {
 
             //adjust max breadth to the number of available moves
             int adjustedMaxBreadth = maxBreadth < legalBoards.size() && maxBreadth != -1 ? maxBreadth : legalBoards.size();
-            int numberOfRetries = 0;
 
-            for (int i = 0; i < adjustedMaxBreadth + numberOfRetries; i++) {
+            for (int i = 0; i < adjustedMaxBreadth; i++) {
                 //pick from neutral board position when retrying
-                Board legalBoard = i < adjustedMaxBreadth ? legalBoards.get(i) : legalBoards.get(legalBoards.size() - numberOfRetries);
-
+                Board legalBoard = legalBoards.get(i);
                 //promotes pawn to queen every time
                 if (legalBoard.getState() == BoardState.PROMOTING_AND_EATING || legalBoard.getState() == BoardState.PROMOTING_PAWN) {//can the board promote a pawn?
                     legalBoard.promotePawn(legalBoard.getPieceByClone(legalBoard.getLastMove().moveToPiece()), PieceName.QUEEN);
                 }
-
-                Node childNode = new Node(legalBoard, this, maxDepth, maxBreadth, color, maxRetries);
+                Node childNode = new Node(legalBoard, this, maxDepth, maxBreadth, color);
                 childNode.addNodes(depth + 1, adjustedMaxDepth);
                 this.addChild(childNode);
-
-                //adds retry if outcome is bad.
-                if (childNode.cascadedScore * valueSign < currentScore * valueSign) { //does this move have a significant negative value compared to the current board position?
-                    if (adjustedMaxBreadth + numberOfRetries < legalBoards.size()) { //are there enough possible moves to try again?
-                        if (maxRetries > numberOfRetries) { //have we already reached the maximum amount of retries?
-                            numberOfRetries++;
-                        }
-                    }
-                }
             }
         }
-        inheritBestChildScore(); //cascade best or worst outcome from children
+        inheritBestChildScore();
     }
 }

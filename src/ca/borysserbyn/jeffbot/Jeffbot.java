@@ -8,8 +8,7 @@ import java.util.concurrent.ForkJoinPool;
 
 public class Jeffbot {
     private static int maxDepth = 4;
-    private static int maxBreadth = 15;
-    private static int maxRetries = 5;
+    private static int maxBreadth = 30;
     private static final ForkJoinPool pool = new ForkJoinPool();
     private Board board;
     private Color color;
@@ -18,7 +17,7 @@ public class Jeffbot {
     public Jeffbot(Color color) {
         this.color = color;
         this.board = new Board(1);
-        currentNode = new Node(board, null, maxDepth, maxBreadth, color, maxRetries);
+        currentNode = new Node(board, null, maxDepth, maxBreadth, color);
         buildTree(currentNode);
     }
 
@@ -67,7 +66,7 @@ public class Jeffbot {
         if (moveNode == null) {//is there a node in the tree corresponding the the move?
             System.out.println("Couldnt find node: " + move + " in tree.");
             Board clonedBoard = (Board) board.clone();
-            moveNode = new Node(clonedBoard, currentNode, maxDepth, maxBreadth, color, maxRetries);
+            moveNode = new Node(clonedBoard, currentNode, maxDepth, maxBreadth, color);
             currentNode.addChild(moveNode);
         }
 
@@ -79,7 +78,6 @@ public class Jeffbot {
         //node.addNodes(0, maxDepth);
         TreeTask rootTask = new TreeTask(node, 0);
         pool.invoke(rootTask);
-
         node.getChildNodes().forEach(Node::inheritBestChildScore);
 
         node.setParentNode(null);

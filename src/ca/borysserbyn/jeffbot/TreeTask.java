@@ -19,7 +19,7 @@ public class TreeTask extends RecursiveAction {
             node.addNodes(depth, node.getMaxDepth());
         }else{
             if(node.getChildNodes().isEmpty()){//if node is empty, add children with max depth = 1;
-                node.addNodes(0, 1);
+                node.addNodes(depth, depth+1);
             }
             List<TreeTask> subtasks = new ArrayList<TreeTask>();
             for (Node childNode : node.getChildNodes()) {

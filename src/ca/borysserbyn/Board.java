@@ -17,6 +17,8 @@ public class Board implements Cloneable, Serializable, Comparable {
     private int turnCounter;
     private Tile[][] tiles;
     private Tile graveyard;
+    private boolean hasWhiteCastled;
+    private boolean hasBlackCastled;
     private boolean[] castlingConditionsWhite;
     private boolean[] castlingConditionsBlack;
     private boolean[] enPassantConditionsWhite;
@@ -31,6 +33,8 @@ public class Board implements Cloneable, Serializable, Comparable {
         this.orientation = orientation;
         this.graveyard = new Tile(-1, -1, Color.WHITE);
         this.turn = Color.WHITE;
+        this.hasWhiteCastled = false;
+        this.hasBlackCastled = false;
         initializeTiles();
         initializePieces();
         //initializeJeff();
@@ -77,11 +81,11 @@ public class Board implements Cloneable, Serializable, Comparable {
 
     @Override
     public Object clone() {
-        Board board = null;
+        Board clonedBoard = null;
         try {
-            board = (Board) super.clone();
+            clonedBoard = (Board) super.clone();
         } catch (CloneNotSupportedException e) {
-            board = new Board(pieces, orientation, turn, turnCounter, tiles, graveyard, castlingConditionsWhite, castlingConditionsBlack, enPassantConditionsWhite,
+            clonedBoard = new Board(pieces, orientation, turn, turnCounter, tiles, graveyard, castlingConditionsWhite, castlingConditionsBlack, enPassantConditionsWhite,
                     enPassantConditionsBlack, moveHistory, state);
         }
 
@@ -90,13 +94,13 @@ public class Board implements Cloneable, Serializable, Comparable {
         ArrayList<Piece> clonedPieces = new ArrayList<Piece>();
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                clonedTiles[i][j] = (Tile) board.getTileByPosition(i, j).clone();
+                clonedTiles[i][j] = (Tile) clonedBoard.getTileByPosition(i, j).clone();
             }
         }
 
         Tile clonedGraveyard = (Tile) this.graveyard.clone();
 
-        for (Piece piece : board.getPieces()) {
+        for (Piece piece : clonedBoard.getPieces()) {
             Piece clonedPiece = (Piece) piece.clone();
             Tile clonedTile = clonedPiece.getTile();
             if (clonedTile.getX() != -1) { //check if the piece isnt in the graveyard
@@ -113,16 +117,18 @@ public class Board implements Cloneable, Serializable, Comparable {
             clonedMoveHistory.add(clonedMove);
         }
 
-        board.moveHistory = clonedMoveHistory;
-        board.castlingConditionsWhite = copyArrayOfBools(castlingConditionsWhite);
-        board.castlingConditionsBlack = copyArrayOfBools(castlingConditionsBlack);
-        board.enPassantConditionsWhite = copyArrayOfBools(enPassantConditionsWhite);
-        board.enPassantConditionsBlack = copyArrayOfBools(enPassantConditionsBlack);
-        board.pieces = clonedPieces;
-        board.tiles = clonedTiles;
-        board.graveyard = clonedGraveyard;
+        clonedBoard.hasBlackCastled = this.hasBlackCastled;
+        clonedBoard.hasWhiteCastled = this.hasWhiteCastled;
+        clonedBoard.moveHistory = clonedMoveHistory;
+        clonedBoard.castlingConditionsWhite = copyArrayOfBools(castlingConditionsWhite);
+        clonedBoard.castlingConditionsBlack = copyArrayOfBools(castlingConditionsBlack);
+        clonedBoard.enPassantConditionsWhite = copyArrayOfBools(enPassantConditionsWhite);
+        clonedBoard.enPassantConditionsBlack = copyArrayOfBools(enPassantConditionsBlack);
+        clonedBoard.pieces = clonedPieces;
+        clonedBoard.tiles = clonedTiles;
+        clonedBoard.graveyard = clonedGraveyard;
 
-        return board;
+        return clonedBoard;
     }
 
     //evaluates control of the center for a given color
@@ -149,20 +155,24 @@ public class Board implements Cloneable, Serializable, Comparable {
 
     //evaluates the protection of the king for a given color
     public int kingProtectionValue(Color targetColor){
-        return targetColor != turn && (state == BoardState.CASTLING_LONG || state == BoardState.CASTLING_SHORT) ? 1 : 0;
+        boolean hasTargetCastled = targetColor == Color.WHITE ? hasWhiteCastled : hasBlackCastled;
+        return hasTargetCastled ? 1 : 0;
     }
 
     //evaluates whether the queen moved too early for a given color
     public int queenProtectionValue(Color targetColor){
         Piece queen = getPieceByName(PieceName.QUEEN, targetColor);
-        Tile queenTile;
-        if(orientation == 1){//initialize queenTile based on orientation
-            queenTile = targetColor == Color.WHITE ? getTileByPosition(4,0) : getTileByPosition(4,7);
-        }else{
-            queenTile = targetColor == Color.WHITE ? getTileByPosition(3,7) : getTileByPosition(3,0);
+        if(queen != null){
+            Tile queenTile;
+            if(orientation == 1){//initialize queenTile based on orientation
+                queenTile = targetColor == Color.WHITE ? getTileByPosition(4,0) : getTileByPosition(4,7);
+            }else{
+                queenTile = targetColor == Color.WHITE ? getTileByPosition(3,7) : getTileByPosition(3,0);
+            }
+            //if turn count is inferior to 10, you probably shouldnt move your queen
+            return turnCounter < 10 && queen.getTile() != queenTile ? -1 : 0;
         }
-        //if turn count is inferior to 10, you probably shouldnt move your queen
-        return turnCounter < 10 && queen.getTile() != queenTile ? -1 : 0;
+        return 0;
     }
 
 
@@ -534,6 +544,11 @@ public class Board implements Cloneable, Serializable, Comparable {
         Piece rook = this.getPieceByTile(rookTile);
         rook.setTile(getTileByPosition(rookTile.getX() + rookXMove, rookTile.getY()));
         setState(Math.abs(rookXMove) == 2 ? BoardState.CASTLING_SHORT : BoardState.CASTLING_LONG);
+        if(getTurn() == Color.WHITE){
+            hasWhiteCastled = true;
+        }else{
+            hasBlackCastled = true;
+        }
     }
 
     //updates castling condition based on the movement of a given piece (did rooks or king move)
