@@ -134,7 +134,7 @@ public class Node implements Comparable {
 
     //recurive method that adds children to root node given certain specifications;
     public void addNodes(int depth, int adjustedMaxDepth) {
-        if (board.isGameOver() || depth >= adjustedMaxDepth) {//is game over or desired depth reached?
+        if (depth >= adjustedMaxDepth || board.isGameOver()) {//is game over or desired depth reached?
             if (board.getState() == BoardState.CHECKMATE) {
                 this.checkmateValue = valueSign;
             } else if (board.getState() == BoardState.STALEMATE) {
@@ -153,10 +153,18 @@ public class Node implements Comparable {
         if (depth > 1) {//single threading starts at depth of 2, which means we can take cascading score into account.
             //if this node already has children, use the cascaded score instead of the current one.
             float adjustedScore = this.childNodes.isEmpty() ? currentScore : cascadedScore;
+            float parentNodeScore = this.parentNode.currentScore;
+            float grandParentNodeScore = this.parentNode.parentNode.currentScore;
+
+            if(parentNodeScore < grandParentNodeScore && adjustedScore < grandParentNodeScore){
+                cascadedScore = adjustedScore;
+                return;
+            }
+
             for (Node siblingNode : parentNode.getChildNodes()) {
                 double siblingCascadedScore = siblingNode.cascadedScore;
                 //add the value to the adjusted score to keep investigating small losses.
-                if (siblingCascadedScore * valueSign > adjustedScore * valueSign) {//is the current score worse than a siblings
+                if (siblingCascadedScore * valueSign> adjustedScore * valueSign) {//is the current score worse than a siblings
                     cascadedScore = adjustedScore;
                     return;
                 }
@@ -173,6 +181,15 @@ public class Node implements Comparable {
 
             //adjust max breadth to the number of available moves
             int adjustedMaxBreadth = maxBreadth < legalBoards.size() && maxBreadth != -1 ? maxBreadth : legalBoards.size();
+
+            //calculate adjusted depth based on number of available moves
+            if(adjustedMaxDepth != 1){//prevent depth from changing before multithreading begins
+                if(adjustedMaxBreadth >= 20){//prevents it from computing log function if its reaching the plateau to save on time
+                    adjustedMaxDepth = maxDepth;
+                }else{
+                    adjustedMaxDepth = (int) Math.round(-2.66*Math.log((double) adjustedMaxBreadth) + 12.588);
+                }
+            }
 
             for (int i = 0; i < adjustedMaxBreadth; i++) {
                 //pick from neutral board position when retrying

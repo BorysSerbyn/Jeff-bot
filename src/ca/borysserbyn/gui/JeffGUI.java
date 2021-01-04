@@ -25,12 +25,6 @@ public class JeffGUI {
     private final JLabel message = new JLabel("Jeff is ready");
 
     JeffGUI() {
-        board = new Board(1);
-        System.out.println("Main board: " + board);
-        jeffColor = Color.WHITE;
-        jeff = new Jeffbot(jeffColor);
-        this.staticGUI = new StaticGUI(jeff.getBoard());
-        System.out.println("Jeff's board" + jeff.getBoard());
         initializeGui();
     }
 
@@ -156,6 +150,10 @@ public class JeffGUI {
         initializeGui();
     }
 
+    public void clickNewGameButton(ActionEvent e){
+        initializeGui();
+    }
+
     //Sends piece to the gui graveyard (not the boards)
     public void sendPieceToGraveyard(Piece deadPiece){
         JLabel deadPieceLabel = new JLabel("");
@@ -172,13 +170,21 @@ public class JeffGUI {
     Initializes the gui with a new board
      */
     public final void initializeGui() {
-        // set up the main gui
+        board = new Board(1);
+        System.out.println("Main board: " + board);
+        jeffColor = Color.WHITE;
+        jeff = new Jeffbot(jeffColor);
+        this.staticGUI = new StaticGUI(jeff.getBoard());
+        System.out.println("Jeff's board" + jeff.getBoard());
+
         isGameOver = false;
         gui.setBorder(new EmptyBorder(5, 5, 5, 5));
         JToolBar tools = new JToolBar();
         tools.setFloatable(false);
         gui.add(tools, BorderLayout.PAGE_START);
-        tools.add(new JButton("New")); // TODO - add functionality!
+        JButton newGameButton = new JButton("New");
+        newGameButton.addActionListener(this::clickNewGameButton);
+        tools.add(newGameButton); // TODO - add functionality!
         JButton saveButton = new JButton("Save");
         saveButton.addActionListener(this::clickSaveButton);
         tools.add(saveButton);

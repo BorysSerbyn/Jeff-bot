@@ -145,9 +145,10 @@ public class Board implements Cloneable, Serializable, Comparable {
     //evaluates the positioning of the nights for a given color
     public int centerKnightValue(Color targetColor) {
         int[] centerPieceCoords = new int[]{2, 5};
+        int yValue = !(orientation == 1 ^ targetColor == Color.WHITE) ? 2 : 5;
         ArrayList<Piece> centerPieces = pieces.stream()
                 .filter(piece -> piece.getPieceName() == PieceName.KNIGHT)
-                .filter(piece -> ArrayUtils.contains(centerPieceCoords, piece.getTile().getX()) && ArrayUtils.contains(centerPieceCoords, piece.getTile().getY()))
+                .filter(piece -> ArrayUtils.contains(centerPieceCoords, piece.getTile().getX()) && yValue == piece.getTile().getY())
                 .collect(toCollection(ArrayList::new));
         int centerBoardValue = getSubsetValueByColor(targetColor, centerPieces);
         return centerBoardValue;
