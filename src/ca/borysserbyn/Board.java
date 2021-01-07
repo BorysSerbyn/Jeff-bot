@@ -17,8 +17,8 @@ public class Board implements Cloneable, Serializable, Comparable {
     private int turnCounter;
     private Tile[][] tiles;
     private Tile graveyard;
-    private boolean hasWhiteCastled;
-    private boolean hasBlackCastled;
+    private int whiteCastleState; // 0: not castled, 1: short, 2: long
+    private int blackCastleState;
     private boolean[] castlingConditionsWhite;
     private boolean[] castlingConditionsBlack;
     private boolean[] enPassantConditionsWhite;
@@ -33,12 +33,12 @@ public class Board implements Cloneable, Serializable, Comparable {
         this.orientation = orientation;
         this.graveyard = new Tile(-1, -1, Color.WHITE);
         this.turn = Color.WHITE;
-        this.hasWhiteCastled = false;
-        this.hasBlackCastled = false;
+        this.whiteCastleState = 0;
+        this.blackCastleState = 0;
         initializeTiles();
         initializePieces();
         //initializeJeff();
-        //initializePromotingTest();
+        initializePromotingTest();
         //initializeStalemateTest();
         //initializeinsufficientMatTest();
         //initializeCheckMateTest();
@@ -117,8 +117,8 @@ public class Board implements Cloneable, Serializable, Comparable {
             clonedMoveHistory.add(clonedMove);
         }
 
-        clonedBoard.hasBlackCastled = this.hasBlackCastled;
-        clonedBoard.hasWhiteCastled = this.hasWhiteCastled;
+        clonedBoard.blackCastleState = this.blackCastleState;
+        clonedBoard.whiteCastleState = this.whiteCastleState;
         clonedBoard.moveHistory = clonedMoveHistory;
         clonedBoard.castlingConditionsWhite = copyArrayOfBools(castlingConditionsWhite);
         clonedBoard.castlingConditionsBlack = copyArrayOfBools(castlingConditionsBlack);
@@ -156,8 +156,12 @@ public class Board implements Cloneable, Serializable, Comparable {
 
     //evaluates the protection of the king for a given color
     public int kingProtectionValue(Color targetColor){
-        boolean hasTargetCastled = targetColor == Color.WHITE ? hasWhiteCastled : hasBlackCastled;
-        return hasTargetCastled ? 1 : 0;
+        int hasTargetCastled = targetColor == Color.WHITE ? whiteCastleState : blackCastleState;
+        boolean[] castlingConditions = targetColor == Color.WHITE ? castlingConditionsWhite : castlingConditionsBlack;
+        int kingProtectionValue = hasTargetCastled != 0 ? 2 : 0;
+        kingProtectionValue += castlingConditions[1] == false ? 0 : 1;
+
+        return kingProtectionValue;
     }
 
     //evaluates whether the queen moved too early for a given color
@@ -171,7 +175,21 @@ public class Board implements Cloneable, Serializable, Comparable {
                 queenTile = targetColor == Color.WHITE ? getTileByPosition(3,7) : getTileByPosition(3,0);
             }
             //if turn count is inferior to 10, you probably shouldnt move your queen
-            return turnCounter < 10 && queen.getTile() != queenTile ? -1 : 0;
+            return turnCounter < 20 && queen.getTile() != queenTile ? -1 : 0;
+        }
+        return 0;
+    }
+
+    //evaluates whether you have the right colored bishop to fight against opponents castling.
+    public int bishopValue(Color targetColor){
+        int targetCastleState = targetColor == Color.WHITE ? blackCastleState : whiteCastleState;
+        if(targetCastleState != 0){
+            Color bishopTileColor = !(!(orientation == 1 ^ targetColor == Color.WHITE) ^ targetCastleState == 1) ? Color.BLACK : Color.WHITE;
+            for (Piece piece : getUneatenPiecesByColor(targetColor)) {
+                if(piece.getPieceName() == PieceName.BISHOP && piece.getTile().getColor() == bishopTileColor){
+                    return 1;
+                }
+            }
         }
         return 0;
     }
@@ -308,7 +326,7 @@ public class Board implements Cloneable, Serializable, Comparable {
     }
 
 
-    /*
+    /**
     The following methods are useful for the AI
      */
     public ArrayList<Board> getLegalBoardsByColor(Color color) {
@@ -370,7 +388,7 @@ public class Board implements Cloneable, Serializable, Comparable {
     }
 
 
-    /*
+    /**
     End game detection.
      */
     public boolean isGameOver() {
@@ -494,7 +512,7 @@ public class Board implements Cloneable, Serializable, Comparable {
     }
 
 
-    /*
+    /**
     Manage moving pieces (any kind of movement)
      */
     public void movePiece(Piece piece, Tile tile) {
@@ -508,7 +526,7 @@ public class Board implements Cloneable, Serializable, Comparable {
         if (targetPiece != null) {//if a piece is to be eaten
             targetPiece.discardPiece(graveyard);
             setState(BoardState.PIECE_EATEN);
-            if (piece.getPieceName() == PieceName.PAWN && isPawnPromotionLegal(piece, tile)) {
+            if (piece.getPieceName() == PieceName.PAWN && isPawnPromotionLegal(piece, tile)) {//is eating while promoting?
                 setState(BoardState.PROMOTING_AND_EATING);
             }
         }
@@ -546,9 +564,9 @@ public class Board implements Cloneable, Serializable, Comparable {
         rook.setTile(getTileByPosition(rookTile.getX() + rookXMove, rookTile.getY()));
         setState(Math.abs(rookXMove) == 2 ? BoardState.CASTLING_SHORT : BoardState.CASTLING_LONG);
         if(getTurn() == Color.WHITE){
-            hasWhiteCastled = true;
+            whiteCastleState = Math.abs(rookXMove) == 2 ? 1 : 2;
         }else{
-            hasBlackCastled = true;
+            blackCastleState = Math.abs(rookXMove) == 2 ? 1 : 2;
         }
     }
 
@@ -593,7 +611,7 @@ public class Board implements Cloneable, Serializable, Comparable {
     }
 
 
-    /*
+    /**
     Tests to decide if a move is legal
      */
     public boolean isMoveLegal(Piece piece, Tile tile) {
@@ -1025,7 +1043,7 @@ public class Board implements Cloneable, Serializable, Comparable {
     }
 
 
-    /*
+    /**
     Initializers
      */
     public void initializeTiles() {

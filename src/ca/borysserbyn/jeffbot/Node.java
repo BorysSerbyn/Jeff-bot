@@ -56,6 +56,14 @@ public class Node implements Comparable {
         return (int) Math.signum(scoreDifference);
     }
 
+    public float getCascadedScore() {
+        return cascadedScore;
+    }
+
+    public float getCurrentScore() {
+        return currentScore;
+    }
+
     public Node getParentNode() {
         return parentNode;
     }
@@ -96,6 +104,8 @@ public class Node implements Comparable {
         childNodes = new ArrayList<Node>();
     }
 
+
+
     /**
      * Score based on:
      * 1. game outcome determined at the termination of addNodes method
@@ -104,17 +114,19 @@ public class Node implements Comparable {
     public void scoreNode() {
         pieceValue = board.getBoardValueByColor(color);
 
-        float centerPawnValue = Math.signum(board.centerPawnValue(color) - board.centerPawnValue(opponentColor));
-        float kingProtectionValue = Math.signum(board.kingProtectionValue(color) - board.kingProtectionValue(opponentColor));
-        float queenProtectionValue = Math.signum(board.queenProtectionValue(color) - board.queenProtectionValue(opponentColor));
-        float centerKnightValue = Math.signum(board.centerKnightValue(color) - board.centerKnightValue(opponentColor));
+        float centerPawnValue = Math.signum(board.centerPawnValue(color) - board.centerPawnValue(opponentColor))/2;
+        float kingProtectionValue = Math.signum(board.kingProtectionValue(color) - board.kingProtectionValue(opponentColor))/4;
+        float queenProtectionValue = Math.signum(board.queenProtectionValue(color) - board.queenProtectionValue(opponentColor))/8;
+        float centerKnightValue = Math.signum(board.centerKnightValue(color) - board.centerKnightValue(opponentColor))/4;
+        float bishopValue = Math.signum(board.bishopValue(color) - board.bishopValue(opponentColor))/8;
 
         float score = pieceValue +
                 checkmateValue * 20 +
-                centerPawnValue / 4 +
-                kingProtectionValue/4+
-                centerKnightValue/5+
-                queenProtectionValue/8;
+                centerPawnValue+
+                kingProtectionValue+
+                centerKnightValue+
+                queenProtectionValue+
+                bishopValue;
         //substract stalemate value if you are winning, do nothing if you are losing.
         score -= score > 0 ? stalemateValue * 20 : 0;
         this.currentScore = score;
@@ -122,7 +134,7 @@ public class Node implements Comparable {
 
 
     //inherits min or max child cascadedScore depending on board turn
-    public void inheritBestChildScore() {
+    public void inheritChildScore() {
         if (this.childNodes.isEmpty()) {
             return;
         }
@@ -133,7 +145,7 @@ public class Node implements Comparable {
     }
 
     //recurive method that adds children to root node given certain specifications;
-    public void addNodes(int depth, int adjustedMaxDepth) {
+    public void addNodes(int depth, int adjustedMaxDepth, boolean secondTry) {
         if (depth >= adjustedMaxDepth || board.isGameOver()) {//is game over or desired depth reached?
             if (board.getState() == BoardState.CHECKMATE) {
                 this.checkmateValue = valueSign;
@@ -146,21 +158,21 @@ public class Node implements Comparable {
         }
         scoreNode();
 
-        /**
+        /*
          * Alpha-Beta pruner
-         * prunes branch if a better alternative has already been calculated
+         * 1. prunes branch if a better alternative has already been calculated
+         * 2. prunes branches where score has been bad for 2 consecutive turns
          */
-        if (depth > 1) {//single threading starts at depth of 2, which means we can take cascading score into account.
+        if (depth > 1) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
             //if this node already has children, use the cascaded score instead of the current one.
             float adjustedScore = this.childNodes.isEmpty() ? currentScore : cascadedScore;
             float parentNodeScore = this.parentNode.currentScore;
             float grandParentNodeScore = this.parentNode.parentNode.currentScore;
-
-            if(parentNodeScore < grandParentNodeScore && adjustedScore < grandParentNodeScore){
-                cascadedScore = adjustedScore;
-                return;
+            //float filter = this.childNodes.isEmpty() ? 1 : 0;
+            if(parentNodeScore < grandParentNodeScore && adjustedScore < grandParentNodeScore){// has the branch been a failure for 2 layers?
+                //cascadedScore = adjustedScore;
+                //return;
             }
-
             for (Node siblingNode : parentNode.getChildNodes()) {
                 double siblingCascadedScore = siblingNode.cascadedScore;
                 //add the value to the adjusted score to keep investigating small losses.
@@ -170,24 +182,32 @@ public class Node implements Comparable {
                 }
             }
         }
+        //tree traversal
         if (!this.getChildNodes().isEmpty()) {//does this node already have children?
             for (Node childNode : this.getChildNodes()) {
-                childNode.addNodes(depth + 1, adjustedMaxDepth);
+                childNode.addNodes(depth + 1, adjustedMaxDepth, false);
             }
         } else {
             ArrayList<Board> legalBoards = board.getLegalBoardsByColor(board.getTurn());
+
+            //aranges the legal boards so that the most relevant ones are used in the tree
             Collections.shuffle(legalBoards);
             Collections.sort(legalBoards);
+
+            //reverses legal boards at layer 0 if the last pass wasnt successful
+            if(secondTry && depth == 0){
+                Collections.reverse(legalBoards);
+            }
 
             //adjust max breadth to the number of available moves
             int adjustedMaxBreadth = maxBreadth < legalBoards.size() && maxBreadth != -1 ? maxBreadth : legalBoards.size();
 
             //calculate adjusted depth based on number of available moves
-            if(adjustedMaxDepth != 1){//prevent depth from changing before multithreading begins
+            if(adjustedMaxDepth != 1){ //dont adjust depth when starting threads
                 if(adjustedMaxBreadth >= 20){//prevents it from computing log function if its reaching the plateau to save on time
                     adjustedMaxDepth = maxDepth;
                 }else{
-                    adjustedMaxDepth = (int) Math.round(-2.66*Math.log((double) adjustedMaxBreadth) + 12.588);
+                    adjustedMaxDepth = (int) (537.08*Math.pow((double) adjustedMaxBreadth, -2.23));
                 }
             }
 
@@ -199,10 +219,10 @@ public class Node implements Comparable {
                     legalBoard.promotePawn(legalBoard.getPieceByClone(legalBoard.getLastMove().moveToPiece()), PieceName.QUEEN);
                 }
                 Node childNode = new Node(legalBoard, this, maxDepth, maxBreadth, color);
-                childNode.addNodes(depth + 1, adjustedMaxDepth);
+                childNode.addNodes(depth + 1, adjustedMaxDepth, false);
                 this.addChild(childNode);
             }
         }
-        inheritBestChildScore();
+        inheritChildScore();
     }
 }

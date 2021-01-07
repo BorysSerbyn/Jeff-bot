@@ -7,8 +7,8 @@ import java.util.Collections;
 import java.util.concurrent.ForkJoinPool;
 
 public class Jeffbot {
-    private static int maxDepth = 4;
-    private static int maxBreadth = 30;
+    private static int maxDepth = 5;
+    private static int maxBreadth = 20;
     private static final ForkJoinPool pool = new ForkJoinPool();
     private Board board;
     private Color color;
@@ -18,7 +18,7 @@ public class Jeffbot {
         this.color = color;
         this.board = new Board(1);
         currentNode = new Node(board, null, maxDepth, maxBreadth, color);
-        buildTree(currentNode);
+        buildTree(currentNode, false);
     }
 
     public Board getBoard() {
@@ -39,19 +39,25 @@ public class Jeffbot {
     public Move findBestMove() {
         Collections.sort(currentNode.getChildNodes());
         Node bestMoveNode = currentNode.getChildNodes().get(0);
+        if(bestMoveNode.getCascadedScore() + 1 < currentNode.getCurrentScore()){
+            secondTry();
+            bestMoveNode = currentNode.getChildNodes().get(0);
+        }
+        printThoughtProcess(bestMoveNode);
+        return bestMoveNode.getLastMove();
+    }
 
+    public void printThoughtProcess(Node bestMoveNode){
         currentNode.getChildNodes().forEach(System.out::println);
         System.out.println();
         bestMoveNode.getChildNodes().forEach(System.out::println);
         System.out.println("Jeffs move: " + bestMoveNode);
-
-        return bestMoveNode.getLastMove();
     }
 
-    public void resetTree(){
+    public void secondTry(){
         System.out.println("Reseting the tree, no good moves found");
         currentNode.removeAllChildren();
-        buildTree(currentNode);
+        buildTree(currentNode, true);
         Collections.sort(currentNode.getChildNodes());
     }
 
@@ -71,15 +77,14 @@ public class Jeffbot {
         }
 
         currentNode = moveNode;
-        buildTree(currentNode);
+        buildTree(currentNode, false);
     }
 
-    public void buildTree(Node node){
-        //node.addNodes(0, maxDepth);
-        TreeTask rootTask = new TreeTask(node, 0);
+    public void buildTree(Node node, boolean secondTry){
+        //node.addNodes(0, maxDepth, false);
+        TreeTask rootTask = new TreeTask(node, 0, secondTry);
         pool.invoke(rootTask);
-        node.getChildNodes().forEach(Node::inheritBestChildScore);
-
+        node.getChildNodes().forEach(Node::inheritChildScore);
         node.setParentNode(null);
         System.gc();
     }
