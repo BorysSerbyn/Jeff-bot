@@ -38,7 +38,7 @@ public class Board implements Cloneable, Serializable, Comparable {
         initializeTiles();
         initializePieces();
         //initializeJeff();
-        initializePromotingTest();
+        //initializePromotingTest();
         //initializeStalemateTest();
         //initializeinsufficientMatTest();
         //initializeCheckMateTest();
