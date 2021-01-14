@@ -8,7 +8,7 @@ import java.util.concurrent.ForkJoinPool;
 
 public class Jeffbot {
     private static int maxDepth = 4;
-    private static int maxBreadth = 30;
+    private static int maxBreadth = -1;
     private static final ForkJoinPool pool = new ForkJoinPool();
     private Board board;
     private Color color;

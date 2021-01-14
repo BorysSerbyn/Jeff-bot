@@ -14,7 +14,7 @@ public class Node implements Comparable {
     private Board board;
     private float cascadedScore;
     private float currentScore;
-    private int pieceValue;
+    private float pieceValue;
     private int checkmateValue;
     private int stalemateValue;
     private int valueSign;
@@ -80,7 +80,7 @@ public class Node implements Comparable {
         this.maxDepth = maxDepth;
     }
 
-    public int getPieceValue() {
+    public float getPieceValue() {
         return pieceValue;
     }
 
@@ -113,20 +113,7 @@ public class Node implements Comparable {
      */
     public void scoreNode() {
         pieceValue = board.getBoardValueByColor(color);
-
-        float centerPawnValue = Math.signum(board.centerPawnValue(color) - board.centerPawnValue(opponentColor))/2;
-        float kingProtectionValue = Math.signum(board.kingProtectionValue(color) - board.kingProtectionValue(opponentColor))/4;
-        float queenProtectionValue = Math.signum(board.queenProtectionValue(color) - board.queenProtectionValue(opponentColor))/8;
-        float centerKnightValue = Math.signum(board.centerKnightValue(color) - board.centerKnightValue(opponentColor))/4;
-        float bishopValue = Math.signum(board.bishopValue(color) - board.bishopValue(opponentColor))/8;
-
-        float score = pieceValue +
-                checkmateValue * 20 +
-                centerPawnValue+
-                kingProtectionValue+
-                centerKnightValue+
-                queenProtectionValue+
-                bishopValue;
+        float score = pieceValue + checkmateValue * 20;
         //substract stalemate value if you are winning, do nothing if you are losing.
         score -= score > 0 ? stalemateValue * 20 : 0;
         this.currentScore = score;
@@ -169,10 +156,10 @@ public class Node implements Comparable {
             float parentNodeScore = this.parentNode.currentScore;
             float grandParentNodeScore = this.parentNode.parentNode.currentScore;
             //float filter = this.childNodes.isEmpty() ? 1 : 0;
-            if(parentNodeScore < grandParentNodeScore && adjustedScore < grandParentNodeScore){// has the branch been a failure for 2 layers?
-                //cascadedScore = adjustedScore;
-                //return;
-            }
+            /*if(parentNodeScore < grandParentNodeScore && adjustedScore < grandParentNodeScore){// has the branch been a failure for 2 layers?
+                cascadedScore = adjustedScore;
+                return;
+            }*/
             for (Node siblingNode : parentNode.getChildNodes()) {
                 double siblingCascadedScore = siblingNode.cascadedScore;
                 //add the value to the adjusted score to keep investigating small losses.

@@ -69,14 +69,12 @@ public class Board implements Cloneable, Serializable, Comparable {
     public int compareTo(Object o) {
         Board otherBoard = (Board) o;
 
-        int centerPawnValue = (int) Math.signum(this.centerPawnValue(turn) - otherBoard.centerPawnValue(turn));
-
         int otherBoardCheckState = otherBoard.isKingChecked() ? 1 : -1;
         int otherBoardState = otherBoard.getState() != BoardState.NEUTRAL ? 1 : -1;
         int boardCheckState = this.isKingChecked() ? -1 : 1;
         int boardState = this.getState() != BoardState.NEUTRAL ? -1 : 1;
 
-        return 2*(boardState + boardCheckState + otherBoardState + otherBoardCheckState) + centerPawnValue;
+        return boardState + boardCheckState + otherBoardState + otherBoardCheckState;
     }
 
     @Override
@@ -88,7 +86,6 @@ public class Board implements Cloneable, Serializable, Comparable {
             clonedBoard = new Board(pieces, orientation, turn, turnCounter, tiles, graveyard, castlingConditionsWhite, castlingConditionsBlack, enPassantConditionsWhite,
                     enPassantConditionsBlack, moveHistory, state);
         }
-
 
         Tile[][] clonedTiles = new Tile[8][8];
         ArrayList<Piece> clonedPieces = new ArrayList<Piece>();
@@ -131,53 +128,25 @@ public class Board implements Cloneable, Serializable, Comparable {
         return clonedBoard;
     }
 
-    //evaluates control of the center for a given color
-    public int centerPawnValue(Color targetColor) {
-        int[] centerPawnCoords = new int[]{3, 4};
-        ArrayList<Piece> centerPawns = pieces.stream()
-                .filter(piece -> piece.getPieceName() == PieceName.PAWN)
-                .filter(piece -> ArrayUtils.contains(centerPawnCoords, piece.getTile().getX()) && ArrayUtils.contains(centerPawnCoords, piece.getTile().getY()))
-                .collect(toCollection(ArrayList::new));
-        int centerBoardValue = getSubsetValueByColor(targetColor, centerPawns);
-        return centerBoardValue;
-    }
-
-    //evaluates the positioning of the nights for a given color
-    public int centerKnightValue(Color targetColor) {
-        int[] centerPieceCoords = new int[]{2, 5};
-        int yValue = !(orientation == 1 ^ targetColor == Color.WHITE) ? 2 : 5;
-        ArrayList<Piece> centerPieces = pieces.stream()
-                .filter(piece -> piece.getPieceName() == PieceName.KNIGHT)
-                .filter(piece -> ArrayUtils.contains(centerPieceCoords, piece.getTile().getX()) && yValue == piece.getTile().getY())
-                .collect(toCollection(ArrayList::new));
-        int centerBoardValue = getSubsetValueByColor(targetColor, centerPieces);
-        return centerBoardValue;
-    }
-
     //evaluates the protection of the king for a given color
     public int kingProtectionValue(Color targetColor){
-        int hasTargetCastled = targetColor == Color.WHITE ? whiteCastleState : blackCastleState;
-        boolean[] castlingConditions = targetColor == Color.WHITE ? castlingConditionsWhite : castlingConditionsBlack;
-        int kingProtectionValue = hasTargetCastled != 0 ? 2 : 0;
-        kingProtectionValue += castlingConditions[1] == false ? 0 : 1;
+        Piece king = getPieceByName(PieceName.KING, targetColor);
+        int kingProtectionValue = 0;
+        int kingX = king.getTile().getX();
+        int kingY = king.getTile().getY();
+
+        //go through surrounding pieces
+        for (int i = kingX-1; i <= kingX+1; i++) {
+            for (int j = kingY-1; j <= kingY+1; j++) {
+                if (i > 7 || i < 0 || j > 7 || j < 0) {
+                    kingProtectionValue++;
+                } else if (getPieceByTile(getTileByPosition(i, j)) != null && getPieceByTile(getTileByPosition(i, j)).getColor() == targetColor) {
+                    kingProtectionValue++;
+                }
+            }
+        }
 
         return kingProtectionValue;
-    }
-
-    //evaluates whether the queen moved too early for a given color
-    public int queenProtectionValue(Color targetColor){
-        Piece queen = getPieceByName(PieceName.QUEEN, targetColor);
-        if(queen != null){
-            Tile queenTile;
-            if(orientation == 1){//initialize queenTile based on orientation
-                queenTile = targetColor == Color.WHITE ? getTileByPosition(4,0) : getTileByPosition(4,7);
-            }else{
-                queenTile = targetColor == Color.WHITE ? getTileByPosition(3,7) : getTileByPosition(3,0);
-            }
-            //if turn count is inferior to 10, you probably shouldnt move your queen
-            return turnCounter < 20 && queen.getTile() != queenTile ? -1 : 0;
-        }
-        return 0;
     }
 
     //evaluates whether you have the right colored bishop to fight against opponents castling.
@@ -193,7 +162,6 @@ public class Board implements Cloneable, Serializable, Comparable {
         }
         return 0;
     }
-
 
     //copys an array of bools (conditions) for the clone function
     public boolean[] copyArrayOfBools(boolean[] targetArray) {
@@ -363,25 +331,25 @@ public class Board implements Cloneable, Serializable, Comparable {
         return legalMovesList;
     }
 
-    public int getBoardValueByColor(Color color) {
-        int value = 0;
+    public float getBoardValueByColor(Color color) {
+        float value = 0;
         for (Piece piece : getUneatenPieces()) {
             if (piece.getColor() == color) {
-                value += piece.getValue();
+                value += piece.getValue(orientation);
             } else {
-                value -= piece.getValue();
+                value -= piece.getValue(orientation);
             }
         }
         return value;
     }
 
-    public int getSubsetValueByColor(Color color, ArrayList<Piece> pieces) {
-        int value = 0;
+    public float getSubsetValueByColor(Color color, ArrayList<Piece> pieces) {
+        float value = 0;
         for (Piece piece : pieces) {
             if (piece.getColor() == color) {
-                value += piece.getValue();
+                value += piece.getValue(orientation);
             } else {
-                value -= piece.getValue();
+                value -= piece.getValue(orientation);
             }
         }
         return value;

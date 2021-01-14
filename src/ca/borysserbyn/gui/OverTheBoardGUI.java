@@ -71,7 +71,7 @@ public class OverTheBoardGUI {
             }
             endGameMessage();
         }
-        System.out.println(Math.signum(board.centerPawnValue(Color.WHITE) - board.centerPawnValue(Color.BLACK)));
+        System.out.println(originPiece.getValue(board.getOrientation()));
         this.originButton = null;
     }
 
