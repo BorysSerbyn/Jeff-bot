@@ -7,7 +7,7 @@ import java.util.concurrent.RecursiveAction;
 public class TreeTask extends RecursiveAction {
     private final Node node;
     private final int depth;
-    private final int THRESHOLD = 1;
+    private final int THRESHOLD = 0;
     private final boolean secondTry;
 
     public TreeTask(Node node, int depth, boolean secondTry) {
@@ -23,7 +23,7 @@ public class TreeTask extends RecursiveAction {
             if(node.getChildNodes().isEmpty()){//if node is empty, add children with max depth = 1;
                 node.addNodes(0, 1, secondTry);
             }
-            List<TreeTask> subtasks = new ArrayList<TreeTask>();
+            List<TreeTask> subtasks = new ArrayList<>();
             for (Node childNode : node.getChildNodes()) {
                 subtasks.add(new TreeTask(childNode, depth + 1, false));
             }

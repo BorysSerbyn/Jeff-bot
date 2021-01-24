@@ -1,6 +1,7 @@
 package ca.borysserbyn;
 
-import java.awt.*;
+
+import ca.borysserbyn.Color;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -9,7 +10,7 @@ public class Piece implements Cloneable, Serializable {
     private static float[][] pawnPositionValue = new float[][]{
             {1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f},
             {1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f},
-            {1.13f,1.00f,1.00f,1.25f,1.25f,1.00f,1.00f,1.13f},
+            {1.00f,1.00f,1.00f,1.25f,1.25f,1.00f,1.00f,1.00f},
             {1.00f,1.00f,1.00f,1.50f,1.50f,1.00f,1.00f,1.00f},
             {1.00f,1.00f,1.00f,1.75f,1.75f,1.00f,1.00f,1.00f},
             {1.00f,1.00f,1.00f,1.75f,1.75f,1.00f,1.00f,1.00f},
@@ -77,8 +78,8 @@ public class Piece implements Cloneable, Serializable {
     public String toString() {
         String pieceString = new String();
         pieceString += color == Color.WHITE ? "WHITE_" : "BLACK_";
-        pieceString += pieceName.name();
-        pieceString += " {" + tile.toString() + "}";
+        pieceString += pieceName.name() + " ";
+        pieceString += tile.toString();
         return pieceString;
     }
 
@@ -155,7 +156,4 @@ public class Piece implements Cloneable, Serializable {
                 return 0;
         }
     }
-
-
-
 }

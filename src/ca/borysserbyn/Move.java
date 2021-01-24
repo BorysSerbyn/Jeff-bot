@@ -1,8 +1,11 @@
 package ca.borysserbyn;
 
+import com.google.gson.Gson;
+
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Move implements Cloneable{
+public class Move implements Cloneable, Serializable {
     private Piece piece;
     private Tile tile;
 

@@ -7,11 +7,11 @@ import ca.borysserbyn.Tile;
 import javax.swing.*;
 import java.awt.image.BufferedImage;
 
-public class PieceButton extends JButton {
+public class TileButton extends JButton {
     private Piece piece;
     private Tile tile;
 
-    public PieceButton(Tile tile) {
+    public TileButton(Tile tile) {
         this.tile = tile;
         piece = null;
     }

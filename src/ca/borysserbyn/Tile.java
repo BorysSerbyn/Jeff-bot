@@ -1,6 +1,7 @@
 package ca.borysserbyn;
 
-import java.awt.*;
+
+import ca.borysserbyn.Color;
 import java.io.Serializable;
 import java.util.Objects;
 

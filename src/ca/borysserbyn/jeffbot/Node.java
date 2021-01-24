@@ -2,7 +2,6 @@ package ca.borysserbyn.jeffbot;
 
 import ca.borysserbyn.*;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -104,8 +103,6 @@ public class Node implements Comparable {
         childNodes = new ArrayList<Node>();
     }
 
-
-
     /**
      * Score based on:
      * 1. game outcome determined at the termination of addNodes method
@@ -118,7 +115,6 @@ public class Node implements Comparable {
         score -= score > 0 ? stalemateValue * 20 : 0;
         this.currentScore = score;
     }
-
 
     //inherits min or max child cascadedScore depending on board turn
     public void inheritChildScore() {
@@ -153,17 +149,11 @@ public class Node implements Comparable {
         if (depth > 1) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
             //if this node already has children, use the cascaded score instead of the current one.
             float adjustedScore = this.childNodes.isEmpty() ? currentScore : cascadedScore;
-            float parentNodeScore = this.parentNode.currentScore;
-            float grandParentNodeScore = this.parentNode.parentNode.currentScore;
-            //float filter = this.childNodes.isEmpty() ? 1 : 0;
-            /*if(parentNodeScore < grandParentNodeScore && adjustedScore < grandParentNodeScore){// has the branch been a failure for 2 layers?
-                cascadedScore = adjustedScore;
-                return;
-            }*/
+            float filter = this.childNodes.isEmpty() ? 0 : 0;
             for (Node siblingNode : parentNode.getChildNodes()) {
                 double siblingCascadedScore = siblingNode.cascadedScore;
                 //add the value to the adjusted score to keep investigating small losses.
-                if (siblingCascadedScore * valueSign> adjustedScore * valueSign) {//is the current score worse than a siblings
+                if (siblingCascadedScore * valueSign > adjustedScore * valueSign + filter) {//is the current score worse than a siblings
                     cascadedScore = adjustedScore;
                     return;
                 }
@@ -175,31 +165,19 @@ public class Node implements Comparable {
                 childNode.addNodes(depth + 1, adjustedMaxDepth, false);
             }
         } else {
-            ArrayList<Board> legalBoards = board.getLegalBoardsByColor(board.getTurn());
-
             //aranges the legal boards so that the most relevant ones are used in the tree
-            Collections.shuffle(legalBoards);
-            Collections.sort(legalBoards);
-
+            ArrayList<Board> legalBoards = board.getLegalBoardsByColor(board.getTurn());
+            if(maxBreadth != -1){ //dont need to do this if were picking all boards
+                Collections.shuffle(legalBoards);
+                Collections.sort(legalBoards);
+            }
             //reverses legal boards at layer 0 if the last pass wasnt successful
             if(secondTry && depth == 0){
                 Collections.reverse(legalBoards);
             }
-
-            //adjust max breadth to the number of available moves
+            //adjust max depth and max depth based on number of available moves
             int adjustedMaxBreadth = maxBreadth < legalBoards.size() && maxBreadth != -1 ? maxBreadth : legalBoards.size();
-
-            //calculate adjusted depth based on number of available moves
-            if(adjustedMaxDepth != 1){ //dont adjust depth when starting threads
-                if(adjustedMaxBreadth >= 20){//prevents it from computing log function if its reaching the plateau to save on time
-                    adjustedMaxDepth = maxDepth;
-                }else{
-                    adjustedMaxDepth = (int) (537.08*Math.pow((double) adjustedMaxBreadth, -2.23));
-                }
-            }
-
             for (int i = 0; i < adjustedMaxBreadth; i++) {
-                //pick from neutral board position when retrying
                 Board legalBoard = legalBoards.get(i);
                 //promotes pawn to queen every time
                 if (legalBoard.getState() == BoardState.PROMOTING_AND_EATING || legalBoard.getState() == BoardState.PROMOTING_PAWN) {//can the board promote a pawn?

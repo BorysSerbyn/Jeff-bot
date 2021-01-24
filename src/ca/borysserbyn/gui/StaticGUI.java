@@ -11,7 +11,7 @@ import java.awt.image.BufferedImage;
 public class StaticGUI {
     private Board board;
     private final JPanel gui = new JPanel(new BorderLayout(3, 3));
-    private PieceButton[][] pieceButtonArray = new PieceButton[8][8];
+    private TileButton[][] pieceButtonArray = new TileButton[8][8];
     private JPanel chessBoard;
     private JPanel graveyardPanel;
     private JScrollPane graveyardScroll;
@@ -56,7 +56,7 @@ public class StaticGUI {
 
         //add the chessboard to the gui
         chessBoard = new JPanel(new GridLayout(0, 9));
-        chessBoard.setBorder(new LineBorder(Color.BLACK));
+        chessBoard.setBorder(new LineBorder(java.awt.Color.BLACK));
         gui.add(chessBoard);
 
         initializeBoardSquares();
@@ -68,7 +68,7 @@ public class StaticGUI {
         Insets buttonMargin = new Insets(0,0,0,0);
         for (int ii = 0; ii < pieceButtonArray.length; ii++) {
             for (int jj = 0; jj < pieceButtonArray[ii].length; jj++) {
-                PieceButton b = new PieceButton(board.getTileByPosition(jj, ii));
+                TileButton b = new TileButton(board.getTileByPosition(jj, ii));
                 b.setMargin(buttonMargin);
                 // our chess pieces are 64x64 px in size, so we'll
                 // 'fill this in' using a transparent icon..
@@ -78,9 +78,9 @@ public class StaticGUI {
                 if ((jj % 2 == 1 && ii % 2 == 1)
                         //) {
                         || (jj % 2 == 0 && ii % 2 == 0)) {
-                    b.setBackground(Color.WHITE);
+                    b.setBackground(java.awt.Color.WHITE);
                 } else {
-                    b.setBackground(Color.BLACK);
+                    b.setBackground(java.awt.Color.BLACK);
                 }
                 pieceButtonArray[jj][ii] = b;
             }
@@ -114,7 +114,7 @@ public class StaticGUI {
     public final void initializePieces(){
         for (int i = 0; i < pieceButtonArray.length; i++) {
             for (int j = 0; j < pieceButtonArray[i].length; j++) {
-                PieceButton pieceButton = pieceButtonArray[i][j];
+                TileButton pieceButton = pieceButtonArray[i][j];
                 Tile tile = pieceButton.getTile();
                 Piece piece = board.getPieceByTile(tile);
                 if(piece != null){

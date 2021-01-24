@@ -1,14 +1,14 @@
 package ca.borysserbyn.jeffbot;
 
 import ca.borysserbyn.*;
+import ca.borysserbyn.Color;
 
-import java.awt.*;
 import java.util.Collections;
 import java.util.concurrent.ForkJoinPool;
 
 public class Jeffbot {
-    private static int maxDepth = 4;
-    private static int maxBreadth = -1;
+    private static int maxDepth = 3;
+    private static int maxBreadth = 20;
     private static final ForkJoinPool pool = new ForkJoinPool();
     private Board board;
     private Color color;
@@ -19,6 +19,11 @@ public class Jeffbot {
         this.board = new Board(1);
         currentNode = new Node(board, null, maxDepth, maxBreadth, color);
         buildTree(currentNode, false);
+    }
+
+    public void setBoard(Board board) {
+        this.board = board;
+        resetCurrentNode();
     }
 
     public Board getBoard() {
@@ -32,6 +37,9 @@ public class Jeffbot {
                 .orElse(null);
     }
 
+    public void resetCurrentNode() {
+        currentNode = new Node(board, null, maxDepth, maxBreadth, color);
+    }
     public Node getCurrentNode() {
         return currentNode;
     }
@@ -48,10 +56,22 @@ public class Jeffbot {
     }
 
     public void printThoughtProcess(Node bestMoveNode){
-        currentNode.getChildNodes().forEach(System.out::println);
-        System.out.println();
-        bestMoveNode.getChildNodes().forEach(System.out::println);
-        System.out.println("Jeffs move: " + bestMoveNode);
+//        currentNode.getChildNodes().forEach(System.out::println);
+//        System.out.println();
+//        bestMoveNode.getChildNodes().forEach(System.out::println);
+//        System.out.println();
+//        System.out.println(bestMoveNode.getChildNodes().get(0).getChildNodes().isEmpty());
+//        System.out.println("Jeffs move: " + bestMoveNode);
+
+        Node bestNode = bestMoveNode;
+        while(true){
+            System.out.println(bestNode);
+            if(bestNode.getChildNodes().isEmpty()){
+                break;
+            }
+            Collections.sort(currentNode.getChildNodes());
+            bestNode = bestNode.getChildNodes().get(0);
+        }
     }
 
     public void secondTry(){
@@ -81,9 +101,9 @@ public class Jeffbot {
     }
 
     public void buildTree(Node node, boolean secondTry){
-        //node.addNodes(0, maxDepth, false);
-        TreeTask rootTask = new TreeTask(node, 0, secondTry);
-        pool.invoke(rootTask);
+        node.addNodes(0, maxDepth, false);
+//        TreeTask rootTask = new TreeTask(node, 0, secondTry);
+//        pool.invoke(rootTask);
         node.getChildNodes().forEach(Node::inheritChildScore);
         node.setParentNode(null);
         System.gc();

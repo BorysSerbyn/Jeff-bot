@@ -1,8 +1,8 @@
 package ca.borysserbyn.gui;
 
 import ca.borysserbyn.Piece;
+import ca.borysserbyn.Color;
 
-import java.awt.*;
 import java.awt.image.*;
 import javax.imageio.*;
 import java.net.*;

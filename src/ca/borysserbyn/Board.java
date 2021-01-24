@@ -2,7 +2,8 @@ package ca.borysserbyn;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import java.awt.*;
+
+import ca.borysserbyn.Color;
 import java.io.Serializable;
 import java.util.ArrayList;
 
