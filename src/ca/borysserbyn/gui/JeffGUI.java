@@ -10,8 +10,8 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class JeffGUI {
     private StaticGUI staticGUI;
@@ -27,6 +27,7 @@ public class JeffGUI {
     private Jeffbot jeff;
     private Color jeffColor = Color.WHITE;
     private final JLabel message = new JLabel("Jeff is ready");
+    private long seed;
 
     JeffGUI() {
         initializeGui();
@@ -45,53 +46,52 @@ public class JeffGUI {
     }
 
     //Handles pieces/squares being clicked.
-    public void clickTile(ActionEvent e){
-        if(isGameOver){
+    public void clickTile(ActionEvent e) {
+        if (isGameOver) {
             return;
         }
-        if(jeffColor == board.getTurn()){
+        if (jeffColor == board.getTurn()) {
             return;
         }
-        TileButton selectedButton = (TileButton)e.getSource();
+        TileButton selectedButton = (TileButton) e.getSource();
         Piece selectedPiece = selectedButton.getPiece();
-        if(originButton == null && selectedPiece != null){ //is there a piece in the selected square and was a piece already selected
-            if(selectedPiece.getColor() == board.getTurn()){//is it that colors turn to move
+        if (originButton == null && selectedPiece != null) { //is there a piece in the selected square and was a piece already selected
+            if (selectedPiece.getColor() == board.getTurn()) {//is it that colors turn to move
                 originButton = selectedButton;
             }
-        }else if(originButton != null){ //is there a piece to be moved
-            if(selectedPiece == null){
+        } else if (originButton != null) { //is there a piece to be moved
+            if (selectedPiece == null) {
                 movePiece(selectedButton, originButton);
-            }else if(selectedPiece.getColor() == originButton.getPiece().getColor()){
+            } else if (selectedPiece.getColor() == originButton.getPiece().getColor()) {
                 originButton = selectedButton;
-            }else{
+            } else {
                 movePiece(selectedButton, originButton);
             }
         }
     }
 
     //Handles piece movement in the gui and calls it in the logic of the board.
-    public void movePiece(TileButton selectedButton, TileButton originButton){
+    public void movePiece(TileButton selectedButton, TileButton originButton) {
         Piece originPiece = originButton.getPiece();
-        Tile destinationTile = selectedButton.getTile();
-        Move move = new Move(originPiece, destinationTile);
+        Move move = new Move(originPiece, selectedButton.getXOnBoard(), selectedButton.getYOnBoard());
         Move clonedMove = (Move) move.clone();
         Piece clonedPiece = clonedMove.getPiece();
 
-        if(board.isMoveLegal(originButton.getPiece(), selectedButton.getTile())){ //is the move legal
-            board.movePiece(originPiece, destinationTile);
+        if (board.isMoveLegal(move)) { //is the move legal
+            board.movePiece(move);
             initializePieces();
             endGameMessage();
 
             System.out.println(board.getState());
-            if(board.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN){
+            if (board.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN) {
                 displayPromotionWindow(selectedButton, clonedPiece);
             }
-            if(!isGameOver){
+            if (!isGameOver) {
                 long start_time = System.nanoTime();
                 jeff.updateTree(clonedMove);
                 jeffMove();
                 long end_time = System.nanoTime();
-                System.out.println(board.getTurnCounter() + " " +(end_time - start_time) / 1e6);
+                System.out.println(board.getTurnCounter() + " " + (end_time - start_time) / 1e6);
             }
         }
 
@@ -99,39 +99,39 @@ public class JeffGUI {
     }
 
     //Handles bot movement.
-    public void jeffMove(){
+    public void jeffMove() {
         message.setText("Jeff is thinking.");
-        Move bestMove = jeff.findBestMove();
-        Piece piece = board.getPieceByClone(bestMove.getPiece());
-        Tile destinationTile =  board.getTileByClone(bestMove.getTile());
-        board.movePiece(piece, destinationTile);
-        if(board.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN){
-            Piece jeffPiece = jeff.getBoard().getPieceByClone(bestMove.getPiece());
-            board.promotePawn(piece, PieceName.QUEEN);
-            jeff.getBoard().promotePawn(jeffPiece, PieceName.QUEEN);
-            bestMove.getPiece().setPieceName(PieceName.QUEEN);
+        Move bestMoveNodeBoard = jeff.findBestMove();
+        Move bestMoveGUIBoard = board.getMoveByClone(bestMoveNodeBoard);
+        Move bestMoveJeffBoard = jeff.getBoard().getMoveByClone(bestMoveNodeBoard);
+        board.movePiece(bestMoveGUIBoard);
+
+        if (board.getState() == BoardState.PROMOTING_AND_EATING || board.getState() == BoardState.PROMOTING_PAWN) {
+            board.promotePawn(bestMoveGUIBoard.getPiece(), PieceName.QUEEN);
+            jeff.getBoard().promotePawn(bestMoveJeffBoard.getPiece(), PieceName.QUEEN);
+            bestMoveNodeBoard.getPiece().setPieceName(PieceName.QUEEN);
         }
         System.out.println(board.getState());
         initializePieces();
         endGameMessage();
         message.setText("Jeff is ready.");
-        jeff.updateTree(bestMove);
+        jeff.updateTree(bestMoveNodeBoard);
     }
 
     //handles end game detection
-    public void endGameMessage(){
+    public void endGameMessage() {
         isGameOver = board.isGameOver();
-        if(board.getState() == BoardState.CHECKMATE){
-            JOptionPane.showMessageDialog(gui,"Checkmate!");
-        }else if(board.getState() == BoardState.STALEMATE){
-            JOptionPane.showMessageDialog(gui,"Stalemate!");
+        if (board.getState() == BoardState.CHECKMATE) {
+            JOptionPane.showMessageDialog(gui, "Checkmate!");
+        } else if (board.getState() == BoardState.STALEMATE) {
+            JOptionPane.showMessageDialog(gui, "Stalemate!");
 
         }
     }
 
     //Popup that lets you choose which piece to promote a back rank pawn to
-    public void displayPromotionWindow(TileButton selectedButton, Piece clonedPiece){
-        String[] choices = { "QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"};
+    public void displayPromotionWindow(TileButton selectedButton, Piece clonedPiece) {
+        String[] choices = {"QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"};
         String choice = (String) JOptionPane.showInputDialog(gui, "Choose a piece to promote to.",
                 "Pawn promotion", JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
         PieceName chosenPieceName = PieceName.valueOf(choice);
@@ -142,11 +142,11 @@ public class JeffGUI {
         selectedButton.updateIcon();
     }
 
-    public void clickSaveButton(ActionEvent e){
+    public void clickSaveButton(ActionEvent e) {
         FileUtils.writeToFile(board);
     }
 
-    public void clickLoadButton(ActionEvent e){
+    public void clickLoadButton(ActionEvent e) {
         board = FileUtils.readFile();
         isGameOver = false;
         originButton = null;
@@ -157,7 +157,7 @@ public class JeffGUI {
         gui.repaint();
 
         jeff.setBoard((Board) board.clone());
-        if(jeffColor == board.getTurn()){
+        if (jeffColor == board.getTurn()) {
             jeffMove();
         }
     }
@@ -171,9 +171,8 @@ public class JeffGUI {
             Board newBoard = new Board(orientation);
             //take two moves off the top, (yours and jeffs)
             for (int i = 0; i < moveHistory.size() - 2; i++) {
-                Piece pieceToMove = newBoard.getPieceByClone(moveHistory.get(i).getPiece());
-                Tile tileToMoveTo = newBoard.getTileByClone(moveHistory.get(i).getTile());
-                newBoard.movePiece(pieceToMove, tileToMoveTo);
+                Move move = newBoard.getMoveByClone(moveHistory.get(i));
+                newBoard.movePiece(move);
             }
 
             board = newBoard;
@@ -190,7 +189,7 @@ public class JeffGUI {
     }
 
     //Sends piece to the gui graveyard (not the boards)
-    public void sendPieceToGraveyard(Piece deadPiece){
+    public void sendPieceToGraveyard(Piece deadPiece) {
         JLabel deadPieceLabel = new JLabel("");
         deadPieceLabel.setIcon(new ImageIcon(ChessSprites.getSpriteByPiece(deadPiece)));
         graveyardPanel.add(deadPieceLabel);
@@ -199,15 +198,13 @@ public class JeffGUI {
     }
 
 
-
-
     /*
     Initializes the gui with a new board
      */
     public final void initializeGui() {
+        seed = 16;
         board = new Board(orientation);
-        System.out.println("Main board: " + board);
-        jeff = new Jeffbot(jeffColor);
+        jeff = new Jeffbot(jeffColor, seed);
         this.staticGUI = new StaticGUI(jeff.getBoard());
         System.out.println("Jeff's board" + jeff.getBoard());
 
@@ -246,17 +243,17 @@ public class JeffGUI {
         initializePieces();
 
         //jeff makes the first move
-        if(jeffColor == board.getTurn()){
+        if (jeffColor == board.getTurn()) {
             jeffMove();
         }
     }
 
-    public final void initializeBoardSquares(){
+    public final void initializeBoardSquares() {
 
-        Insets buttonMargin = new Insets(0,0,0,0);
+        Insets buttonMargin = new Insets(0, 0, 0, 0);
         for (int ii = 0; ii < tileButtons.length; ii++) {
             for (int jj = 0; jj < tileButtons[ii].length; jj++) {
-                TileButton b = new TileButton(board.getTileByPosition(jj, ii));
+                TileButton b = new TileButton(jj, ii);
                 b.setMargin(buttonMargin);
                 b.addActionListener(this::clickTile);
                 // our chess pieces are 64x64 px in size, so we'll
@@ -274,7 +271,6 @@ public class JeffGUI {
                 tileButtons[jj][ii] = b;
             }
         }
-
 
 
         //fill the chess board
@@ -300,22 +296,21 @@ public class JeffGUI {
         }
     }
 
-    public final void initializePieces(){
+    public final void initializePieces() {
         for (int i = 0; i < tileButtons.length; i++) {
             for (int j = 0; j < tileButtons[i].length; j++) {
                 TileButton pieceButton = tileButtons[i][j];
-                Tile tile = pieceButton.getTile();
-                Piece piece = board.getPieceByTile(tile);
-                if(piece != null){
+                Piece piece = board.getPieceByTile(i, j);
+                if (piece != null) {
                     pieceButton.setPiece(piece);
-                }else{
+                } else {
                     pieceButton.removePiece();
                 }
             }
         }
 
         graveyardPanel.removeAll();
-        for(Piece deadPiece : board.getEatenPieces()){
+        for (Piece deadPiece : board.getEatenPieces()) {
             sendPieceToGraveyard(deadPiece);
         }
 

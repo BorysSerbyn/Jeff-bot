@@ -7,17 +7,19 @@ import java.util.Collections;
 import java.util.concurrent.ForkJoinPool;
 
 public class Jeffbot {
-    private static int maxDepth = 3;
+    private static int maxDepth = 4;
     private static int maxBreadth = 20;
     private static final ForkJoinPool pool = new ForkJoinPool();
     private Board board;
     private Color color;
     private Node currentNode;
+    private long seed;
 
-    public Jeffbot(Color color) {
+    public Jeffbot(Color color, long seed) {
+        this.seed = seed;
         this.color = color;
         this.board = new Board(1);
-        currentNode = new Node(board, null, maxDepth, maxBreadth, color);
+        currentNode = new Node(board, null, maxDepth, maxBreadth, color, seed);
         buildTree(currentNode, false);
     }
 
@@ -38,8 +40,9 @@ public class Jeffbot {
     }
 
     public void resetCurrentNode() {
-        currentNode = new Node(board, null, maxDepth, maxBreadth, color);
+        currentNode = new Node(board, null, maxDepth, maxBreadth, color, seed);
     }
+
     public Node getCurrentNode() {
         return currentNode;
     }
@@ -47,7 +50,7 @@ public class Jeffbot {
     public Move findBestMove() {
         Collections.sort(currentNode.getChildNodes());
         Node bestMoveNode = currentNode.getChildNodes().get(0);
-        if(bestMoveNode.getCascadedScore() + 1 < currentNode.getCurrentScore()){
+        if (bestMoveNode.getCascadedScore() + 1 < currentNode.getCurrentScore()) {
             secondTry();
             bestMoveNode = currentNode.getChildNodes().get(0);
         }
@@ -55,7 +58,7 @@ public class Jeffbot {
         return bestMoveNode.getLastMove();
     }
 
-    public void printThoughtProcess(Node bestMoveNode){
+    public void printThoughtProcess(Node bestMoveNode) {
 //        currentNode.getChildNodes().forEach(System.out::println);
 //        System.out.println();
 //        bestMoveNode.getChildNodes().forEach(System.out::println);
@@ -64,9 +67,9 @@ public class Jeffbot {
 //        System.out.println("Jeffs move: " + bestMoveNode);
 
         Node bestNode = bestMoveNode;
-        while(true){
+        while (true) {
             System.out.println(bestNode);
-            if(bestNode.getChildNodes().isEmpty()){
+            if (bestNode.getChildNodes().isEmpty()) {
                 break;
             }
             Collections.sort(currentNode.getChildNodes());
@@ -74,7 +77,7 @@ public class Jeffbot {
         }
     }
 
-    public void secondTry(){
+    public void secondTry() {
         System.out.println("Reseting the tree, no good moves found");
         currentNode.removeAllChildren();
         buildTree(currentNode, true);
@@ -83,16 +86,15 @@ public class Jeffbot {
 
     public void updateTree(Move move) {
         Move clonedMove = (Move) move.clone();
-        Piece jeffPiece = board.getPieceByClone(move.getPiece());
-        Tile jeffDestinationTile = board.getTileByClone(move.getTile());
+        Move moveJeffBoard = board.getMoveByClone(move);
 
-        board.movePiece(jeffPiece, jeffDestinationTile);
+        board.movePiece(moveJeffBoard);
         Node moveNode = getNodeByMove(currentNode, clonedMove);
 
         if (moveNode == null) {//is there a node in the tree corresponding the the move?
             System.out.println("Couldnt find node: " + move + " in tree.");
             Board clonedBoard = (Board) board.clone();
-            moveNode = new Node(clonedBoard, currentNode, maxDepth, maxBreadth, color);
+            moveNode = new Node(clonedBoard, currentNode, maxDepth, maxBreadth, color, seed);
             currentNode.addChild(moveNode);
         }
 
@@ -100,7 +102,7 @@ public class Jeffbot {
         buildTree(currentNode, false);
     }
 
-    public void buildTree(Node node, boolean secondTry){
+    public void buildTree(Node node, boolean secondTry) {
         node.addNodes(0, maxDepth, false);
 //        TreeTask rootTask = new TreeTask(node, 0, secondTry);
 //        pool.invoke(rootTask);

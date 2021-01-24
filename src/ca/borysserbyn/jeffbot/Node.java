@@ -4,6 +4,7 @@ import ca.borysserbyn.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Random;
 
 public class Node implements Comparable {
     private int maxDepth;
@@ -19,9 +20,11 @@ public class Node implements Comparable {
     private int valueSign;
     private ArrayList<Node> childNodes;
     private Node parentNode;
+    private long seed;
 
 
-    public Node(Board board, Node parentNode, int maxDepth, int maxBreadth, Color color) {
+    public Node(Board board, Node parentNode, int maxDepth, int maxBreadth, Color color, long seed) {
+        this.seed = seed;
         this.color = color;
         this.maxBreadth = maxBreadth;
         this.maxDepth = maxDepth;
@@ -167,12 +170,12 @@ public class Node implements Comparable {
         } else {
             //aranges the legal boards so that the most relevant ones are used in the tree
             ArrayList<Board> legalBoards = board.getLegalBoardsByColor(board.getTurn());
-            if(maxBreadth != -1){ //dont need to do this if were picking all boards
-                Collections.shuffle(legalBoards);
+            if (maxBreadth != -1) { //dont need to do this if were picking all boards
+                Collections.shuffle(legalBoards, new Random(seed));
                 Collections.sort(legalBoards);
             }
             //reverses legal boards at layer 0 if the last pass wasnt successful
-            if(secondTry && depth == 0){
+            if (secondTry && depth == 0) {
                 Collections.reverse(legalBoards);
             }
             //adjust max depth and max depth based on number of available moves
@@ -183,7 +186,7 @@ public class Node implements Comparable {
                 if (legalBoard.getState() == BoardState.PROMOTING_AND_EATING || legalBoard.getState() == BoardState.PROMOTING_PAWN) {//can the board promote a pawn?
                     legalBoard.promotePawn(legalBoard.getPieceByClone(legalBoard.getLastMove().moveToPiece()), PieceName.QUEEN);
                 }
-                Node childNode = new Node(legalBoard, this, maxDepth, maxBreadth, color);
+                Node childNode = new Node(legalBoard, this, maxDepth, maxBreadth, color, seed);
                 childNode.addNodes(depth + 1, adjustedMaxDepth, false);
                 this.addChild(childNode);
             }

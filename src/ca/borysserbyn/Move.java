@@ -7,11 +7,14 @@ import java.util.Objects;
 
 public class Move implements Cloneable, Serializable {
     private Piece piece;
-    private Tile tile;
+    private int x;
+    private int y;
 
-    public Move(Piece piece, Tile tile) {
+
+    public Move(Piece piece, int x, int y) {
         this.piece = piece;
-        this.tile = tile;
+        this.x = x;
+        this.y = y;
     }
     @Override
     public Object clone() {
@@ -19,16 +22,15 @@ public class Move implements Cloneable, Serializable {
         try {
             move = (Move) super.clone();
         } catch (CloneNotSupportedException e) {
-            move = new Move(piece, tile);
+            move = new Move(piece, x, y);
         }
         move.piece = (Piece) piece.clone();
-        move.tile = (Tile) tile.clone();
         return move;
     }
 
     @Override
     public String toString() {
-        return piece.toString() + " to: " + tile.toString();
+        return piece.toString() + " TO--> " + "(" + x + ", " + y + ")";
     }
 
     @Override
@@ -37,12 +39,13 @@ public class Move implements Cloneable, Serializable {
         if (o == null || getClass() != o.getClass()) return false;
         Move move = (Move) o;
         return this.piece.equals(move.piece) &&
-                this.tile.equals(move.tile);
+                x == move.x &&
+                y == move.y;
     }
 
     public Piece moveToPiece(){
         Piece clonedPiece = (Piece) piece.clone();
-        clonedPiece.setTile((Tile)tile.clone());
+        clonedPiece.setTile(x, y);
         return clonedPiece;
     }
 
@@ -53,12 +56,16 @@ public class Move implements Cloneable, Serializable {
     public void setPiece(Piece piece) {
         this.piece = piece;
     }
-
-    public Tile getTile() {
-        return tile;
+    public int getX(){
+        return x;
     }
 
-    public void setTile(Tile tile) {
-        this.tile = tile;
+    public int getY(){
+        return y;
+    }
+
+    public void setTile(int x, int y) {
+        this.x = x;
+        this.y = y;
     }
 }

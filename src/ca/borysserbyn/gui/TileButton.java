@@ -1,18 +1,21 @@
 package ca.borysserbyn.gui;
 
 import ca.borysserbyn.Board;
+import ca.borysserbyn.Color;
+import ca.borysserbyn.Move;
 import ca.borysserbyn.Piece;
-import ca.borysserbyn.Tile;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
 
 public class TileButton extends JButton {
     private Piece piece;
-    private Tile tile;
+    private int x;
+    private int y;
 
-    public TileButton(Tile tile) {
-        this.tile = tile;
+    public TileButton(int x, int y) {
+        this.x = x;
+        this.y = y;
         piece = null;
     }
 
@@ -20,13 +23,25 @@ public class TileButton extends JButton {
         System.out.println(piece.toString());
     }
 
-    public Tile getTile() {
-        return tile;
+
+    public void setTile(int x, int y) {
+        this.x = x;
+        this.y = y;
     }
 
-    public void setTile(Tile tile) {
-        this.tile = tile;
+    public int getXOnBoard(){
+        return x;
     }
+
+    public int getYOnBoard(){
+        return y;
+    }
+
+    @Override
+    public String toString() {
+        return "Tile Button: (" + x + ", " + y + ")";
+    }
+
 
     public Piece getPiece() {
         return piece;
@@ -38,7 +53,7 @@ public class TileButton extends JButton {
     }
 
     public void setAndMovePiece(Board board, Piece piece) {
-        board.movePiece(piece, tile);
+        board.movePiece(new Move(piece, x, y));
         this.piece = piece;
         updateIcon();
     }

@@ -47,12 +47,15 @@ public class Piece implements Cloneable, Serializable {
 
     private Color color;
     private PieceName pieceName;
-    private Tile tile;
+    private int x;
+    private int y;
 
-    public Piece(Color color, PieceName pieceName, Tile tile) {
+
+    public Piece(Color color, PieceName pieceName, int x, int y) {
         this.color = color;
         this.pieceName = pieceName;
-        this.tile = tile;
+        this.x = x;
+        this.y = y;
     }
 
     @Override
@@ -62,7 +65,8 @@ public class Piece implements Cloneable, Serializable {
         Piece piece = (Piece) o;
         return color == piece.getColor() &&
                 pieceName == piece.pieceName &&
-                tile.equals(piece.getTile());
+                x == piece.x &&
+                y == piece.y;
     }
 
     @Override
@@ -70,7 +74,7 @@ public class Piece implements Cloneable, Serializable {
         try {
             return (Piece) super.clone();
         } catch (CloneNotSupportedException e) {
-            return new Piece(this.getColor(), this.getPieceName(), this.getTile());
+            return new Piece(this.getColor(), this.getPieceName(), this.x, this.y);
         }
     }
 
@@ -79,12 +83,17 @@ public class Piece implements Cloneable, Serializable {
         String pieceString = new String();
         pieceString += color == Color.WHITE ? "WHITE_" : "BLACK_";
         pieceString += pieceName.name() + " ";
-        pieceString += tile.toString();
+        pieceString += "(" + x + ", " + y + ")";
         return pieceString;
     }
 
     public void setPieceName(PieceName pieceName) {
         this.pieceName = pieceName;
+    }
+
+    public void setTile(int x, int y){
+        this.x = x;
+        this.y = y;
     }
 
     public Color getColor() {
@@ -95,16 +104,17 @@ public class Piece implements Cloneable, Serializable {
         return pieceName;
     }
 
-    public Tile getTile() {
-        return tile;
+    public int getX(){
+        return x;
     }
 
-    public void setTile(Tile tile) {
-        this.tile = tile;
+    public int getY(){
+        return y;
     }
 
-    public void discardPiece(Tile tile){
-        this.tile = tile;
+    public void discardPiece(){
+        x = -1;
+        y = -1;
     }
 
     public int getValue(){
@@ -131,13 +141,13 @@ public class Piece implements Cloneable, Serializable {
         int y = 0;
         if(orientation == 1){
             //flip it verticaly if its black
-            x = color == Color.WHITE ? tile.getX() : tile.getX();
-            y = color == Color.WHITE ? tile.getY() : 7-tile.getY();
+            x = color == Color.WHITE ? this.x :this.x;
+            y = color == Color.WHITE ? this.y : 7-this.y;
         }else{
             //rotate if white
             //flip horizontaly if black
-            x = color == Color.WHITE ? 7-tile.getX() : 7-tile.getX();
-            y = color == Color.WHITE ? 7-tile.getY() : tile.getY();
+            x = color == Color.WHITE ? 7-this.x : this.x;
+            y = color == Color.WHITE ? 7-this.y : this.y;
         }
         switch (pieceName) {
             case PAWN:

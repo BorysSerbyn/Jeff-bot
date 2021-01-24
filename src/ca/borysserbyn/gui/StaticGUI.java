@@ -68,7 +68,7 @@ public class StaticGUI {
         Insets buttonMargin = new Insets(0,0,0,0);
         for (int ii = 0; ii < pieceButtonArray.length; ii++) {
             for (int jj = 0; jj < pieceButtonArray[ii].length; jj++) {
-                TileButton b = new TileButton(board.getTileByPosition(jj, ii));
+                TileButton b = new TileButton(jj, ii);
                 b.setMargin(buttonMargin);
                 // our chess pieces are 64x64 px in size, so we'll
                 // 'fill this in' using a transparent icon..
@@ -115,8 +115,7 @@ public class StaticGUI {
         for (int i = 0; i < pieceButtonArray.length; i++) {
             for (int j = 0; j < pieceButtonArray[i].length; j++) {
                 TileButton pieceButton = pieceButtonArray[i][j];
-                Tile tile = pieceButton.getTile();
-                Piece piece = board.getPieceByTile(tile);
+                Piece piece = board.getPieceByTile(i, j);
                 if(piece != null){
                     pieceButton.setPiece(piece);
                 }else{
