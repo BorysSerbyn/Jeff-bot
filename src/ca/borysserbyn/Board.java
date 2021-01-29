@@ -250,6 +250,22 @@ public class Board implements Cloneable, Serializable, Comparable {
      * the following methods are used by the scoring function in node class
      */
 
+    public int castlingValue(Color targetColor){
+        int value = 0;
+        int castleState = targetColor == Color.WHITE ? whiteCastleState : blackCastleState;
+        boolean[] castlingConditions = targetColor == Color.WHITE ? castlingConditionsWhite : castlingConditionsBlack;
+        if(castleState == 0){
+            for(boolean condition : castlingConditions){
+                if(condition == true){
+                    value++;
+                }
+            }
+        }else{
+            value = 3;
+        }
+        return value;
+    }
+
     //evaluates the protection of the king for a given color
     public int kingProtectionValue(Color targetColor) {
         Piece king = getPieceByName(PieceName.KING, targetColor);

@@ -106,8 +106,9 @@ public class Node implements Comparable {
      * 2. other heuristics defined in Board
      */
     public void scoreNode() {
+        float castlingValue = board.castlingValue(color) - board.castlingValue(opponentColor);
         pieceValue = board.getBoardValueByColor(color);
-        float score = pieceValue + checkmateValue * 20;
+        float score = pieceValue + checkmateValue * 20 + castlingValue/12;
         //substract stalemate value if you are winning, do nothing if you are losing.
         score -= score > 0 ? stalemateValue * 20 : 0;
         this.currentScore = score;

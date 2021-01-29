@@ -25,7 +25,7 @@ public class JeffGUI {
     private Board board;
     private boolean isGameOver;
     private Jeffbot jeff;
-    private Color jeffColor = Color.BLACK;
+    private Color jeffColor = Color.WHITE;
     private final JLabel message = new JLabel("Jeff is ready");
 
     JeffGUI() {
@@ -251,10 +251,12 @@ public class JeffGUI {
         JButton loadButton = new JButton("Load");
         loadButton.addActionListener(this::clickLoadButton);
         tools.add(loadButton);
-        tools.addSeparator();
         JButton changeSeedButton = new JButton("Change Seed");
         changeSeedButton.addActionListener(this::clickSeedButton);
         tools.add(changeSeedButton);
+        tools.addSeparator();
+        JButton helpButton = new JButton("Help");
+        tools.add(helpButton);
         tools.addSeparator();
         tools.add(message);
         originButton = null;
