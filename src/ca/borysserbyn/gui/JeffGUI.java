@@ -21,13 +21,12 @@ public class JeffGUI {
     private TileButton originButton;
     private TileButton[][] tileButtons = new TileButton[8][8];
     private JScrollPane graveyardScroll;
-    private int orientation = 1;
+    private int orientation = 0;
     private Board board;
     private boolean isGameOver;
     private Jeffbot jeff;
-    private Color jeffColor = Color.WHITE;
+    private Color jeffColor = Color.BLACK;
     private final JLabel message = new JLabel("Jeff is ready");
-    private long seed;
 
     JeffGUI() {
         initializeGui();
@@ -100,6 +99,7 @@ public class JeffGUI {
 
     //Handles bot movement.
     public void jeffMove() {
+        System.out.println("These are the random seeds " + board.getSeed() + " " + jeff.getCurrentNode().getBoard().getSeed());
         message.setText("Jeff is thinking.");
         Move bestMoveNodeBoard = jeff.findBestMove();
         Move bestMoveGUIBoard = board.getMoveByClone(bestMoveNodeBoard);
@@ -146,8 +146,28 @@ public class JeffGUI {
         FileUtils.writeToFile(board);
     }
 
+    public void clickRematchButton(ActionEvent e) {
+        board = new Board(orientation);
+        isGameOver = false;
+        originButton = null;
+        chessBoard.removeAll();
+        initializeBoardSquares();
+        initializePieces();
+        gui.revalidate();
+        gui.repaint();
+
+        jeff.setBoard((Board) board.clone());
+        if (jeffColor == board.getTurn()) {
+            jeffMove();
+        }
+    }
+
     public void clickLoadButton(ActionEvent e) {
-        board = FileUtils.readFile();
+        Board newBoard = FileUtils.readFile();
+        if(newBoard == null){
+            return;
+        }
+        board = newBoard;
         isGameOver = false;
         originButton = null;
         chessBoard.removeAll();
@@ -169,6 +189,7 @@ public class JeffGUI {
             ArrayList<Move> moveHistory = board.getMoveHistory();
 
             Board newBoard = new Board(orientation);
+            newBoard.setSeed(board.getSeed());
             //take two moves off the top, (yours and jeffs)
             for (int i = 0; i < moveHistory.size() - 2; i++) {
                 Move move = newBoard.getMoveByClone(moveHistory.get(i));
@@ -188,6 +209,12 @@ public class JeffGUI {
         }
     }
 
+    public void clickSeedButton(ActionEvent e){
+        int newSeed = new Random().nextInt();
+        board.setSeed(newSeed);
+        jeff.setBoard((Board) board.clone());
+    }
+
     //Sends piece to the gui graveyard (not the boards)
     public void sendPieceToGraveyard(Piece deadPiece) {
         JLabel deadPieceLabel = new JLabel("");
@@ -202,9 +229,8 @@ public class JeffGUI {
     Initializes the gui with a new board
      */
     public final void initializeGui() {
-        seed = 16;
         board = new Board(orientation);
-        jeff = new Jeffbot(jeffColor, seed);
+        jeff = new Jeffbot(jeffColor, board);
         this.staticGUI = new StaticGUI(jeff.getBoard());
         System.out.println("Jeff's board" + jeff.getBoard());
 
@@ -213,6 +239,9 @@ public class JeffGUI {
         JToolBar tools = new JToolBar();
         tools.setFloatable(false);
         gui.add(tools, BorderLayout.PAGE_START);
+        JButton rematchButton = new JButton("Rematch");
+        rematchButton.addActionListener(this::clickRematchButton);
+        tools.add(rematchButton);
         JButton undoButton = new JButton("Undo");
         undoButton.addActionListener(this::clickUndoButton);
         tools.add(undoButton);
@@ -223,6 +252,9 @@ public class JeffGUI {
         loadButton.addActionListener(this::clickLoadButton);
         tools.add(loadButton);
         tools.addSeparator();
+        JButton changeSeedButton = new JButton("Change Seed");
+        changeSeedButton.addActionListener(this::clickSeedButton);
+        tools.add(changeSeedButton);
         tools.addSeparator();
         tools.add(message);
         originButton = null;

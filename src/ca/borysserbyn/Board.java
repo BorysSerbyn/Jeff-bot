@@ -8,6 +8,7 @@ import ca.borysserbyn.Color;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 
 import static java.util.stream.Collectors.toCollection;
 
@@ -27,6 +28,7 @@ public class Board implements Cloneable, Serializable, Comparable {
     private boolean[] enPassantConditionsBlack;
     private ArrayList<Move> moveHistory;
     private BoardState state;
+    private int seed;
 
 
     public Board(int orientation) {
@@ -37,13 +39,13 @@ public class Board implements Cloneable, Serializable, Comparable {
         this.turn = Color.WHITE;
         this.whiteCastleState = 0;
         this.blackCastleState = 0;
+        seed = new Random().nextInt();
         initializePieces();
         //initializeJeff();
         //initializePromotingTest();
         //initializeStalemateTest();
         //initializeinsufficientMatTest();
         //initializeCheckMateTest();
-
         this.moveHistory = new ArrayList<>();
         this.castlingConditionsWhite = new boolean[]{true, true, true};
         this.castlingConditionsBlack = new boolean[]{true, true, true};
@@ -51,19 +53,49 @@ public class Board implements Cloneable, Serializable, Comparable {
         this.enPassantConditionsBlack = new boolean[]{false, false, false, false, false, false, false, false};
     }
 
-    public Board(ArrayList<Piece> pieces, int orientation, Color turn, int turnCounter, int[] graveyard, boolean[] castlingConditionsWhite, boolean[] castlingConditionsBlack, boolean[] enPassantConditionsWhite, boolean[] enPassantConditionsBlack, ArrayList<Move> moveHistory, BoardState state) {
+    public Board(ArrayList<Piece> pieces, int orientation, Color turn, int turnCounter, int[] graveyard, int whiteCastleState, int blackCastleState, boolean[] castlingConditionsWhite, boolean[] castlingConditionsBlack, boolean[] enPassantConditionsWhite, boolean[] enPassantConditionsBlack, ArrayList<Move> moveHistory, BoardState state, int seed) {
         this.pieces = pieces;
         this.orientation = orientation;
         this.turn = turn;
         this.turnCounter = turnCounter;
         this.graveyard = graveyard;
+        this.whiteCastleState = whiteCastleState;
+        this.blackCastleState = blackCastleState;
         this.castlingConditionsWhite = castlingConditionsWhite;
         this.castlingConditionsBlack = castlingConditionsBlack;
         this.enPassantConditionsWhite = enPassantConditionsWhite;
         this.enPassantConditionsBlack = enPassantConditionsBlack;
         this.moveHistory = moveHistory;
         this.state = state;
+        this.seed = seed;
     }
+
+    @Override
+    public Object clone() {
+        Board clonedBoard = null;
+        try {
+            clonedBoard = (Board) super.clone();
+        } catch (CloneNotSupportedException e) {
+            clonedBoard = new Board(pieces, orientation, turn, turnCounter, graveyard, whiteCastleState, blackCastleState, castlingConditionsWhite, castlingConditionsBlack, enPassantConditionsWhite,
+                    enPassantConditionsBlack, moveHistory, state, seed);
+        }
+
+        ArrayList<Piece> clonedPieces = new ArrayList();
+        for (Piece piece : pieces) clonedPieces.add((Piece) piece.clone());
+
+        ArrayList<Move> clonedHistory = new ArrayList();
+        for (Move move : moveHistory) clonedHistory.add((Move) move.clone());
+
+        clonedBoard.moveHistory = clonedHistory;
+        clonedBoard.castlingConditionsWhite = copyArrayOfBools(castlingConditionsWhite);
+        clonedBoard.castlingConditionsBlack = copyArrayOfBools(castlingConditionsBlack);
+        clonedBoard.enPassantConditionsWhite = copyArrayOfBools(enPassantConditionsWhite);
+        clonedBoard.enPassantConditionsBlack = copyArrayOfBools(enPassantConditionsBlack);
+        clonedBoard.pieces = clonedPieces;
+
+        return clonedBoard;
+    }
+
 
     @Override
     public int compareTo(Object o) {
@@ -77,70 +109,6 @@ public class Board implements Cloneable, Serializable, Comparable {
         return boardState + boardCheckState + otherBoardState + otherBoardCheckState;
     }
 
-    @Override
-    public Object clone() {
-        Board clonedBoard = null;
-        try {
-            clonedBoard = (Board) super.clone();
-        } catch (CloneNotSupportedException e) {
-            clonedBoard = new Board(pieces, orientation, turn, turnCounter, graveyard, castlingConditionsWhite, castlingConditionsBlack, enPassantConditionsWhite,
-                    enPassantConditionsBlack, moveHistory, state);
-        }
-
-        ArrayList<Piece> clonedPieces = new ArrayList();
-        for (Piece piece : pieces) clonedPieces.add((Piece) piece.clone());
-
-        ArrayList<Move> clonedHistory = new ArrayList();
-        for (Move move : moveHistory) clonedHistory.add((Move) move.clone());
-
-        clonedBoard.blackCastleState = this.blackCastleState;
-        clonedBoard.whiteCastleState = this.whiteCastleState;
-        clonedBoard.moveHistory = clonedHistory;
-        clonedBoard.castlingConditionsWhite = copyArrayOfBools(castlingConditionsWhite);
-        clonedBoard.castlingConditionsBlack = copyArrayOfBools(castlingConditionsBlack);
-        clonedBoard.enPassantConditionsWhite = copyArrayOfBools(enPassantConditionsWhite);
-        clonedBoard.enPassantConditionsBlack = copyArrayOfBools(enPassantConditionsBlack);
-        clonedBoard.pieces = clonedPieces;
-
-        return clonedBoard;
-    }
-
-    //evaluates the protection of the king for a given color
-    public int kingProtectionValue(Color targetColor) {
-        Piece king = getPieceByName(PieceName.KING, targetColor);
-        int kingProtectionValue = 0;
-        int kingX = king.getX();
-        int kingY = king.getY();
-
-        //go through surrounding pieces
-        for (int i = kingX - 1; i <= kingX + 1; i++) {
-            for (int j = kingY - 1; j <= kingY + 1; j++) {
-                if (i > 7 || i < 0 || j > 7 || j < 0) {
-                    kingProtectionValue++;
-                } else if (getPieceByTile(i, j) != null && getPieceByTile(i, j).getColor() == targetColor) {
-                    kingProtectionValue++;
-                }
-            }
-        }
-
-        return kingProtectionValue;
-    }
-
-    //evaluates whether you have the right colored bishop to fight against opponents castling.
-    public int bishopValue(Color targetColor) {
-        int targetCastleState = targetColor == Color.WHITE ? blackCastleState : whiteCastleState;
-        if (targetCastleState != 0) {
-            Color bishopTileColor = !(!(orientation == 1 ^ targetColor == Color.WHITE) ^ targetCastleState == 1) ? Color.BLACK : Color.WHITE;
-            for (Piece piece : getUneatenPiecesByColor(targetColor)) {
-                int tileColorToInt = bishopTileColor == Color.WHITE ? 0 : -1;
-                if (piece.getPieceName() == PieceName.BISHOP && (piece.getX() + piece.getY()) % 2 == tileColorToInt) {
-                    return 1;
-                }
-            }
-        }
-        return 0;
-    }
-
     //copys an array of bools (conditions) for the clone function
     public boolean[] copyArrayOfBools(boolean[] targetArray) {
         boolean[] copiedArray = new boolean[targetArray.length];
@@ -150,12 +118,13 @@ public class Board implements Cloneable, Serializable, Comparable {
         return copiedArray;
     }
 
-    public BoardState getState() {
-        return state;
+
+    public int getSeed(){
+        return seed;
     }
 
-    public void setState(BoardState state) {
-        this.state = state;
+    public BoardState getState() {
+        return state;
     }
 
     public int getOrientation() {
@@ -170,28 +139,8 @@ public class Board implements Cloneable, Serializable, Comparable {
         return turn;
     }
 
-    //also checks calls endgame detection to change state.
-    public void toggleTurn() {
-        increaseTurnCount();
-        if (turn == Color.BLACK) {
-            for (boolean cond : enPassantConditionsWhite) {
-                cond = false;
-            }
-            turn = Color.WHITE;
-        } else {
-            for (boolean cond : enPassantConditionsBlack) {
-                cond = false;
-            }
-            turn = Color.BLACK;
-        }
-    }
-
     public int getTurnCounter() {
         return turnCounter;
-    }
-
-    public void increaseTurnCount() {
-        turnCounter++;
     }
 
     public ArrayList<Piece> getPiecesByColor(Color color) {
@@ -255,18 +204,86 @@ public class Board implements Cloneable, Serializable, Comparable {
                 .collect(toCollection(ArrayList::new));
     }
 
-    //adds last move to appropriate array to track threefold repetitions
-    public void addLastMove(Move move) {
-        Move archivedMove = (Move) move.clone();
-        moveHistory.add(archivedMove);
-    }
-
     public ArrayList<Move> getMoveHistory() {
         return moveHistory;
     }
 
     public Move getLastMove() {
         return moveHistory.get(moveHistory.size() - 1);
+    }
+
+    public void setState(BoardState state) {
+        this.state = state;
+    }
+
+    public void setSeed(int seed) {
+        this.seed = seed;
+    }
+
+    //adds last move to appropriate array to track threefold repetitions
+    public void addLastMove(Move move) {
+        Move archivedMove = (Move) move.clone();
+        moveHistory.add(archivedMove);
+    }
+
+    //also checks calls endgame detection to change state.
+    public void toggleTurn() {
+        increaseTurnCount();
+        if (turn == Color.BLACK) {
+            for (boolean cond : enPassantConditionsWhite) {
+                cond = false;
+            }
+            turn = Color.WHITE;
+        } else {
+            for (boolean cond : enPassantConditionsBlack) {
+                cond = false;
+            }
+            turn = Color.BLACK;
+        }
+    }
+
+    public void increaseTurnCount() {
+        turnCounter++;
+    }
+
+    /**
+     * the following methods are used by the scoring function in node class
+     */
+
+    //evaluates the protection of the king for a given color
+    public int kingProtectionValue(Color targetColor) {
+        Piece king = getPieceByName(PieceName.KING, targetColor);
+        int kingProtectionValue = 0;
+        int kingX = king.getX();
+        int kingY = king.getY();
+
+        //go through surrounding pieces
+        for (int i = kingX - 1; i <= kingX + 1; i++) {
+            for (int j = kingY - 1; j <= kingY + 1; j++) {
+                if (i > 7 || i < 0 || j > 7 || j < 0) {
+                    kingProtectionValue++;
+                } else if (getPieceByTile(i, j) != null && getPieceByTile(i, j).getColor() == targetColor) {
+                    kingProtectionValue++;
+                }
+            }
+        }
+
+        return kingProtectionValue;
+    }
+
+    //evaluates whether you have the right colored bishop to fight against opponents castling.
+    public int bishopValue(Color targetColor) {
+        int targetCastleState = targetColor == Color.WHITE ? blackCastleState : whiteCastleState;
+        if (targetCastleState != 0) {
+            Color bishopTileColor = !(!(orientation == 1 ^ targetColor == Color.WHITE) ^ targetCastleState == 1) ? Color.BLACK : Color.WHITE;
+            for (Piece piece : getUneatenPiecesByColor(targetColor)) {
+                int tileColorToInt = bishopTileColor == Color.WHITE ? 0 : -1;
+                if (piece.getPieceName() == PieceName.BISHOP && (piece.getX() + piece.getY()) % 2 == tileColorToInt) {
+                    return 1;
+                }
+            }
+        }
+        return 0;
     }
 
 
@@ -505,13 +522,15 @@ public class Board implements Cloneable, Serializable, Comparable {
         int pieceY = piece.getY();
         int signedXMove = destinationX - pieceX;
 
-        if (orientation == 1) {
+
+        if(orientation == 1){
             rookXMove = signedXMove < 0 ? 2 : -3; //short if true
-            rookX = signedXMove < 0 ? 0 : 7;
-        } else {
+        }else{
             rookXMove = signedXMove > 0 ? -2 : 3; //short if true
-            rookX = signedXMove > 0 ? 0 : 7;
         }
+
+        rookX = signedXMove < 0 ? 0 : 7;
+
         Piece rook = this.getPieceByTile(rookX, pieceY);
         rook.setTile(rookX + rookXMove, pieceY);
         setState(Math.abs(rookXMove) == 2 ? BoardState.CASTLING_SHORT : BoardState.CASTLING_LONG);
@@ -533,18 +552,10 @@ public class Board implements Cloneable, Serializable, Comparable {
         }
 
         if (piece.getPieceName() == PieceName.ROOK) {//turns off castling condition for a specific rook if it moves.
-            if (orientation == 1) {
-                if (piece.getX() == 0) {
-                    castlingConditions[0] = false;
-                } else {
-                    castlingConditions[2] = false;
-                }
+            if (piece.getX() == 0) {
+                castlingConditions[0] = false;
             } else {
-                if (piece.getX() == 7) {
-                    castlingConditions[0] = false;
-                } else {
-                    castlingConditions[2] = false;
-                }
+                castlingConditions[2] = false;
             }
         }
     }
@@ -909,30 +920,25 @@ public class Board implements Cloneable, Serializable, Comparable {
         boolean castleCondition;
         int castleX;
 
-        if (orientation == 1) {
-            castleCondition = signedXMove < 0 ? casltingConditions[0] : casltingConditions[2]; //short if true
-            castleX = signedXMove < 0 ? 0 : 7;
-        } else {
-            castleCondition = signedXMove > 0 ? casltingConditions[0] : casltingConditions[2];
-            castleX = signedXMove > 0 ? 0 : 7;
-        }
+        castleCondition = signedXMove < 0 ? casltingConditions[0] : casltingConditions[2];
+        castleX = signedXMove < 0 ? 0 : 7;
 
         if (yMove != 0) {
             return false;
         }
-        if (isPieceThreatened(piece)) { //is king checked
+        if (xMove != 2) {//is the king trying to move more than 2 squares
             return false;
         }
         if (!kingCondition || !castleCondition) {//has the king or the tower moved
-            return false;
-        }
-        if (xMove != 2) {//is the king trying to move more than 2 squares
             return false;
         }
         if (getPieceByTile(castleX, y) == null) {
             return false;
         }
         if (isPieceInTheWay(move)) {//is a piece between the king and the rook
+            return false;
+        }
+        if (isPieceThreatened(piece)) { //is king checked
             return false;
         }
         if (willKingBeChecked(new Move(piece, signedXMove / 2 + x, y))) {//will the king get checked in between movements.
@@ -1008,30 +1014,36 @@ public class Board implements Cloneable, Serializable, Comparable {
      */
 
     public void initializePieces() {
+        int whiteY = orientation == 1 ? 0 : 7;
+        int blackY = orientation == 1 ? 7 : 0;
+        int queenX = orientation == 1 ? 4 : 3;
+        int kingX = orientation == 1 ? 3 : 4;
         pieces = new ArrayList<Piece>();
         for (int i = 0; i < 8; i++) {
-            pieces.add(new Piece(Color.WHITE, PieceName.PAWN, i, 1));
+            int pawnY = orientation == 1 ? 1 : 6;
+            pieces.add(new Piece(Color.WHITE, PieceName.PAWN, i, pawnY));
         }
         for (int i = 0; i < 8; i++) {
-            pieces.add(new Piece(Color.BLACK, PieceName.PAWN, i, 6));
+            int pawnY = orientation == 1 ? 6 : 1;
+            pieces.add(new Piece(Color.BLACK, PieceName.PAWN, i, pawnY));
         }
-        pieces.add(new Piece(Color.WHITE, PieceName.ROOK, 0, 0));
-        pieces.add(new Piece(Color.WHITE, PieceName.KNIGHT, 1, 0));
-        pieces.add(new Piece(Color.WHITE, PieceName.BISHOP, 2, 0));
-        pieces.add(new Piece(Color.WHITE, PieceName.KING, 3, 0));
-        pieces.add(new Piece(Color.WHITE, PieceName.QUEEN, 4, 0));
-        pieces.add(new Piece(Color.WHITE, PieceName.BISHOP, 5, 0));
-        pieces.add(new Piece(Color.WHITE, PieceName.KNIGHT, 6, 0));
-        pieces.add(new Piece(Color.WHITE, PieceName.ROOK, 7, 0));
+        pieces.add(new Piece(Color.WHITE, PieceName.ROOK, 0, whiteY));
+        pieces.add(new Piece(Color.WHITE, PieceName.KNIGHT, 1, whiteY));
+        pieces.add(new Piece(Color.WHITE, PieceName.BISHOP, 2, whiteY));
+        pieces.add(new Piece(Color.WHITE, PieceName.KING, kingX, whiteY));
+        pieces.add(new Piece(Color.WHITE, PieceName.QUEEN, queenX, whiteY));
+        pieces.add(new Piece(Color.WHITE, PieceName.BISHOP, 5, whiteY));
+        pieces.add(new Piece(Color.WHITE, PieceName.KNIGHT, 6, whiteY));
+        pieces.add(new Piece(Color.WHITE, PieceName.ROOK, 7, whiteY));
 
-        pieces.add(new Piece(Color.BLACK, PieceName.ROOK, 0, 7));
-        pieces.add(new Piece(Color.BLACK, PieceName.KNIGHT, 1, 7));
-        pieces.add(new Piece(Color.BLACK, PieceName.BISHOP, 2, 7));
-        pieces.add(new Piece(Color.BLACK, PieceName.KING, 3, 7));
-        pieces.add(new Piece(Color.BLACK, PieceName.QUEEN, 4, 7));
-        pieces.add(new Piece(Color.BLACK, PieceName.BISHOP, 5, 7));
-        pieces.add(new Piece(Color.BLACK, PieceName.KNIGHT, 6, 7));
-        pieces.add(new Piece(Color.BLACK, PieceName.ROOK, 7, 7));
+        pieces.add(new Piece(Color.BLACK, PieceName.ROOK, 0, blackY));
+        pieces.add(new Piece(Color.BLACK, PieceName.KNIGHT, 1, blackY));
+        pieces.add(new Piece(Color.BLACK, PieceName.BISHOP, 2, blackY));
+        pieces.add(new Piece(Color.BLACK, PieceName.KING, kingX, blackY));
+        pieces.add(new Piece(Color.BLACK, PieceName.QUEEN, queenX, blackY));
+        pieces.add(new Piece(Color.BLACK, PieceName.BISHOP, 5, blackY));
+        pieces.add(new Piece(Color.BLACK, PieceName.KNIGHT, 6, blackY));
+        pieces.add(new Piece(Color.BLACK, PieceName.ROOK, 7, blackY));
     }
 
     public void initializePromotingTest() {

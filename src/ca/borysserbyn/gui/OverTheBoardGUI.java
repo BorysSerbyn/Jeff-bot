@@ -20,8 +20,8 @@ public class OverTheBoardGUI {
     private boolean isGameOver;
     private final JLabel message = new JLabel("Have fun!");
 
-    OverTheBoardGUI() {
-        board = new Board(1);
+    OverTheBoardGUI(int orientation) {
+        board = new Board(orientation);
         System.out.println("Main board: " + board);
         initializeGui();
     }
@@ -101,7 +101,6 @@ public class OverTheBoardGUI {
 
     public void clickLoadButton(ActionEvent e) {
         board = FileUtils.readFile();
-        board.getPieces().forEach(System.out::println);
         originButton = null;
         chessBoard.removeAll();
         initializeBoardSquares();

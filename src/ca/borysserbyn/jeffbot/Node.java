@@ -20,11 +20,9 @@ public class Node implements Comparable {
     private int valueSign;
     private ArrayList<Node> childNodes;
     private Node parentNode;
-    private long seed;
 
 
-    public Node(Board board, Node parentNode, int maxDepth, int maxBreadth, Color color, long seed) {
-        this.seed = seed;
+    public Node(Board board, Node parentNode, int maxDepth, int maxBreadth, Color color) {
         this.color = color;
         this.maxBreadth = maxBreadth;
         this.maxDepth = maxDepth;
@@ -102,10 +100,6 @@ public class Node implements Comparable {
         childNodes.add(childNode);
     }
 
-    public void removeAllChildren() {
-        childNodes = new ArrayList<Node>();
-    }
-
     /**
      * Score based on:
      * 1. game outcome determined at the termination of addNodes method
@@ -126,7 +120,16 @@ public class Node implements Comparable {
         }
         cascadedScore = childNodes.get(0).cascadedScore;
         for (Node childNode : childNodes) {
-            cascadedScore = childNode.cascadedScore * childNode.valueSign > cascadedScore * childNode.valueSign ? childNode.cascadedScore : cascadedScore;
+            if(valueSign < 0){
+                if(cascadedScore < childNode.cascadedScore){
+                    cascadedScore = childNode.cascadedScore;
+                }
+            }else{
+                if(cascadedScore > childNode.cascadedScore){
+                    cascadedScore = childNode.cascadedScore;
+                }
+            }
+            //cascadedScore = childNode.cascadedScore * childNode.valueSign > cascadedScore * childNode.valueSign ? cascadedScore : childNode.cascadedScore;
         }
     }
 
@@ -151,9 +154,12 @@ public class Node implements Comparable {
          */
         if (depth > 1) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
             //if this node already has children, use the cascaded score instead of the current one.
-            float adjustedScore = this.childNodes.isEmpty() ? currentScore : cascadedScore;
-            float filter = this.childNodes.isEmpty() ? 0 : 0;
+            float adjustedScore = childNodes.isEmpty() ? currentScore : cascadedScore;
+            float filter = childNodes.isEmpty() ? 0 : 0;
             for (Node siblingNode : parentNode.getChildNodes()) {
+                if(siblingNode.childNodes.isEmpty()){
+                    continue;
+                }
                 double siblingCascadedScore = siblingNode.cascadedScore;
                 //add the value to the adjusted score to keep investigating small losses.
                 if (siblingCascadedScore * valueSign > adjustedScore * valueSign + filter) {//is the current score worse than a siblings
@@ -171,7 +177,7 @@ public class Node implements Comparable {
             //aranges the legal boards so that the most relevant ones are used in the tree
             ArrayList<Board> legalBoards = board.getLegalBoardsByColor(board.getTurn());
             if (maxBreadth != -1) { //dont need to do this if were picking all boards
-                Collections.shuffle(legalBoards, new Random(seed));
+                Collections.shuffle(legalBoards, new Random(board.getSeed()));
                 Collections.sort(legalBoards);
             }
             //reverses legal boards at layer 0 if the last pass wasnt successful
@@ -186,7 +192,7 @@ public class Node implements Comparable {
                 if (legalBoard.getState() == BoardState.PROMOTING_AND_EATING || legalBoard.getState() == BoardState.PROMOTING_PAWN) {//can the board promote a pawn?
                     legalBoard.promotePawn(legalBoard.getPieceByClone(legalBoard.getLastMove().moveToPiece()), PieceName.QUEEN);
                 }
-                Node childNode = new Node(legalBoard, this, maxDepth, maxBreadth, color, seed);
+                Node childNode = new Node(legalBoard, this, maxDepth, maxBreadth, color);
                 childNode.addNodes(depth + 1, adjustedMaxDepth, false);
                 this.addChild(childNode);
             }

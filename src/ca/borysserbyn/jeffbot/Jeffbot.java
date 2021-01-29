@@ -3,6 +3,7 @@ package ca.borysserbyn.jeffbot;
 import ca.borysserbyn.*;
 import ca.borysserbyn.Color;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.ForkJoinPool;
 
@@ -13,13 +14,11 @@ public class Jeffbot {
     private Board board;
     private Color color;
     private Node currentNode;
-    private long seed;
 
-    public Jeffbot(Color color, long seed) {
-        this.seed = seed;
+    public Jeffbot(Color color, Board board) {
         this.color = color;
-        this.board = new Board(1);
-        currentNode = new Node(board, null, maxDepth, maxBreadth, color, seed);
+        this.board = (Board) board.clone();
+        currentNode = new Node(board, null, maxDepth, maxBreadth, color);
         buildTree(currentNode, false);
     }
 
@@ -40,7 +39,7 @@ public class Jeffbot {
     }
 
     public void resetCurrentNode() {
-        currentNode = new Node(board, null, maxDepth, maxBreadth, color, seed);
+        currentNode = new Node(board, null, maxDepth, maxBreadth, color);
     }
 
     public Node getCurrentNode() {
@@ -59,27 +58,27 @@ public class Jeffbot {
     }
 
     public void printThoughtProcess(Node bestMoveNode) {
-//        currentNode.getChildNodes().forEach(System.out::println);
-//        System.out.println();
-//        bestMoveNode.getChildNodes().forEach(System.out::println);
-//        System.out.println();
-//        System.out.println(bestMoveNode.getChildNodes().get(0).getChildNodes().isEmpty());
-//        System.out.println("Jeffs move: " + bestMoveNode);
-
         Node bestNode = bestMoveNode;
         while (true) {
+            ArrayList<Node> siblings = bestNode.getParentNode().getChildNodes();
+            Collections.sort(siblings);
+            for (Node child : siblings) {
+                System.out.print(child.getCascadedScore() + ", ");
+            }
+            System.out.println();
             System.out.println(bestNode);
+            System.out.println();
             if (bestNode.getChildNodes().isEmpty()) {
                 break;
             }
-            Collections.sort(currentNode.getChildNodes());
+            Collections.sort(bestNode.getChildNodes());
             bestNode = bestNode.getChildNodes().get(0);
         }
     }
 
     public void secondTry() {
         System.out.println("Reseting the tree, no good moves found");
-        currentNode.removeAllChildren();
+        resetCurrentNode();
         buildTree(currentNode, true);
         Collections.sort(currentNode.getChildNodes());
     }
@@ -94,18 +93,17 @@ public class Jeffbot {
         if (moveNode == null) {//is there a node in the tree corresponding the the move?
             System.out.println("Couldnt find node: " + move + " in tree.");
             Board clonedBoard = (Board) board.clone();
-            moveNode = new Node(clonedBoard, currentNode, maxDepth, maxBreadth, color, seed);
-            currentNode.addChild(moveNode);
+            resetCurrentNode();
+        }else{
+            currentNode = moveNode;
         }
-
-        currentNode = moveNode;
         buildTree(currentNode, false);
     }
 
     public void buildTree(Node node, boolean secondTry) {
-        node.addNodes(0, maxDepth, false);
-//        TreeTask rootTask = new TreeTask(node, 0, secondTry);
-//        pool.invoke(rootTask);
+        //node.addNodes(0, maxDepth, false);
+        TreeTask rootTask = new TreeTask(node, 0, secondTry);
+        pool.invoke(rootTask);
         node.getChildNodes().forEach(Node::inheritChildScore);
         node.setParentNode(null);
         System.gc();
