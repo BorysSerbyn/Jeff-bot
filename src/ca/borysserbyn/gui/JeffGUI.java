@@ -21,12 +21,12 @@ public class JeffGUI {
     private TileButton originButton;
     private TileButton[][] tileButtons = new TileButton[8][8];
     private JScrollPane graveyardScroll;
-    private int orientation = 0;
+    private int orientation = 1;
     private Board board;
     private boolean isGameOver;
     private Jeffbot jeff;
     private Color jeffColor = Color.WHITE;
-    private final JLabel message = new JLabel("Jeff is ready");
+    private final JLabel message = new JLabel("");
 
     JeffGUI() {
         initializeGui();
