@@ -21,7 +21,7 @@ public class JeffGUI {
     private TileButton originButton;
     private TileButton[][] tileButtons = new TileButton[8][8];
     private JScrollPane graveyardScroll;
-    private int orientation = 1;
+    private int orientation = 0;
     private Board board;
     private boolean isGameOver;
     private Jeffbot jeff;

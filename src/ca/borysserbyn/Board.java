@@ -505,6 +505,9 @@ public class Board implements Cloneable, Serializable, Comparable {
             setState(BoardState.PROMOTING_PAWN);
         }
         if (targetPiece != null) {//if a piece is to be eaten
+            if(targetPiece.getPieceName() == PieceName.ROOK){//cant castle on that side if piece is eaten
+                updateCastlingConditions(targetPiece);
+            }
             targetPiece.discardPiece();
             setState(BoardState.PIECE_EATEN);
             if (piece.getPieceName() == PieceName.PAWN && isPawnPromotionLegal(move)) {//is eating while promoting?
