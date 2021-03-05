@@ -1,0 +1,86 @@
+package ca.borysserbyn.mechanics;
+
+import java.util.ArrayList;
+
+public enum PieceName {
+    PAWN,
+    KNIGHT,
+    BISHOP,
+    ROOK,
+    QUEEN,
+    KING;
+
+    private static final float[][] pawnPositionValue = new float[][]{
+            {1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f},
+            {1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f},
+            {1.00f,1.00f,1.00f,1.25f,1.25f,1.00f,1.00f,1.00f},
+            {1.00f,1.00f,1.00f,1.50f,1.50f,1.00f,1.00f,1.00f},
+            {1.00f,1.00f,1.00f,1.75f,1.75f,1.00f,1.00f,1.00f},
+            {1.00f,1.00f,1.00f,1.75f,1.75f,1.00f,1.00f,1.00f},
+            {1.00f,1.00f,1.00f,1.75f,1.75f,1.00f,1.00f,1.00f},
+            {1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f}};
+    private static final float[][] knightPositionValue = new float[][]{
+            {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f},
+            {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f},
+            {3.00f,3.00f,3.25f,3.00f,3.00f,3.25f,3.00f,3.00f},
+            {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f},
+            {3.00f,3.00f,3.00f,3.50f,3.50f,3.00f,3.00f,3.00f},
+            {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f},
+            {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f},
+            {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f}};
+    private static final float[][] kingPositionValue = new float[][]{
+            {0.25f,0.50f,0.01f,0.25f,0.01f,0.025f,0.3f,0.25f},
+            {0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f},
+            {0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f},
+            {0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f},
+            {0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f},
+            {0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f},
+            {0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f},
+            {0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f}};
+    private static final float[][] queenPositionValue = new float[][]{
+            {9.00f,9.00f,9.00f,9.25f,9.25f,9.25f,9.00f,9.00f},
+            {9.00f,9.00f,9.00f,9.00f,9.00f,9.00f,9.00f,9.00f},
+            {9.00f,9.00f,9.00f,9.00f,9.00f,9.00f,9.00f,9.00f},
+            {9.00f,9.00f,9.00f,9.00f,9.00f,9.00f,9.00f,9.00f},
+            {9.00f,9.00f,9.00f,9.00f,9.00f,9.00f,9.00f,9.00f},
+            {9.00f,9.00f,9.00f,9.00f,9.00f,9.00f,9.00f,9.00f},
+            {9.00f,9.00f,9.00f,9.00f,9.00f,9.00f,9.00f,9.00f},
+            {9.00f,9.00f,9.00f,9.00f,9.00f,9.00f,9.00f,9.00f}};
+    private static final float[][] bishopPositionValue = new float[][]{
+            {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f},
+            {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f},
+            {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f},
+            {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f},
+            {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f},
+            {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f},
+            {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f},
+            {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f}};
+    private static final float[][] rookPositionValue = new float[][]{
+            {5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f},
+            {5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f},
+            {5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f},
+            {5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f},
+            {5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f},
+            {5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f},
+            {5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f},
+            {5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f,5.00f}};
+
+    public float[][] getValueArray(){
+        switch (this) {
+            case BISHOP:
+                return bishopPositionValue;
+            case KNIGHT:
+                return knightPositionValue;
+            case PAWN:
+                return pawnPositionValue;
+            case ROOK:
+                return rookPositionValue;
+            case KING:
+                return kingPositionValue;
+            case QUEEN:
+                return queenPositionValue;
+            default:
+                return null;
+        }
+    }
+}
