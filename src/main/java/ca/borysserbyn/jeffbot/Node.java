@@ -84,7 +84,7 @@ public class Node implements Comparable {
         return pieceValue;
     }
 
-    public Game getBoard() {
+    public Game getGame() {
         return game;
     }
 
@@ -176,7 +176,7 @@ public class Node implements Comparable {
             }
         } else {
             //aranges the legal boards so that the most relevant ones are used in the tree
-            ArrayList<Game> legalGames = game.getLegalGamesByColor(game.getTurn());
+            ArrayList<Game> legalGames = game.generateLegalGamesByColor(game.getTurn());
             if (maxBreadth != -1) { //dont need to do this if were picking all boards
                 Collections.shuffle(legalGames, new Random(game.getSeed()));
                 Collections.sort(legalGames);

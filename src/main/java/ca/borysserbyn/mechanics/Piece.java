@@ -103,7 +103,7 @@ public class Piece implements Cloneable, Serializable {
             case KNIGHT:
                 return MoveGenUtils.generateKnightMoves(game, this);
             case PAWN:
-                return null;
+                return MoveGenUtils.generatePawnMoves(game, this);
             case ROOK:
                 return MoveGenUtils.generateRookMoves(game, this);
             case KING:

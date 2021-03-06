@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class JeffGUI {
-    private StaticGUI staticGUI;
     private final JPanel gui = new JPanel(new BorderLayout(3, 3));
     private JPanel chessBoard;
     private JPanel graveyardPanel;
@@ -40,9 +39,6 @@ public class JeffGUI {
         return gui;
     }
 
-    public StaticGUI getStaticGUI() {
-        return staticGUI;
-    }
 
     //Handles pieces/squares being clicked.
     public void clickTile(ActionEvent e) {
@@ -99,16 +95,16 @@ public class JeffGUI {
 
     //Handles bot movement.
     public void jeffMove() {
-        System.out.println("These are the random seeds " + game.getSeed() + " " + jeff.getCurrentNode().getBoard().getSeed());
+        System.out.println("These are the random seeds " + game.getSeed() + " " + jeff.getCurrentNode().getGame().getSeed());
         message.setText("Jeff is thinking.");
         Move bestMoveNodeBoard = jeff.findBestMove();
         Move bestMoveGUIBoard = game.getMoveByClone(bestMoveNodeBoard);
-        Move bestMoveJeffBoard = jeff.getBoard().getMoveByClone(bestMoveNodeBoard);
+        Move bestMoveJeffBoard = jeff.getGame().getMoveByClone(bestMoveNodeBoard);
         game.movePiece(bestMoveGUIBoard);
 
         if (game.getState() == GameState.PROMOTING_AND_EATING || game.getState() == GameState.PROMOTING_PAWN) {
             game.promotePawn(bestMoveGUIBoard.getPiece(), PieceName.QUEEN);
-            jeff.getBoard().promotePawn(bestMoveJeffBoard.getPiece(), PieceName.QUEEN);
+            jeff.getGame().promotePawn(bestMoveJeffBoard.getPiece(), PieceName.QUEEN);
             bestMoveNodeBoard.getPiece().setPieceName(PieceName.QUEEN);
         }
         System.out.println(game.getState());
@@ -136,8 +132,8 @@ public class JeffGUI {
                 "Pawn promotion", JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
         PieceName chosenPieceName = PieceName.valueOf(choice);
         game.promotePawn(selectedButton.getPiece(), chosenPieceName);
-        Piece jeffPiece = jeff.getBoard().getPieceByClone(clonedPiece);
-        jeff.getBoard().promotePawn(jeffPiece, chosenPieceName);
+        Piece jeffPiece = jeff.getGame().getPieceByClone(clonedPiece);
+        jeff.getGame().promotePawn(jeffPiece, chosenPieceName);
         clonedPiece.setPieceName(chosenPieceName);
         selectedButton.updateIcon();
     }
@@ -231,8 +227,6 @@ public class JeffGUI {
     public final void initializeGui() {
         game = new Game(orientation);
         jeff = new Jeffbot(jeffColor, game);
-        this.staticGUI = new StaticGUI(jeff.getBoard());
-        System.out.println("Jeff's board" + jeff.getBoard());
 
         isGameOver = false;
         gui.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -348,7 +342,6 @@ public class JeffGUI {
             sendPieceToGraveyard(deadPiece);
         }
 
-        staticGUI.initializePieces();
         gui.revalidate();
     }
 }

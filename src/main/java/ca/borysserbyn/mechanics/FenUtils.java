@@ -51,11 +51,12 @@ public class FenUtils {
         game.getCastlingConditionsBlack()[1] = true;
         game.getCastlingConditionsBlack()[2] = splitFen[2].contains("q") ? true : false;
 
+        int letterValue = splitFen[3].charAt(0);
+        int index = letterValue-97;
+
         if(splitFen[3].contains("3")){
-            int index = Character.getNumericValue(splitFen[3].charAt(1));
             game.getEnPassantConditionsWhite()[index] = true;
         }else if(splitFen[3].contains("6")){
-            int index = Character.getNumericValue(splitFen[3].charAt(1));
             game.getEnPassantConditionsBlack()[index] = true;
         }
 

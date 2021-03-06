@@ -367,8 +367,8 @@ public class Game implements Cloneable, Serializable, Comparable {
     /**
      * The following methods are useful for the AI
      */
-    public ArrayList<Game> getLegalGamesByColor(Color color) {
-        ArrayList<Move> legalMoves = this.getLegalMovesByColor(color);
+    public ArrayList<Game> generateLegalGamesByColor(Color color) {
+        ArrayList<Move> legalMoves = this.generateLegalMovesByColor(color);
         ArrayList<Game> legalGames = new ArrayList<>();
         for (Move legalMove : legalMoves) {
             Game clonedGame = (Game) this.clone();
@@ -379,23 +379,10 @@ public class Game implements Cloneable, Serializable, Comparable {
         return legalGames;
     }
 
-    public ArrayList<Move> getLegalMovesByColor(Color color) {
+    public ArrayList<Move> generateLegalMovesByColor(Color color) {
         ArrayList<Move> legalMovesList = new ArrayList<>();
         for (Piece piece : getUneatenPiecesByColor(color)) {
-            legalMovesList.addAll(getLegalMovesByPiece(piece));
-        }
-        return legalMovesList;
-    }
-
-    public ArrayList<Move> getLegalMovesByPiece(Piece piece) {
-        ArrayList<Move> legalMovesList = new ArrayList<>();
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                Move move = new Move(piece, i, j);
-                if (isMoveLegal(move)) {
-                    legalMovesList.add(move);
-                }
-            }
+            legalMovesList.addAll(piece.generateMoves(this));
         }
         return legalMovesList;
     }
@@ -1115,7 +1102,11 @@ public class Game implements Cloneable, Serializable, Comparable {
         Piece piece = move.getPiece();
         Game clonedGame = (Game) this.clone();
         Piece clonedPiece = clonedGame.getPieceByClone(piece);
-        clonedGame.movePiece(new Move(clonedPiece, move.getX(), move.getY()));
+        if(move.getX() == -1){
+            clonedPiece.discardPiece();
+        }else{
+            clonedGame.movePiece(new Move(clonedPiece, move.getX(), move.getY()));
+        }
         Piece clonedKing = clonedGame.getPieceByName(PieceName.KING, piece.getColor());
         return clonedGame.isPieceThreatened(clonedKing);
     }
