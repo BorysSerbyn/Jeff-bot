@@ -96,20 +96,20 @@ public class Piece implements Cloneable, Serializable {
         return pieceName.getValueArray()[y][x];
     }
 
-    public ArrayList generateMoves(Piece[][] board){
+    public ArrayList generateMoves(Game game){
         switch (pieceName) {
             case BISHOP:
-                return MoveGenUtils.generateBiShopMoves(board, this);
+                return MoveGenUtils.generateBiShopMoves(game, this);
             case KNIGHT:
-                return null;
+                return MoveGenUtils.generateKnightMoves(game, this);
             case PAWN:
                 return null;
             case ROOK:
-                return null;
+                return MoveGenUtils.generateRookMoves(game, this);
             case KING:
-                return null;
+                return MoveGenUtils.generateKingMoves(game, this);
             case QUEEN:
-                return null;
+                return MoveGenUtils.generateQueenMoves(game, this);
             default:
                 return null;
         }

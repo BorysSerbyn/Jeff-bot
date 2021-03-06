@@ -14,7 +14,8 @@ public class Game implements Cloneable, Serializable, Comparable {
     private final int orientation; //1 if white on the first row
     private Color turn;
     private int turnCounter;
-    private Piece[][] board;
+    private int fiftyMoveClock;
+    private Piece[][] board = new Piece[8][8];
 
     private int[] graveyard;
     private int whiteCastleState; // 0: not castled, 1: short, 2: long
@@ -23,6 +24,7 @@ public class Game implements Cloneable, Serializable, Comparable {
     private boolean[] castlingConditionsBlack;
     private boolean[] enPassantConditionsWhite;
     private boolean[] enPassantConditionsBlack;
+
 
     private ArrayList<Move> moveHistory;
     private GameState state;
@@ -49,6 +51,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         this.castlingConditionsBlack = new boolean[]{true, true, true};
         this.enPassantConditionsWhite = new boolean[]{false, false, false, false, false, false, false, false};
         this.enPassantConditionsBlack = new boolean[]{false, false, false, false, false, false, false, false};
+        buildBoard();
     }
 
     public Game(ArrayList<Piece> pieces, int orientation, Color turn, int turnCounter, int[] graveyard, int whiteCastleState, int blackCastleState, boolean[] castlingConditionsWhite, boolean[] castlingConditionsBlack, boolean[] enPassantConditionsWhite, boolean[] enPassantConditionsBlack, ArrayList<Move> moveHistory, GameState state, int seed) {
@@ -90,6 +93,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         clonedGame.enPassantConditionsWhite = copyArrayOfBools(enPassantConditionsWhite);
         clonedGame.enPassantConditionsBlack = copyArrayOfBools(enPassantConditionsBlack);
         clonedGame.pieces = clonedPieces;
+        clonedGame.buildBoard();
 
         return clonedGame;
     }
@@ -114,6 +118,26 @@ public class Game implements Cloneable, Serializable, Comparable {
             copiedArray[i] = targetArray[i];
         }
         return copiedArray;
+    }
+
+    public boolean[] getEnPassantConditionsWhite() {
+        return enPassantConditionsWhite;
+    }
+
+    public boolean[] getEnPassantConditionsBlack() {
+        return enPassantConditionsBlack;
+    }
+
+    public int getFiftyMoveClock() {
+        return fiftyMoveClock;
+    }
+
+    public boolean[] getCastlingConditionsWhite() {
+        return castlingConditionsWhite;
+    }
+
+    public boolean[] getCastlingConditionsBlack() {
+        return castlingConditionsBlack;
     }
 
     public Piece[][] getBoard() {
@@ -219,6 +243,42 @@ public class Game implements Cloneable, Serializable, Comparable {
 
     public void setSeed(int seed) {
         this.seed = seed;
+    }
+
+    public void setPieces(ArrayList<Piece> pieces) {
+        this.pieces = pieces;
+    }
+
+    public void setTurn(Color turn) {
+        this.turn = turn;
+    }
+
+    public void setTurnCounter(int turnCounter) {
+        this.turnCounter = turnCounter;
+    }
+
+    public void setFiftyMoveClock(int fiftyMoveClock) {
+        this.fiftyMoveClock = fiftyMoveClock;
+    }
+
+    public void setBoard(Piece[][] board) {
+        this.board = board;
+    }
+
+    public void setCastlingConditionsWhite(boolean[] castlingConditionsWhite) {
+        this.castlingConditionsWhite = castlingConditionsWhite;
+    }
+
+    public void setCastlingConditionsBlack(boolean[] castlingConditionsBlack) {
+        this.castlingConditionsBlack = castlingConditionsBlack;
+    }
+
+    public void setEnPassantConditionsWhite(boolean[] enPassantConditionsWhite) {
+        this.enPassantConditionsWhite = enPassantConditionsWhite;
+    }
+
+    public void setEnPassantConditionsBlack(boolean[] enPassantConditionsBlack) {
+        this.enPassantConditionsBlack = enPassantConditionsBlack;
     }
 
     //adds last move to appropriate array to track threefold repetitions
@@ -490,6 +550,14 @@ public class Game implements Cloneable, Serializable, Comparable {
     }
 
 
+    public void buildBoard(){
+        for(Piece piece: pieces){
+            if(piece.getX() != -1){
+                board[piece.getX()][piece.getY()] = piece;
+            }
+        }
+    }
+
     /**
      * Manage moving pieces (any kind of movement)
      */
@@ -498,9 +566,14 @@ public class Game implements Cloneable, Serializable, Comparable {
         int destinationX = move.getX();
         int destinationY = move.getY();
 
+        fiftyMoveClock++;
         Piece targetPiece = getPieceByTile(destinationX, destinationY);
         setState(GameState.NEUTRAL);
         updateEnPassantConditions(piece.getColor());
+
+        if(piece.getPieceName() == PieceName.PAWN || targetPiece != null){ //reset 50 move clock if rules are met
+            fiftyMoveClock = 0;
+        }
 
         if (piece.getPieceName() == PieceName.PAWN && isPawnPromotionLegal(move)) {
             setState(GameState.PROMOTING_PAWN);
@@ -530,6 +603,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         addLastMove(move);
         piece.setTile(destinationX, destinationY);
         toggleTurn();
+        buildBoard();
     }
 
     public void castlingMove(Move move) {
@@ -743,6 +817,22 @@ public class Game implements Cloneable, Serializable, Comparable {
             return true;
         } else {
             return false;
+        }
+    }
+
+    public int pawnOrientationByColor(Color color){
+        if (orientation == 1) {
+            if (color == Color.BLACK) {
+                return -1;
+            } else {
+                return 1;
+            }
+        } else {
+            if (color == Color.WHITE) {
+                return 1;
+            } else {
+                return -1;
+            }
         }
     }
 
@@ -1038,8 +1128,8 @@ public class Game implements Cloneable, Serializable, Comparable {
     public void initializePieces() {
         int whiteY = orientation == 1 ? 0 : 7;
         int blackY = orientation == 1 ? 7 : 0;
-        int queenX = orientation == 1 ? 4 : 3;
-        int kingX = orientation == 1 ? 3 : 4;
+        int queenX = orientation == 1 ? 3 : 4;
+        int kingX = orientation == 1 ? 4 : 3;
         pieces = new ArrayList<Piece>();
         for (int i = 0; i < 8; i++) {
             int pawnY = orientation == 1 ? 1 : 6;

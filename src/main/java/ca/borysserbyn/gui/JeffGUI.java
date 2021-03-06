@@ -298,9 +298,9 @@ public class JeffGUI {
                 if ((jj % 2 == 1 && ii % 2 == 1)
                         //) {
                         || (jj % 2 == 0 && ii % 2 == 0)) {
-                    b.setBackground(java.awt.Color.WHITE);
-                } else {
                     b.setBackground(java.awt.Color.BLACK);
+                } else {
+                    b.setBackground(java.awt.Color.WHITE);
                 }
                 tileButtons[jj][ii] = b;
             }
@@ -317,10 +317,10 @@ public class JeffGUI {
         }
         // fill the black non-pawn piece row
         for (int ii = 0; ii < 8; ii++) {
-            for (int jj = 0; jj < 8; jj++) {
+            for (int jj = 7; jj >= 0; jj--) {
                 switch (jj) {
-                    case 0:
-                        chessBoard.add(new JLabel("" + (ii),
+                    case 7:
+                        chessBoard.add(new JLabel("" + Math.abs(ii-7),
                                 SwingConstants.CENTER));
                     default:
                         chessBoard.add(tileButtons[jj][ii]);
