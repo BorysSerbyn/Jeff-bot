@@ -24,7 +24,7 @@ public class NewGameGUI extends JFrame{
     }
 
     public void overTheButtonClick(ActionEvent e){
-        OverTheBoardGUI overTheBoardGUI = new OverTheBoardGUI(0);
+        OverTheBoardGUI overTheBoardGUI = new OverTheBoardGUI(1);
         createJFrame(overTheBoardGUI.getGui());
         this.dispose();
     }

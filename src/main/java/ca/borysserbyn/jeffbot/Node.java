@@ -153,7 +153,7 @@ public class Node implements Comparable {
          * 1. prunes branch if a better alternative has already been calculated
          * 2. prunes branches where score has been bad for 2 consecutive turns
          */
-        if (depth > 1) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
+        if (depth > 1 && false) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
             //if this node already has children, use the cascaded score instead of the current one.
             float adjustedScore = childNodes.isEmpty() ? currentScore : cascadedScore;
             float filter = childNodes.isEmpty() ? 0 : 0;

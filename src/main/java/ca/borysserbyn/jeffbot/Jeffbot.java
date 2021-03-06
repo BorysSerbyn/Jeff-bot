@@ -1,5 +1,6 @@
 package ca.borysserbyn.jeffbot;
 
+import ca.borysserbyn.mechanics.FenUtils;
 import ca.borysserbyn.mechanics.Game;
 import ca.borysserbyn.mechanics.Color;
 import ca.borysserbyn.mechanics.Move;
@@ -10,7 +11,7 @@ import java.util.concurrent.ForkJoinPool;
 
 public class Jeffbot {
     private static int maxDepth = 5;
-    private static int maxBreadth = 20;
+    private static int maxBreadth = -1;
     private static final ForkJoinPool pool = new ForkJoinPool();
     private Game game;
     private Color color;
@@ -25,7 +26,7 @@ public class Jeffbot {
 
     public void setBoard(Game game) {
         this.game = game;
-        resetCurrentNode();
+        resetCurrentNode(game);
     }
 
     public Game getGame() {
@@ -39,8 +40,8 @@ public class Jeffbot {
                 .orElse(null);
     }
 
-    public void resetCurrentNode() {
-        currentNode = new Node(game, null, maxDepth, maxBreadth, color);
+    public void resetCurrentNode(Game clonedGame) {
+        currentNode = new Node(clonedGame, null, maxDepth, maxBreadth, color);
     }
 
     public Node getCurrentNode() {
@@ -49,6 +50,7 @@ public class Jeffbot {
 
     public Move findBestMove() {
         Collections.sort(currentNode.getChildNodes());
+        String fen = FenUtils.createFenFromGame(game);
         Node bestMoveNode = currentNode.getChildNodes().get(0);
         if (bestMoveNode.getCascadedScore() + 1 < currentNode.getCurrentScore()) {
             secondTry();
@@ -79,7 +81,7 @@ public class Jeffbot {
 
     public void secondTry() {
         System.out.println("Reseting the tree, no good moves found");
-        resetCurrentNode();
+        resetCurrentNode(game);
         buildTree(currentNode, true);
         Collections.sort(currentNode.getChildNodes());
     }
@@ -94,7 +96,7 @@ public class Jeffbot {
         if (moveNode == null) {//is there a node in the tree corresponding the the move?
             System.out.println("Couldnt find node: " + move + " in tree.");
             Game clonedGame = (Game) game.clone();
-            resetCurrentNode();
+            resetCurrentNode(clonedGame);
         }else{
             currentNode = moveNode;
         }
@@ -105,8 +107,8 @@ public class Jeffbot {
         node.addNodes(0, maxDepth, false);
         /*TreeTask rootTask = new TreeTask(node, 0, secondTry);
         pool.invoke(rootTask);
-        node.getChildNodes().forEach(Node::inheritChildScore);
+        node.getChildNodes().forEach(Node::inheritChildScore);*/
         node.setParentNode(null);
-        System.gc();*/
+        System.gc();
     }
 }

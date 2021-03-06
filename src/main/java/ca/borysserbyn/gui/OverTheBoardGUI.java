@@ -191,11 +191,11 @@ public class OverTheBoardGUI {
                             SwingConstants.CENTER));
         }
         // fill the black non-pawn piece row
-        for (int ii = 0; ii < 8; ii++) {
-            for (int jj = 7; jj >= 0; jj--) {
+        for (int ii = 7; ii >= 0; ii--) {
+            for (int jj = 0; jj < 8; jj++) {
                 switch (jj) {
-                    case 7:
-                        chessBoard.add(new JLabel("" + Math.abs(ii-7),
+                    case 0:
+                        chessBoard.add(new JLabel("" + Math.abs(ii),
                                 SwingConstants.CENTER));
                     default:
                         chessBoard.add(tileButtons[jj][ii]);

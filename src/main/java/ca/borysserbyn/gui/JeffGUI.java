@@ -20,11 +20,11 @@ public class JeffGUI {
     private TileButton originButton;
     private TileButton[][] tileButtons = new TileButton[8][8];
     private JScrollPane graveyardScroll;
-    private int orientation = 0;
+    private int orientation = 1;
     private Game game;
     private boolean isGameOver;
     private Jeffbot jeff;
-    private Color jeffColor = Color.WHITE;
+    private Color jeffColor = Color.BLACK;
     private final JLabel message = new JLabel("");
 
     JeffGUI() {
@@ -77,7 +77,7 @@ public class JeffGUI {
             initializePieces();
             endGameMessage();
 
-            System.out.println(game.getState());
+            System.out.println("turn: " + game.getTurnCounter() + " state: " + game.getState());
             if (game.getState() == GameState.PROMOTING_AND_EATING || game.getState() == GameState.PROMOTING_PAWN) {
                 displayPromotionWindow(selectedButton, clonedPiece);
             }
@@ -86,7 +86,7 @@ public class JeffGUI {
                 jeff.updateTree(clonedMove);
                 jeffMove();
                 long end_time = System.nanoTime();
-                System.out.println(game.getTurnCounter() + " " + (end_time - start_time) / 1e6);
+                System.out.println("computing time " + (end_time - start_time) / 1e6);
             }
         }
 
@@ -277,7 +277,6 @@ public class JeffGUI {
     }
 
     public final void initializeBoardSquares() {
-
         Insets buttonMargin = new Insets(0, 0, 0, 0);
         for (int ii = 0; ii < tileButtons.length; ii++) {
             for (int jj = 0; jj < tileButtons[ii].length; jj++) {
@@ -310,11 +309,11 @@ public class JeffGUI {
                             SwingConstants.CENTER));
         }
         // fill the black non-pawn piece row
-        for (int ii = 0; ii < 8; ii++) {
-            for (int jj = 7; jj >= 0; jj--) {
+        for (int ii = 7; ii >= 0; ii--) {
+            for (int jj = 0; jj < 8; jj++) {
                 switch (jj) {
-                    case 7:
-                        chessBoard.add(new JLabel("" + Math.abs(ii-7),
+                    case 0:
+                        chessBoard.add(new JLabel("" + Math.abs(ii),
                                 SwingConstants.CENTER));
                     default:
                         chessBoard.add(tileButtons[jj][ii]);
@@ -323,7 +322,6 @@ public class JeffGUI {
             }
         }
     }
-
     public final void initializePieces() {
         for (int i = 0; i < tileButtons.length; i++) {
             for (int j = 0; j < tileButtons[i].length; j++) {

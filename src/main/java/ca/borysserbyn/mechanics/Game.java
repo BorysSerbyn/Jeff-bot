@@ -463,8 +463,8 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (canPieceMove(king)) {
             return false;
         }
-        for (Piece piece : getUneatenPieces()) {
-            if (piece.getColor() == turn && canPieceMove(piece)) {
+        for (Piece piece : getUneatenPiecesByColor(turn)) {
+            if (canPieceMove(piece)) {
                 return false;
             }
         }
@@ -525,15 +525,10 @@ public class Game implements Cloneable, Serializable, Comparable {
     }
 
     public boolean canPieceMove(Piece piece) {
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-
-                if (isMoveLegal(new Move(piece, i, j))) {
-                    return true;
-                }
-            }
+        if(piece.generateMoves(this).isEmpty()){
+            return false;
         }
-        return false;
+        return true;
     }
 
 
