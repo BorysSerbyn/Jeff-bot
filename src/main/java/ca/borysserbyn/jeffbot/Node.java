@@ -134,6 +134,26 @@ public class Node implements Comparable {
         }
     }
 
+
+    public void addNodesTest(int depth, Game game){
+        if(depth >= maxDepth){
+            return;
+        }
+
+        ArrayList<Game> legalGames = game.generateLegalGamesByColor(game.getTurn());
+        for (int i = 0; i < maxDepth; i++) {
+            Game legalGame = legalGames.get(i);
+            //promotes pawn to queen every time
+            if (legalGame.getState() == GameState.PROMOTING_AND_EATING || legalGame.getState() == GameState.PROMOTING_PAWN) {//can the board promote a pawn?
+                legalGame.promotePawn(legalGame.getPieceByClone(legalGame.getLastMove().moveToPiece()), PieceName.QUEEN);
+            }
+            Node childNode = new Node(legalGame, this, maxDepth, maxBreadth, color);
+            childNode.addNodes(depth + 1, maxDepth, false);
+            this.addChild(childNode);
+        }
+
+    }
+
     //recurive method that adds children to root node given certain specifications;
     public void addNodes(int depth, int adjustedMaxDepth, boolean secondTry) {
         if (depth >= adjustedMaxDepth || game.isGameOver()) {//is game over or desired depth reached?
@@ -153,7 +173,7 @@ public class Node implements Comparable {
          * 1. prunes branch if a better alternative has already been calculated
          * 2. prunes branches where score has been bad for 2 consecutive turns
          */
-        if (depth > 1 && false) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
+        if (depth > 1) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
             //if this node already has children, use the cascaded score instead of the current one.
             float adjustedScore = childNodes.isEmpty() ? currentScore : cascadedScore;
             float filter = childNodes.isEmpty() ? 0 : 0;

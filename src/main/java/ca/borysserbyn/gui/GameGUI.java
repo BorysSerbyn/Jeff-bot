@@ -1,11 +1,15 @@
 package ca.borysserbyn.gui;
 
+import ca.borysserbyn.mechanics.Game;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-public class NewGameGUI extends JFrame{
+public class GameGUI extends JFrame{
 
-    public NewGameGUI(String title){
+    JPanel newGamePanel = new JPanel();
+
+    public GameGUI(String title){
         super(title);
         initializeNewGameGUI();
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -17,28 +21,26 @@ public class NewGameGUI extends JFrame{
 
 
     public void jeffButtonClick(ActionEvent e){
-        JeffGUI jeffGUI = new JeffGUI();
-        createJFrame(jeffGUI.getGui());
-        //createJFrame(jeffGUI.getStaticGUI().getGui());
-        this.dispose();
+        this.remove(newGamePanel);
+        JeffPanel jeffPanel = new JeffPanel(new Game(1));
+        this.add(jeffPanel);
     }
 
     public void overTheButtonClick(ActionEvent e){
-        OverTheBoardGUI overTheBoardGUI = new OverTheBoardGUI(1);
-        createJFrame(overTheBoardGUI.getGui());
-        this.dispose();
+        this.remove(newGamePanel);
+        ChessPanel chessPanel = new ChessPanel(new Game(1));
+        this.add(chessPanel);
     }
 
 
     public void initializeNewGameGUI(){
-        JPanel pannel = new JPanel();
         JButton jeffButton = new JButton("Play against Jeff.");
         JButton overTheButton = new JButton("Play over the board.");
         jeffButton.addActionListener(this::jeffButtonClick);
         overTheButton.addActionListener(this::overTheButtonClick);
-        pannel.add(jeffButton);
-        pannel.add(overTheButton);
-        this.add(pannel);
+        newGamePanel.add(jeffButton);
+        newGamePanel.add(overTheButton);
+        this.add(newGamePanel);
     }
 
     public static final void createJFrame(JComponent jComponent){
@@ -57,7 +59,7 @@ public class NewGameGUI extends JFrame{
         Runnable r = new Runnable() {
             @Override
             public void run() {
-                NewGameGUI newGame = new NewGameGUI("New Game");
+                GameGUI newGame = new GameGUI("New Game");
             }
         };
         SwingUtilities.invokeLater(r);

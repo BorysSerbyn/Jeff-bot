@@ -11,7 +11,7 @@ import java.util.concurrent.ForkJoinPool;
 
 public class Jeffbot {
     private static int maxDepth = 5;
-    private static int maxBreadth = -1;
+    private static int maxBreadth = 20;
     private static final ForkJoinPool pool = new ForkJoinPool();
     private Game game;
     private Color color;
@@ -104,10 +104,10 @@ public class Jeffbot {
     }
 
     public void buildTree(Node node, boolean secondTry) {
-        node.addNodes(0, maxDepth, false);
-        /*TreeTask rootTask = new TreeTask(node, 0, secondTry);
+        //node.addNodes(0, maxDepth, false);
+        TreeTask rootTask = new TreeTask(node, 0, secondTry);
         pool.invoke(rootTask);
-        node.getChildNodes().forEach(Node::inheritChildScore);*/
+        node.getChildNodes().forEach(Node::inheritChildScore);
         node.setParentNode(null);
         System.gc();
     }

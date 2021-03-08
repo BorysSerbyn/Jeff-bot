@@ -1,5 +1,7 @@
 package ca.borysserbyn.mechanics;
 
+import ca.borysserbyn.gui.TestPanel;
+
 import java.util.ArrayList;
 
 public abstract class MoveGenUtils {
@@ -14,23 +16,23 @@ public abstract class MoveGenUtils {
     public static final int[][] reverseEatingPawnArray = new int[][]{{-1, 1}, {-1, -1}};
     public static final int[][] castlingArray = new int[][]{{2,0}, {-2, 0}};
 
-    public static ArrayList generateRookMoves(Game game, Piece piece) {
+    public static ArrayList<Move> generateRookMoves(Game game, Piece piece) {
         return generateSimpleMoves(game, piece, lineArray, false);
     }
 
-    public static ArrayList generateBiShopMoves(Game game, Piece piece) {
+    public static ArrayList<Move> generateBiShopMoves(Game game, Piece piece) {
         return generateSimpleMoves(game, piece, diagonalArray, false);
     }
 
-    public static ArrayList generateQueenMoves(Game game, Piece piece) {
+    public static ArrayList<Move> generateQueenMoves(Game game, Piece piece) {
         return generateSimpleMoves(game, piece, slidingArray, false);
     }
 
-    public static ArrayList generateKnightMoves(Game game, Piece piece) {
+    public static ArrayList<Move> generateKnightMoves(Game game, Piece piece) {
         return generateSimpleMoves(game, piece, knightArray, true);
     }
 
-    public static ArrayList generateKingMoves(Game game, Piece piece) {
+    public static ArrayList<Move> generateKingMoves(Game game, Piece piece) {
         ArrayList<Move> moveList = new ArrayList<>();
         moveList.addAll(generateSimpleMoves(game, piece, slidingArray, true));
         moveList.addAll(generateCastlingMoves(game, piece));
@@ -57,7 +59,7 @@ public abstract class MoveGenUtils {
 
 
 
-    public static ArrayList generateSimpleMoves(Game game, Piece piece, int[][] directionArray, boolean limitedMobibilty) {
+    public static ArrayList<Move> generateSimpleMoves(Game game, Piece piece, int[][] directionArray, boolean limitedMobibilty) {
         Move discardMove = new Move(piece, -1, -1);
         boolean isDangerous;
         if (piece.getPieceName() == PieceName.KING) {
@@ -67,6 +69,7 @@ public abstract class MoveGenUtils {
         }
 
         ArrayList<Move> moveList = new ArrayList<>();
+
         for (int[] transformation : directionArray) {
             int tempX = piece.getX();
             int tempY = piece.getY();
@@ -78,6 +81,21 @@ public abstract class MoveGenUtils {
                 }
                 Piece targetPiece = game.getBoard()[tempX][tempY];
                 if (targetPiece != null && targetPiece.getColor() == piece.getColor()) { //is friendly piece on square
+
+                    if(targetPiece.getPieceName() == PieceName.KNIGHT && targetPiece.getColor() == Color.BLACK){
+                        if(piece.getPieceName() == PieceName.KNIGHT && piece.getColor() == Color.BLACK){
+                            TestPanel testPanel = TestPanel.getSingletonInstance();
+                            testPanel.setGame(game);
+                            testPanel.hilightTileRed(piece.getX(), piece.getY());
+                            testPanel.hilightTileGreen(targetPiece.getX(), targetPiece.getY());
+                            try{
+                                Thread.sleep(2000);
+                            }catch(Exception e){
+                                System.out.println("fuckie");
+                            }
+                        }
+                    }
+
                     break;
                 }
                 Move currentMove = new Move(piece, tempX, tempY);
@@ -96,7 +114,7 @@ public abstract class MoveGenUtils {
         return moveList;
     }
 
-    public static ArrayList generateSimplePawnMoves(Game game, Piece piece, int[][] directionArray, boolean isDangerous){
+    public static ArrayList<Move> generateSimplePawnMoves(Game game, Piece piece, int[][] directionArray, boolean isDangerous){
         ArrayList<Move> moveList = new ArrayList<>();
 
         for (int[] transformation : directionArray) {
@@ -109,6 +127,19 @@ public abstract class MoveGenUtils {
             }
             boolean pawnTest = game.isPawnMove1Legal(move);
             boolean moveCheck = Math.abs(transformation[1]) == 1 ? game.isPawnMove1Legal(move) : game.isPawnMove2Legal(move);
+
+            if(Math.abs(transformation[1]) == 1) {
+                TestPanel testPanel = TestPanel.getSingletonInstance();
+                testPanel.setGame(game);
+                testPanel.hilightTileRed(piece.getX(), piece.getY());
+                testPanel.hilightTileBlue(tempX, tempY);
+                try{
+                    Thread.sleep(1000);
+                }catch(Exception e){
+                    System.out.println("fuckie");
+                }
+            }
+
             if (moveCheck) {
                 if (isDangerous) {
                     if (!game.willKingBeChecked(move)) {
@@ -122,7 +153,7 @@ public abstract class MoveGenUtils {
         return moveList;
     }
 
-    public static ArrayList generateEnPassantMoves(Game game, Piece piece, int[][] directionArray) {
+    public static ArrayList<Move> generateEnPassantMoves(Game game, Piece piece, int[][] directionArray) {
         ArrayList<Move> moveList = new ArrayList<>();
 
         for (int[] transformation : directionArray) {
@@ -142,7 +173,7 @@ public abstract class MoveGenUtils {
         return moveList;
     }
 
-    public static ArrayList generatePawnEatingMoves(Game game, Piece piece, int[][] directionArray, boolean isDangerous) {
+    public static ArrayList<Move> generatePawnEatingMoves(Game game, Piece piece, int[][] directionArray, boolean isDangerous) {
         ArrayList<Move> moveList = new ArrayList<>();
 
         for (int[] transformation : directionArray) {
@@ -166,7 +197,7 @@ public abstract class MoveGenUtils {
         return moveList;
     }
 
-    public static ArrayList generateCastlingMoves(Game game, Piece piece){
+    public static ArrayList<Move> generateCastlingMoves(Game game, Piece piece){
         ArrayList<Move> moveList = new ArrayList<>();
         for (int[] transformation : castlingArray) {
             int tempX = piece.getX() + transformation[0];

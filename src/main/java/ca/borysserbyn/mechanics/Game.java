@@ -383,6 +383,20 @@ public class Game implements Cloneable, Serializable, Comparable {
         ArrayList<Move> legalMovesList = new ArrayList<>();
         for (Piece piece : getUneatenPiecesByColor(color)) {
             legalMovesList.addAll(piece.generateMoves(this));
+            //legalMovesList.addAll(getLegalMovesByPiece(piece));
+        }
+        return legalMovesList;
+    }
+
+    public ArrayList<Move> getLegalMovesByPiece(Piece piece) {
+        ArrayList<Move> legalMovesList = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                Move move = new Move(piece, i, j);
+                if (isMoveLegal(move)) {
+                    legalMovesList.add(move);
+                }
+            }
         }
         return legalMovesList;
     }
@@ -1094,15 +1108,15 @@ public class Game implements Cloneable, Serializable, Comparable {
 
     //checks if a move will cause its own king to be checked.
     public boolean willKingBeChecked(Move move) {
-        Piece piece = move.getPiece();
         Game clonedGame = (Game) this.clone();
-        Piece clonedPiece = clonedGame.getPieceByClone(piece);
+        Move clonedMove = clonedGame.getMoveByClone(move);
+        Piece clonedPiece = clonedMove.getPiece();
         if(move.getX() == -1){
             clonedPiece.discardPiece();
         }else{
-            clonedGame.movePiece(new Move(clonedPiece, move.getX(), move.getY()));
+            clonedGame.movePiece(clonedMove);
         }
-        Piece clonedKing = clonedGame.getPieceByName(PieceName.KING, piece.getColor());
+        Piece clonedKing = clonedGame.getPieceByName(PieceName.KING, clonedPiece.getColor());
         return clonedGame.isPieceThreatened(clonedKing);
     }
 

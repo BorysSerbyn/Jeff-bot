@@ -4,9 +4,12 @@ import com.google.gson.Gson;
 
 import javax.swing.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 public class FileUtils {
     private static File savedGamesDir = new File("saved_games");
+    private static File savedTrees = new File("saved_trees");
 
     public FileUtils() {
     }
@@ -29,6 +32,37 @@ public class FileUtils {
                 System.out.println(e.getMessage());
             }
         }
+    }
+
+
+    public static void writeToFile(String moves) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setCurrentDirectory(savedTrees);
+        if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            try{
+                FileOutputStream fileOutputStream = new FileOutputStream(file);
+                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
+                bw.write(moves);
+                bw.close();
+            }catch(IOException e){
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+    public static String readTreeFile(){
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setCurrentDirectory(savedTrees);
+        if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            try{
+                return Files.readString(file.toPath(), StandardCharsets.US_ASCII);
+            }catch(IOException e){
+                System.out.println(e.getMessage());
+            }
+        }
+        return null;
     }
 
     public static Game readFile(){

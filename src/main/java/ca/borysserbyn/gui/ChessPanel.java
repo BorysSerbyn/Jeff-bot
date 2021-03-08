@@ -1,5 +1,4 @@
 package ca.borysserbyn.gui;
-
 import ca.borysserbyn.mechanics.*;
 
 import javax.swing.*;
@@ -8,30 +7,24 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
-public class OverTheBoardGUI {
-    private JPanel gui;
-    private JPanel chessBoard;
-    private JPanel graveyardPanel;
-    private TileButton originButton;
-    private TileButton[][] tileButtons = new TileButton[8][8];
-    private JScrollPane graveyardScroll;
-    private Game game;
-    private boolean isGameOver;
-    private final JLabel message = new JLabel("Have fun!");
+public class ChessPanel extends JPanel {
+    protected JPanel chessBoard;
+    protected JPanel graveyardPanel;
+    protected TileButton originButton;
+    protected TileButton[][] tileButtons = new TileButton[8][8];
+    protected JScrollPane graveyardScroll;
+    protected Game game;
+    protected boolean isGameOver;
+    protected final JLabel message = new JLabel("Have fun!");
+    protected JToolBar tools;
 
-    OverTheBoardGUI(int orientation) {
-        game = new Game(orientation);
-        System.out.println("Main board: " + game);
+    public ChessPanel(Game game) {
+        super(new BorderLayout(3, 3));
+        this.game = game;
+        tools = new JToolBar();
         initializeGui();
-    }
-
-    public final JComponent getChessBoard() {
-        return chessBoard;
-    }
-
-    public final JComponent getGui() {
-        return gui;
     }
 
 
@@ -57,7 +50,7 @@ public class OverTheBoardGUI {
         }
     }
 
-    //Handles piece movement in the gui and calls it in the logic of the board.
+    //Handles piece movement in the this and calls it in the logic of the board.
     public void movePiece(TileButton selectedButton, TileButton originButton) {
         Piece originPiece = originButton.getPiece();
         Move move = new Move(originButton.getPiece(), selectedButton.getXOnBoard(), selectedButton.getYOnBoard());
@@ -73,40 +66,84 @@ public class OverTheBoardGUI {
         this.originButton = null;
     }
 
-    //handles end game detection
-    public void endGameMessage() {
-        isGameOver = game.isGameOver();
-        if (game.getState() == GameState.CHECKMATE) {
-            JOptionPane.showMessageDialog(gui, "Checkmate!");
-        } else if (game.getState() == GameState.STALEMATE) {
-            JOptionPane.showMessageDialog(gui, "Stalemate!");
-
-        }
-    }
-
     //Popup that lets you choose which piece to promote a back rank pawn to
     public void displayPromotionWindow(TileButton selectedButton) {
         String[] choices = {"QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"};
-        String choice = (String) JOptionPane.showInputDialog(gui, "Choose a piece to promote to.",
+        String choice = (String) JOptionPane.showInputDialog(this, "Choose a piece to promote to.",
                 "Pawn promotion", JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
         PieceName chosenPieceName = PieceName.valueOf(choice);
         game.promotePawn(selectedButton.getPiece(), chosenPieceName);
         selectedButton.updateIcon();
 
     }
+    //handles end game detection
+    public void endGameMessage() {
+        isGameOver = game.isGameOver();
+        if (game.getState() == GameState.CHECKMATE) {
+            JOptionPane.showMessageDialog(this, "Checkmate!");
+        } else if (game.getState() == GameState.STALEMATE) {
+            JOptionPane.showMessageDialog(this, "Stalemate!");
+
+        }
+    }
+
+
+    //Popup that lets you choose which piece to promote a back rank pawn to
+    public void displayPromotionWindow(TileButton selectedButton, Piece clonedPiece) {
+        String[] choices = {"QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"};
+        String choice = (String) JOptionPane.showInputDialog(this, "Choose a piece to promote to.",
+                "Pawn promotion", JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
+        PieceName chosenPieceName = PieceName.valueOf(choice);
+        game.promotePawn(selectedButton.getPiece(), chosenPieceName);
+    }
 
     public void clickSaveButton(ActionEvent e) {
         FileUtils.writeToFile(game);
     }
 
-    public void clickLoadButton(ActionEvent e) {
-        game = FileUtils.readFile();
+    public void clickRematchButton(ActionEvent e) {
+        game = new Game(game.getOrientation());
+        isGameOver = false;
         originButton = null;
         chessBoard.removeAll();
         initializeBoardSquares();
         initializePieces();
-        gui.revalidate();
-        gui.repaint();
+        this.revalidate();
+        this.repaint();
+    }
+
+    public void clickLoadButton(ActionEvent e) {
+        Game newGame = FileUtils.readFile();
+        if(newGame == null){
+            return;
+        }
+        game = newGame;
+        isGameOver = false;
+        originButton = null;
+        chessBoard.removeAll();
+        initializeBoardSquares();
+        initializePieces();
+        this.revalidate();
+        this.repaint();
+    }
+
+
+    public void clickUndoButton(ActionEvent e) {
+        ArrayList<Move> moveHistory = game.getMoveHistory();
+        Game newGame = new Game(game.getOrientation());
+        newGame.setSeed(game.getSeed());
+        for (int i = 0; i < moveHistory.size() - 1; i++) {
+            Move move = newGame.getMoveByClone(moveHistory.get(i));
+            newGame.movePiece(move);
+        }
+        game = newGame;
+        isGameOver = false;
+        originButton = null;
+        chessBoard.removeAll();
+        initializeBoardSquares();
+        initializePieces();
+        this.revalidate();
+        this.repaint();
     }
 
     //Sends piece to the gui graveyard (not the boards)
@@ -118,18 +155,21 @@ public class OverTheBoardGUI {
         graveyardPanel.repaint();
     }
 
-
     /*
-    Initializes the gui with a new board
+    Initializes the this with a new board
      */
     public final void initializeGui() {
-        // set up the main gui
+        // set up the main this
         isGameOver = false;
-        gui = new JPanel(new BorderLayout(3, 3));
-        gui.setBorder(new EmptyBorder(5, 5, 5, 5));
-        JToolBar tools = new JToolBar();
+        this.setBorder(new EmptyBorder(5, 5, 5, 5));
         tools.setFloatable(false);
-        gui.add(tools, BorderLayout.PAGE_START);
+        this.add(tools, BorderLayout.PAGE_START);
+        JButton rematchButton = new JButton("Rematch");
+        rematchButton.addActionListener(this::clickRematchButton);
+        tools.add(rematchButton);
+        JButton undoButton = new JButton("Undo");
+        undoButton.addActionListener(this::clickUndoButton);
+        tools.add(undoButton);
         JButton saveButton = new JButton("Save");
         saveButton.addActionListener(this::clickSaveButton);
         tools.add(saveButton);
@@ -137,23 +177,25 @@ public class OverTheBoardGUI {
         loadButton.addActionListener(this::clickLoadButton);
         tools.add(loadButton);
         tools.addSeparator();
-        tools.add(new JButton("Resign")); // TODO - add functionality!
+        JButton helpButton = new JButton("Help");
+        tools.add(helpButton);
         tools.addSeparator();
         tools.add(message);
+        originButton = null;
 
 
         originButton = null;
 
-        //add the graveyard to the gui
+        //add the graveyard to the this
         graveyardPanel = new JPanel();
         graveyardScroll = new JScrollPane(graveyardPanel);
         graveyardScroll.setPreferredSize(new Dimension(512, 100));
-        gui.add(graveyardScroll, BorderLayout.SOUTH);
+        this.add(graveyardScroll, BorderLayout.SOUTH);
 
-        //add the chessboard to the gui
+        //add the chessboard to the this
         chessBoard = new JPanel(new GridLayout(0, 9));
         chessBoard.setBorder(new LineBorder(java.awt.Color.BLACK));
-        gui.add(chessBoard);
+        this.add(chessBoard);
 
         initializeBoardSquares();
         initializePieces();
