@@ -590,7 +590,8 @@ public class Game implements Cloneable, Serializable, Comparable {
             if(targetPiece.getPieceName() == PieceName.ROOK){//cant castle on that side if piece is eaten
                 updateCastlingConditions(targetPiece);
             }
-            targetPiece.discardPiece();
+            //targetPiece.discardPiece();
+            discardPiece(targetPiece);
             setState(GameState.PIECE_EATEN);
             if (piece.getPieceName() == PieceName.PAWN && isPawnPromotionLegal(move)) {//is eating while promoting?
                 setState(GameState.PROMOTING_AND_EATING);
@@ -601,7 +602,8 @@ public class Game implements Cloneable, Serializable, Comparable {
             targetConditions[piece.getX()] = true;
         }
         if (piece.getPieceName() == PieceName.PAWN && isPawnEnPassantLegal(move)) {//is en passant legal?
-            getPieceByTile(destinationX, piece.getY()).discardPiece();
+            //getPieceByTile(destinationX, piece.getY()).discardPiece();
+            discardPiece(getPieceByTile(destinationX, piece.getY()));
             setState(GameState.EN_PASSANT);
         }
         if (piece.getPieceName() == PieceName.KING && isCastlingLegal(move)) {//is the piece a king and castling?
@@ -1146,8 +1148,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         Move clonedMove = clonedGame.getMoveByClone(move);
         Piece clonedPiece = clonedMove.getPiece();
         if(move.getX() == -1){
-            clonedPiece.discardPiece();
-            clonedGame.buildBoard();
+            clonedGame.discardPiece(clonedPiece);
         }else{
             clonedGame.movePiece(clonedMove);
         }

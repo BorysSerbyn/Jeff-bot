@@ -143,6 +143,7 @@ public class MoveGenUtilsTest {
     void generateKingMovesTest2() {
         Piece testKing = new Piece(Color.WHITE, PieceName.KING,4,0);
         String fenStr = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
         int[][] expectedMoveArray = new int[][]{};
         ArrayList<Move> expectedMovesList = new ArrayList<>();
         ArrayList<Move> moveList = testKing.generateMoves(FenUtils.createGameFromFen(fenStr));

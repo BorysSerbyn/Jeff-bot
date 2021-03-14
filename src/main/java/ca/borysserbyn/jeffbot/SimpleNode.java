@@ -1,5 +1,7 @@
 package ca.borysserbyn.jeffbot;
 
+import ca.borysserbyn.gui.GameGUI;
+import ca.borysserbyn.gui.TestPanel;
 import ca.borysserbyn.mechanics.*;
 
 import java.util.ArrayList;
@@ -54,7 +56,7 @@ public class SimpleNode {
         }
 
         if(depth == 1){
-            System.out.println(move.toSFNotation() + ": " + positionsFound);
+            //System.out.println(move.toSFNotation() + ": " + positionsFound);
         }
 
         return positionsFound;
@@ -102,9 +104,13 @@ public class SimpleNode {
             long end_time = System.nanoTime();
             System.out.println("Depth: " + i + " Result: " + positionsFound + " Time: " + (end_time - start_time) / 1e6);
         }*/
+/*
+        TestPanel testPanel = TestPanel.getSingletonInstance();
+        GameGUI.createJFrame(testPanel);*/
 
         for (int i = 1; i <= 5; i++) {
-            Game game = new Game(1);
+            Game game = FenUtils.createGameFromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
             SimpleNode node = new SimpleNode(i, Color.WHITE, null);
             long start_time = System.nanoTime();
             int positionsFound = node.addNodes(0, game);

@@ -76,13 +76,16 @@ public abstract class MoveGenUtils {
             while (true) {
                 tempX += transformation[0];
                 tempY += transformation[1];
+
                 if (isOutOfBounds(tempX, tempY)) {
                     break;
                 }
-                Piece targetPiece = game.getBoard()[tempX][tempY];
+                //Piece targetPiece = game.getBoard()[tempX][tempY];
+                Piece targetPiece = game.getPieceByTile(tempX, tempY);
                 if (targetPiece != null && targetPiece.getColor() == piece.getColor()) { //is friendly piece on square
                     break;
                 }
+
                 Move currentMove = new Move(piece, tempX, tempY);
                 if (isDangerous) {
                     if (!game.willKingBeChecked(currentMove)) {

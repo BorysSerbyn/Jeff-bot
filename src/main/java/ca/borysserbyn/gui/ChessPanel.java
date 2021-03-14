@@ -251,6 +251,7 @@ public class ChessPanel extends JPanel {
         for (int i = 0; i < tileButtons.length; i++) {
             for (int j = 0; j < tileButtons[i].length; j++) {
                 TileButton pieceButton = tileButtons[i][j];
+                //Piece piece = game.getBoard()[i][j];
                 Piece piece = game.getPieceByTile(i, j);
                 if (piece != null) {
                     pieceButton.setPiece(piece);

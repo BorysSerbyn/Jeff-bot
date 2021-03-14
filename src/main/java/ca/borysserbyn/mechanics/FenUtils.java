@@ -64,6 +64,7 @@ public class FenUtils {
         int fullMoves = Integer.valueOf(splitFen[4]);
         int turnCount = game.getTurn() == Color.WHITE ? (fullMoves-1)/2 : fullMoves/2;
         game.setTurnCounter(turnCount);
+        game.buildBoard();
         return game;
     }
 
