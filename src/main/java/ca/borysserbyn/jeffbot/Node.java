@@ -189,6 +189,7 @@ public class Node implements Comparable {
                 }
             }
         }
+
         //tree traversal
         if (!this.getChildNodes().isEmpty()) {//does this node already have children?
             for (Node childNode : this.getChildNodes()) {

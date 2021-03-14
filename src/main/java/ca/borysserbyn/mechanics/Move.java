@@ -25,6 +25,12 @@ public class Move implements Cloneable, Serializable {
         return move;
     }
 
+    public String toSFNotation(){
+        char pieceLetter = (char) (piece.getX() + 97);
+        char targetLetter = (char) (x + 97);
+        return "" + pieceLetter + (piece.getY() + 1) + targetLetter + (y+1);
+    }
+
     @Override
     public String toString() {
         return piece.toString() + " TO--> " + "(" + x + ", " + y + ")";

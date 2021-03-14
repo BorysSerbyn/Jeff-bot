@@ -13,7 +13,7 @@ public abstract class MoveGenUtils {
     public static final int[][] simplePawnArray = new int[][]{{0, 1}, {0, 2}};
     public static final int[][] reverseSimplePawnArray = new int[][]{{0, -1}, {0, -2}};
     public static final int[][] eatingPawnArray = new int[][]{{1, 1}, {-1, 1}};
-    public static final int[][] reverseEatingPawnArray = new int[][]{{-1, 1}, {-1, -1}};
+    public static final int[][] reverseEatingPawnArray = new int[][]{{1, -1}, {-1, -1}};
     public static final int[][] castlingArray = new int[][]{{2,0}, {-2, 0}};
 
     public static ArrayList<Move> generateRookMoves(Game game, Piece piece) {
@@ -81,21 +81,6 @@ public abstract class MoveGenUtils {
                 }
                 Piece targetPiece = game.getBoard()[tempX][tempY];
                 if (targetPiece != null && targetPiece.getColor() == piece.getColor()) { //is friendly piece on square
-
-                    if(targetPiece.getPieceName() == PieceName.KNIGHT && targetPiece.getColor() == Color.BLACK){
-                        if(piece.getPieceName() == PieceName.KNIGHT && piece.getColor() == Color.BLACK){
-                            TestPanel testPanel = TestPanel.getSingletonInstance();
-                            testPanel.setGame(game);
-                            testPanel.hilightTileRed(piece.getX(), piece.getY());
-                            testPanel.hilightTileGreen(targetPiece.getX(), targetPiece.getY());
-                            try{
-                                Thread.sleep(2000);
-                            }catch(Exception e){
-                                System.out.println("fuckie");
-                            }
-                        }
-                    }
-
                     break;
                 }
                 Move currentMove = new Move(piece, tempX, tempY);
@@ -107,6 +92,9 @@ public abstract class MoveGenUtils {
                     moveList.add(currentMove);
                 }
                 if (limitedMobibilty) {
+                    break;
+                }
+                if (targetPiece != null && targetPiece.getColor() != piece.getColor()) { //is enemy piece on square? then stop
                     break;
                 }
             }
@@ -128,7 +116,7 @@ public abstract class MoveGenUtils {
             boolean pawnTest = game.isPawnMove1Legal(move);
             boolean moveCheck = Math.abs(transformation[1]) == 1 ? game.isPawnMove1Legal(move) : game.isPawnMove2Legal(move);
 
-            if(Math.abs(transformation[1]) == 1) {
+            /*if(Math.abs(transformation[1]) == 1) {
                 TestPanel testPanel = TestPanel.getSingletonInstance();
                 testPanel.setGame(game);
                 testPanel.hilightTileRed(piece.getX(), piece.getY());
@@ -138,7 +126,7 @@ public abstract class MoveGenUtils {
                 }catch(Exception e){
                     System.out.println("fuckie");
                 }
-            }
+            }*/
 
             if (moveCheck) {
                 if (isDangerous) {

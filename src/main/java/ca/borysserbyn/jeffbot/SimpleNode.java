@@ -29,13 +29,13 @@ public class SimpleNode {
         childNodes.add(childNode);
     }
 
-    public boolean isPromoting(Game game){
+    public boolean isPromoting(Game game) {
         return game.getState() == GameState.PROMOTING_AND_EATING || game.getState() == GameState.PROMOTING_PAWN;
     }
 
 
-    public int addNodes(int depth, Game game){
-        if(depth >= maxDepth){
+    public int addNodes(int depth, Game game) {
+        if (depth >= maxDepth) {
             return 1;
         }
         ArrayList<Move> allMovesList = game.generateLegalMovesByColor(game.getTurn());
@@ -52,15 +52,23 @@ public class SimpleNode {
             positionsFound += childNode.addNodes(depth + 1, clonedGame);
             this.addChild(childNode);
         }
+
+        if(depth == 1){
+            System.out.println(move.toSFNotation() + ": " + positionsFound);
+        }
+
         return positionsFound;
     }
 
-    public String addNodesMoves(int depth, Game game){
-        if(depth >= maxDepth){
+    public String addNodes2(int depth, Game game) {
+        if (depth >= maxDepth) {
             return move.toString();
         }
         ArrayList<Move> allMovesList = game.generateLegalMovesByColor(game.getTurn());
         String positionsFound = "";
+        if (move != null) {
+            positionsFound += move.toString()+ ":     ";
+        }
         for (Move possibleMove : allMovesList) {
             Game clonedGame = (Game) game.clone();
             Move clonedMove = clonedGame.getMoveByClone(possibleMove);
@@ -71,26 +79,37 @@ public class SimpleNode {
             }
             SimpleNode childNode = new SimpleNode(maxDepth, color, possibleMove);
 
-            positionsFound += childNode.addNodesMoves(depth + 1, clonedGame) + ", ";
+            positionsFound += childNode.addNodes2(depth + 1, clonedGame) + ", ";
             this.addChild(childNode);
         }
         positionsFound += "\n";
         return positionsFound;
     }
 
-    public static void main(String[] args){
-        Game game = new Game(1);
-        SimpleNode node = new SimpleNode(2, Color.WHITE, null);
-        String moves = node.addNodesMoves(0, game);
-        FileUtils.writeToFile(moves);
+    public static void main(String[] args) {
+//        Game game = FenUtils.createGameFromFen("rnbg1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+//        SimpleNode node = new SimpleNode(2, Color.WHITE, null);
+//        String moves = node.addNodes2(0, game);
+//        FileUtils.writeToFile(moves);
 
-//        for (int i = 1; i <= 5; i++) {
-//            Game game = new Game(1);
-//            SimpleNode node = new SimpleNode(i, Color.WHITE, null);
-//            long start_time = System.nanoTime();
-//            int positionsFound = node.addNodes(0, game);
-//            long end_time = System.nanoTime();
-//            System.out.println("Depth: " + i + " Result: " + positionsFound + " Time: " + (end_time - start_time) / 1e6);
-//        }
+        //Game game = FenUtils.createGameFromFen("rnbg1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+
+        /*for (int i = 1; i <= 4; i++) {
+            Game game = FenUtils.createGameFromFen("rnQq1k1r/pp2bppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R b KQ - 1 8");
+            SimpleNode node = new SimpleNode(i, Color.WHITE, null);
+            long start_time = System.nanoTime();
+            int positionsFound = node.addNodes(0, game);
+            long end_time = System.nanoTime();
+            System.out.println("Depth: " + i + " Result: " + positionsFound + " Time: " + (end_time - start_time) / 1e6);
+        }*/
+
+        for (int i = 1; i <= 5; i++) {
+            Game game = new Game(1);
+            SimpleNode node = new SimpleNode(i, Color.WHITE, null);
+            long start_time = System.nanoTime();
+            int positionsFound = node.addNodes(0, game);
+            long end_time = System.nanoTime();
+            System.out.println("Depth: " + i + " Result: " + positionsFound + " Time: " + (end_time - start_time) / 1e6);
+        }
     }
 }

@@ -1,6 +1,8 @@
 package ca.borysserbyn.mechanics;
 
 
+import ca.borysserbyn.gui.TestPanel;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Random;
@@ -175,6 +177,11 @@ public class Game implements Cloneable, Serializable, Comparable {
     }
 
     public Piece getPieceByTile(int x, int y) {
+        /*if(x == -1){
+            return null;
+        }
+        return board[x][y];*/
+
         for (Piece piece : pieces) {
             if (piece.getX() == x && piece.getY() == y) {
                 return piece;
@@ -547,6 +554,11 @@ public class Game implements Cloneable, Serializable, Comparable {
 
 
     public void buildBoard(){
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                board[i][j] = null;
+            }
+        }
         for(Piece piece: pieces){
             if(piece.getX() != -1){
                 board[piece.getX()][piece.getY()] = piece;
@@ -599,6 +611,11 @@ public class Game implements Cloneable, Serializable, Comparable {
         addLastMove(move);
         piece.setTile(destinationX, destinationY);
         toggleTurn();
+        buildBoard();
+    }
+
+    public void discardPiece(Piece piece){
+        piece.discardPiece();
         buildBoard();
     }
 
@@ -1043,6 +1060,9 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (getPieceByTile(castleX, y) == null) {
             return false;
         }
+        if(getPieceByTile(move.getX(), move.getY()) != null){ //is there a piece where king is trying to move
+            return false;
+        }
         if (isPieceInTheWay(move)) {//is a piece between the king and the rook
             return false;
         }
@@ -1064,6 +1084,19 @@ public class Game implements Cloneable, Serializable, Comparable {
         for (int i = 1; i < Math.abs(delta); i++) {
             int y = piece.getY() + i * (int) Math.signum(deltaY);
             int x = piece.getX() + i * (int) Math.signum(deltaX);
+
+            /*if(piece.getPieceName() == PieceName.KING && piece.getColor() == Color.WHITE){
+                TestPanel testPanel = TestPanel.getSingletonInstance();
+                testPanel.setGame(this);
+                testPanel.hilightTileRed(piece.getX(), piece.getY());
+                testPanel.hilightTileBlue(move.getX(), move.getY());
+                try{
+                    Thread.sleep(2000);
+                }catch(Exception e){
+                    System.out.println("fuckie");
+                }
+            }*/
+
             if (getPieceByTile(x, y) != null) {
                 return true;
             }
@@ -1074,6 +1107,7 @@ public class Game implements Cloneable, Serializable, Comparable {
     //checks if a piece is threatened
     public boolean isPieceThreatened(Piece piece) {
         Color color = piece.getColor() == Color.WHITE ? Color.BLACK : Color.WHITE;
+
         for (Piece enemyPiece : getUneatenPiecesByColor(color)) {
             Move move = new Move(enemyPiece, piece.getX(), piece.getY());
             if (enemyPiece.getPieceName() == PieceName.QUEEN && isQueenMoveLegal(move)) {
@@ -1113,6 +1147,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         Piece clonedPiece = clonedMove.getPiece();
         if(move.getX() == -1){
             clonedPiece.discardPiece();
+            clonedGame.buildBoard();
         }else{
             clonedGame.movePiece(clonedMove);
         }
