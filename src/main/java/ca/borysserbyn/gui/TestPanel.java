@@ -36,6 +36,18 @@ public class TestPanel extends ChessPanel{
         return singletonInstance;
     }
 
+    public static TestPanel pauseAndView(Game game){
+        TestPanel testPanel = TestPanel.getSingletonInstance();
+        testPanel.setGame(game);
+        try{
+            Thread.sleep(3000);
+        }catch(Exception e){
+            System.out.println("test panel pause and view failed");
+            e.printStackTrace();
+        }
+        return testPanel;
+    }
+
     public void setGame(Game newGame){
         game = newGame;
         chessBoard.removeAll();

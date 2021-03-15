@@ -41,13 +41,9 @@ public class Game implements Cloneable, Serializable, Comparable {
         this.turn = Color.WHITE;
         this.whiteCastleState = 0;
         this.blackCastleState = 0;
+        this.fiftyMoveClock = 0;
         seed = new Random().nextInt();
         initializePieces();
-        //initializeJeff();
-        //initializePromotingTest();
-        //initializeStalemateTest();
-        //initializeinsufficientMatTest();
-        //initializeCheckMateTest();
         this.moveHistory = new ArrayList<>();
         this.castlingConditionsWhite = new boolean[]{true, true, true};
         this.castlingConditionsBlack = new boolean[]{true, true, true};
@@ -56,32 +52,21 @@ public class Game implements Cloneable, Serializable, Comparable {
         buildBoard();
     }
 
-    public Game(ArrayList<Piece> pieces, int orientation, Color turn, int turnCounter, int[] graveyard, int whiteCastleState, int blackCastleState, boolean[] castlingConditionsWhite, boolean[] castlingConditionsBlack, boolean[] enPassantConditionsWhite, boolean[] enPassantConditionsBlack, ArrayList<Move> moveHistory, GameState state, int seed) {
-        this.pieces = pieces;
+    public Game(int orientation, Color turn, int turnCounter, int fiftyMoveClock, int[] graveyard, int whiteCastleState, int blackCastleState, GameState state, int seed) {
         this.orientation = orientation;
         this.turn = turn;
         this.turnCounter = turnCounter;
+        this.fiftyMoveClock = fiftyMoveClock;
         this.graveyard = graveyard;
         this.whiteCastleState = whiteCastleState;
         this.blackCastleState = blackCastleState;
-        this.castlingConditionsWhite = castlingConditionsWhite;
-        this.castlingConditionsBlack = castlingConditionsBlack;
-        this.enPassantConditionsWhite = enPassantConditionsWhite;
-        this.enPassantConditionsBlack = enPassantConditionsBlack;
-        this.moveHistory = moveHistory;
         this.state = state;
         this.seed = seed;
     }
 
     @Override
     public Object clone() {
-        Game clonedGame = null;
-        try {
-            clonedGame = (Game) super.clone();
-        } catch (CloneNotSupportedException e) {
-            clonedGame = new Game(pieces, orientation, turn, turnCounter, graveyard, whiteCastleState, blackCastleState, castlingConditionsWhite, castlingConditionsBlack, enPassantConditionsWhite,
-                    enPassantConditionsBlack, moveHistory, state, seed);
-        }
+        Game clonedGame = new Game(orientation,turn,turnCounter,fiftyMoveClock,graveyard,whiteCastleState,blackCastleState,state,seed);
 
         ArrayList<Piece> clonedPieces = new ArrayList();
         for (Piece piece : pieces) clonedPieces.add((Piece) piece.clone());
@@ -95,6 +80,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         clonedGame.enPassantConditionsWhite = copyArrayOfBools(enPassantConditionsWhite);
         clonedGame.enPassantConditionsBlack = copyArrayOfBools(enPassantConditionsBlack);
         clonedGame.pieces = clonedPieces;
+        clonedGame.board = new Piece[8][8];
         clonedGame.buildBoard();
 
         return clonedGame;
@@ -177,17 +163,17 @@ public class Game implements Cloneable, Serializable, Comparable {
     }
 
     public Piece getPieceByTile(int x, int y) {
-        /*if(x == -1){
+        if(x == -1){
             return null;
         }
-        return board[x][y];*/
+        return board[x][y];
 
-        for (Piece piece : pieces) {
+        /*for (Piece piece : pieces) {
             if (piece.getX() == x && piece.getY() == y) {
                 return piece;
             }
         }
-        return null;
+        return null;*/
     }
 
     public Piece getPieceByClone(Piece clonedPiece) {
@@ -438,8 +424,10 @@ public class Game implements Cloneable, Serializable, Comparable {
      */
     public boolean isGameOver() {
         if (isGameInCheckMate()) {
+            setState(GameState.CHECKMATE);
             return true;
         } else if (isGameInStaleMate()) {
+            setState(GameState.STALEMATE);
             return true;
         }
         return false;
@@ -450,29 +438,32 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (!isPieceThreatened(king)) {
             return false;
         }
-        for (Piece piece : getUneatenPieces()) {
+        if(canPieceMove(king)){
+            return false;
+        }
+        for (Piece piece : getUneatenPiecesByColor(turn)) {
             if (canPieceMove(piece)) {
                 return false;
             }
         }
-        setState(GameState.CHECKMATE);
         return true;
     }
 
     public boolean isGameInStaleMate() {
         if (noLegalMovesCheck()) {
-            setState(GameState.STALEMATE);
             //System.out.println("no legal moves");
             return true;
         }
         if (insufficientMaterialCheck()) {
-            setState(GameState.STALEMATE);
             //System.out.println("insufficient material");
             return true;
         }
         if (threefoldRepetitionCheck()) {
-            setState(GameState.STALEMATE);
             //System.out.println("threefold repetition");
+            return true;
+        }
+        if(fiftyMoveClock >= 50){
+            //System.out.println("fifty moves reached");
             return true;
         }
         return false;
@@ -590,8 +581,8 @@ public class Game implements Cloneable, Serializable, Comparable {
             if(targetPiece.getPieceName() == PieceName.ROOK){//cant castle on that side if piece is eaten
                 updateCastlingConditions(targetPiece);
             }
-            //targetPiece.discardPiece();
-            discardPiece(targetPiece);
+            targetPiece.discardPiece();
+            //discardPiece(targetPiece);
             setState(GameState.PIECE_EATEN);
             if (piece.getPieceName() == PieceName.PAWN && isPawnPromotionLegal(move)) {//is eating while promoting?
                 setState(GameState.PROMOTING_AND_EATING);
@@ -602,18 +593,18 @@ public class Game implements Cloneable, Serializable, Comparable {
             targetConditions[piece.getX()] = true;
         }
         if (piece.getPieceName() == PieceName.PAWN && isPawnEnPassantLegal(move)) {//is en passant legal?
-            //getPieceByTile(destinationX, piece.getY()).discardPiece();
-            discardPiece(getPieceByTile(destinationX, piece.getY()));
+            getPieceByTile(destinationX, piece.getY()).discardPiece();
+            //discardPiece(getPieceByTile(destinationX, piece.getY()));
             setState(GameState.EN_PASSANT);
         }
         if (piece.getPieceName() == PieceName.KING && isCastlingLegal(move)) {//is the piece a king and castling?
             castlingMove(move);
         }
+        buildBoard();
         updateCastlingConditions(piece);
         addLastMove(move);
         piece.setTile(destinationX, destinationY);
         toggleTurn();
-        buildBoard();
     }
 
     public void discardPiece(Piece piece){

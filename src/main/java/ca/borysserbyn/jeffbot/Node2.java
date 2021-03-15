@@ -1,6 +1,9 @@
 package ca.borysserbyn.jeffbot;
 
+import ca.borysserbyn.gui.GameGUI;
+import ca.borysserbyn.gui.TestPanel;
 import ca.borysserbyn.mechanics.*;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 
@@ -26,6 +29,9 @@ public class Node2 implements Comparable{
         this.maxDepth = maxDepth;
         childNodes = new ArrayList<>();
         opponentColor = color == Color.WHITE ? Color.BLACK : Color.WHITE;
+        if(move != null){
+            valueSign = move.getPiece().getColor() == color ? -1 : 1;
+        }
     }
 
     @Override
@@ -92,18 +98,23 @@ public class Node2 implements Comparable{
 
 
     public int addNodes(int depth, Game game) {
-        scoreNode(game);
         if (depth >= maxDepth || game.isGameOver()) {//is game over or desired depth reached?
+            int moveCount = 0;
             if (game.getState() == GameState.CHECKMATE) {
                 this.checkmateValue = valueSign;
             } else if (game.getState() == GameState.STALEMATE) {
                 stalemateValue = 1;
+            }else{
+                moveCount = 1;
             }
+            scoreNode(game);
             cascadedScore = currentScore;
-            return 1;
+            return moveCount;
         }
+        scoreNode(game);
 
-        if (depth > 1) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
+
+        if (depth > 100) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
             //if this node already has children, use the cascaded score instead of the current one.
             float adjustedScore = childNodes.isEmpty() ? currentScore : cascadedScore;
             float filter = childNodes.isEmpty() ? 0 : 0;
@@ -114,7 +125,6 @@ public class Node2 implements Comparable{
                 double siblingCascadedScore = siblingNode.cascadedScore;
                 //add the value to the adjusted score to keep investigating small losses.
                 if (siblingCascadedScore * valueSign > adjustedScore * valueSign + filter) {//is the current score worse than a siblings
-                    System.out.println("pruned");
                     cascadedScore = adjustedScore;
                     return 1;
                 }
@@ -142,12 +152,11 @@ public class Node2 implements Comparable{
                 positionsFound += childNode.addNodes(depth + 1, clonedGame);
                 this.addChild(childNode);
             }
-
-            if(depth == 1){
-                //System.out.println(move.toSFNotation() + ": " + positionsFound);
-            }
         }
-
+        if(depth == 1){
+            //System.out.println(move.toSFNotation() + ": " + positionsFound);
+        }
+        inheritChildScore();
         return positionsFound;
     }
 
@@ -193,6 +202,8 @@ public class Node2 implements Comparable{
             long end_time = System.nanoTime();
             System.out.println("Depth: " + i + " Result: " + positionsFound + " Time: " + (end_time - start_time) / 1e6);
         }*/
+
+        //GameGUI.createJFrame(TestPanel.getSingletonInstance());
 
         for (int i = 1; i <= 5; i++) {
             Game game = new Game(1);
