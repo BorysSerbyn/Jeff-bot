@@ -48,6 +48,34 @@ public class Node2 implements Comparable{
         return (int) Math.signum(scoreDifference);
     }
 
+    public float getCascadedScore() {
+        return cascadedScore;
+    }
+
+    public float getCurrentScore() {
+        return currentScore;
+    }
+
+    public Node2 getParentNode() {
+        return parentNode;
+    }
+
+    public void setParentNode(Node2 parentNode) {
+        this.parentNode = parentNode;
+    }
+
+    public int getMaxDepth() {
+        return maxDepth;
+    }
+
+    public void setMaxDepth(int maxDepth) {
+        this.maxDepth = maxDepth;
+    }
+
+    public float getPieceValue() {
+        return pieceValue;
+    }
+
 
     public ArrayList<Node2> getChildNodes() {
         return childNodes;
@@ -114,10 +142,10 @@ public class Node2 implements Comparable{
         scoreNode(game);
 
 
-        if (depth > 100) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
+        if (depth > 1) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
             //if this node already has children, use the cascaded score instead of the current one.
             float adjustedScore = childNodes.isEmpty() ? currentScore : cascadedScore;
-            float filter = childNodes.isEmpty() ? 0 : 0;
+            float filter = 0f;
             for (Node2 siblingNode : parentNode.getChildNodes()) {
                 if(siblingNode.childNodes.isEmpty()){
                     continue;

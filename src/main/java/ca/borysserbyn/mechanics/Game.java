@@ -600,11 +600,11 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (piece.getPieceName() == PieceName.KING && isCastlingLegal(move)) {//is the piece a king and castling?
             castlingMove(move);
         }
-        buildBoard();
         updateCastlingConditions(piece);
         addLastMove(move);
         piece.setTile(destinationX, destinationY);
         toggleTurn();
+        buildBoard();
     }
 
     public void discardPiece(Piece piece){
