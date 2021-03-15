@@ -3,57 +3,52 @@ package ca.borysserbyn.jeffbot;
 import ca.borysserbyn.mechanics.*;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Random;
 
-public class Node implements Comparable {
+public class Node implements Comparable{
+
     private int maxDepth;
     private int maxBreadth;
+    private Move move;
     private Color color;
     private Color opponentColor;
-    private Game game;
-    private float cascadedScore;
-    private float currentScore;
-    private float pieceValue;
-    private int checkmateValue;
-    private int stalemateValue;
-    private int valueSign;
     private ArrayList<Node> childNodes;
     private Node parentNode;
+    private float cascadedScore = 0;
+    private float currentScore = 0;
+    private float pieceValue = 0;
+    private int checkmateValue = 0;
+    private int stalemateValue = 0;
+    private int valueSign;
 
-
-    public Node(Game game, Node parentNode, int maxDepth, int maxBreadth, Color color) {
+    public Node(int maxDepth, Color color, Move move) {
         this.color = color;
-        this.maxBreadth = maxBreadth;
+        this.move = move;
         this.maxDepth = maxDepth;
-        this.game = game;
-        this.parentNode = parentNode;
-        currentScore = 0;
-        cascadedScore = 0;
-        pieceValue = 0;
-        checkmateValue = 0;
-        stalemateValue = 0;
         childNodes = new ArrayList<>();
         opponentColor = color == Color.WHITE ? Color.BLACK : Color.WHITE;
-        valueSign = game.getTurn() == color ? -1 : 1;
+        if(move != null){
+            valueSign = move.getPiece().getColor() == color ? -1 : 1;
+        }
     }
 
     @Override
     public String toString() {
         return "Node{" +
-                "turnCount=" + game.getTurnCounter() +
-                ", move=" + getLastMove().toString() +
+                ", move=" + move +
                 ", cascaded score=" + cascadedScore +
                 ", current score=" + currentScore +
                 '}';
     }
 
-    //not final at all
     @Override
     public int compareTo(Object o) {
         Node node = (Node) o;
         double scoreDifference = (node.cascadedScore - this.cascadedScore) * valueSign;
         return (int) Math.signum(scoreDifference);
+    }
+
+    public Move getMove() {
+        return move;
     }
 
     public float getCascadedScore() {
@@ -84,13 +79,6 @@ public class Node implements Comparable {
         return pieceValue;
     }
 
-    public Game getGame() {
-        return game;
-    }
-
-    public Move getLastMove() {
-        return game.getLastMove();
-    }
 
     public ArrayList<Node> getChildNodes() {
         return childNodes;
@@ -100,12 +88,17 @@ public class Node implements Comparable {
         childNodes.add(childNode);
     }
 
+    public boolean isPromoting(Game game) {
+        return game.getState() == GameState.PROMOTING_AND_EATING || game.getState() == GameState.PROMOTING_PAWN;
+    }
+
     /**
      * Score based on:
      * 1. game outcome determined at the termination of addNodes method
      * 2. other heuristics defined in Board
      */
-    public void scoreNode() {
+
+    public void scoreNode(Game game) {
         float castlingValue = game.castlingValue(color) - game.castlingValue(opponentColor);
         pieceValue = game.getGameValueByColor(color);
         float score = pieceValue + checkmateValue * 20 + castlingValue/12;
@@ -135,48 +128,27 @@ public class Node implements Comparable {
     }
 
 
-    public void addNodesTest(int depth, Game game){
-        if(depth >= maxDepth){
-            return;
-        }
-
-        ArrayList<Game> legalGames = game.generateLegalGamesByColor(game.getTurn());
-        for (int i = 0; i < maxDepth; i++) {
-            Game legalGame = legalGames.get(i);
-            //promotes pawn to queen every time
-            if (legalGame.getState() == GameState.PROMOTING_AND_EATING || legalGame.getState() == GameState.PROMOTING_PAWN) {//can the board promote a pawn?
-                legalGame.promotePawn(legalGame.getPieceByClone(legalGame.getLastMove().moveToPiece()), PieceName.QUEEN);
-            }
-            Node childNode = new Node(legalGame, this, maxDepth, maxBreadth, color);
-            childNode.addNodes(depth + 1, maxDepth, false);
-            this.addChild(childNode);
-        }
-
-    }
-
-    //recurive method that adds children to root node given certain specifications;
-    public void addNodes(int depth, int adjustedMaxDepth, boolean secondTry) {
-        if (depth >= adjustedMaxDepth || game.isGameOver()) {//is game over or desired depth reached?
+    public int addNodes(int depth, Game game) {
+        if (depth >= maxDepth || game.isGameOver()) {//is game over or desired depth reached?
+            int moveCount = 0;
             if (game.getState() == GameState.CHECKMATE) {
                 this.checkmateValue = valueSign;
             } else if (game.getState() == GameState.STALEMATE) {
                 stalemateValue = 1;
+            }else{
+                moveCount = 1;
             }
-            scoreNode();
+            scoreNode(game);
             cascadedScore = currentScore;
-            return;
+            return moveCount;
         }
-        scoreNode();
+        scoreNode(game);
 
-        /*
-         * Alpha-Beta pruner
-         * 1. prunes branch if a better alternative has already been calculated
-         * 2. prunes branches where score has been bad for 2 consecutive turns
-         */
+
         if (depth > 1) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
             //if this node already has children, use the cascaded score instead of the current one.
             float adjustedScore = childNodes.isEmpty() ? currentScore : cascadedScore;
-            float filter = childNodes.isEmpty() ? 0 : 0;
+            float filter = 0f;
             for (Node siblingNode : parentNode.getChildNodes()) {
                 if(siblingNode.childNodes.isEmpty()){
                     continue;
@@ -185,40 +157,92 @@ public class Node implements Comparable {
                 //add the value to the adjusted score to keep investigating small losses.
                 if (siblingCascadedScore * valueSign > adjustedScore * valueSign + filter) {//is the current score worse than a siblings
                     cascadedScore = adjustedScore;
-                    return;
+                    return 1;
                 }
             }
         }
 
+        int positionsFound = 0;
         //tree traversal
         if (!this.getChildNodes().isEmpty()) {//does this node already have children?
             for (Node childNode : this.getChildNodes()) {
-                childNode.addNodes(depth + 1, adjustedMaxDepth, false);
+                positionsFound += childNode.addNodes(depth + 1, game);
             }
         } else {
-            //aranges the legal boards so that the most relevant ones are used in the tree
-            ArrayList<Game> legalGames = game.generateLegalGamesByColor(game.getTurn());
-            if (maxBreadth != -1) { //dont need to do this if were picking all boards
-                Collections.shuffle(legalGames, new Random(game.getSeed()));
-                Collections.sort(legalGames);
-            }
-            //reverses legal boards at layer 0 if the last pass wasnt successful
-            if (secondTry && depth == 0) {
-                Collections.reverse(legalGames);
-            }
-            //adjust max depth and max depth based on number of available moves
-            int adjustedMaxBreadth = maxBreadth < legalGames.size() && maxBreadth != -1 ? maxBreadth : legalGames.size();
-            for (int i = 0; i < adjustedMaxBreadth; i++) {
-                Game legalGame = legalGames.get(i);
-                //promotes pawn to queen every time
-                if (legalGame.getState() == GameState.PROMOTING_AND_EATING || legalGame.getState() == GameState.PROMOTING_PAWN) {//can the board promote a pawn?
-                    legalGame.promotePawn(legalGame.getPieceByClone(legalGame.getLastMove().moveToPiece()), PieceName.QUEEN);
+            ArrayList<Move> allMovesList = game.generateLegalMovesByColor(game.getTurn());
+            for (Move possibleMove : allMovesList) {
+                Game clonedGame = (Game) game.clone();
+                Move clonedMove = clonedGame.getMoveByClone(possibleMove);
+                clonedGame.movePiece(clonedMove);
+
+                if (isPromoting(clonedGame)) {
+                    clonedGame.promotePawn(clonedMove.getPiece(), PieceName.QUEEN);
                 }
-                Node childNode = new Node(legalGame, this, maxDepth, maxBreadth, color);
-                childNode.addNodes(depth + 1, adjustedMaxDepth, false);
+                Node childNode = new Node(maxDepth, color, possibleMove);
+                childNode.parentNode = this;
+                positionsFound += childNode.addNodes(depth + 1, clonedGame);
                 this.addChild(childNode);
             }
         }
+        if(depth == 1){
+            //System.out.println(move.toSFNotation() + ": " + positionsFound);
+        }
         inheritChildScore();
+        return positionsFound;
+    }
+
+    public String addNodes2(int depth, Game game) {
+        if (depth >= maxDepth) {
+            return move.toString();
+        }
+        ArrayList<Move> allMovesList = game.generateLegalMovesByColor(game.getTurn());
+        String positionsFound = "";
+        if (move != null) {
+            positionsFound += move.toString()+ ":     ";
+        }
+        for (Move possibleMove : allMovesList) {
+            Game clonedGame = (Game) game.clone();
+            Move clonedMove = clonedGame.getMoveByClone(possibleMove);
+            clonedGame.movePiece(clonedMove);
+
+            if (isPromoting(clonedGame)) {
+                clonedGame.promotePawn(clonedMove.getPiece(), PieceName.QUEEN);
+            }
+            Node childNode = new Node(maxDepth, color, possibleMove);
+
+            positionsFound += childNode.addNodes2(depth + 1, clonedGame) + ", ";
+            this.addChild(childNode);
+        }
+        positionsFound += "\n";
+        return positionsFound;
+    }
+
+    public static void main(String[] args) {
+//        Game game = FenUtils.createGameFromFen("rnbg1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+//        SimpleNode node = new SimpleNode(2, Color.WHITE, null);
+//        String moves = node.addNodes2(0, game);
+//        FileUtils.writeToFile(moves);
+
+        //Game game = FenUtils.createGameFromFen("rnbg1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+
+        /*for (int i = 1; i <= 4; i++) {
+            Game game = FenUtils.createGameFromFen("rnQq1k1r/pp2bppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R b KQ - 1 8");
+            SimpleNode node = new SimpleNode(i, Color.WHITE, null);
+            long start_time = System.nanoTime();
+            int positionsFound = node.addNodes(0, game);
+            long end_time = System.nanoTime();
+            System.out.println("Depth: " + i + " Result: " + positionsFound + " Time: " + (end_time - start_time) / 1e6);
+        }*/
+
+        //GameGUI.createJFrame(TestPanel.getSingletonInstance());
+
+        for (int i = 1; i <= 5; i++) {
+            Game game = new Game(1);
+            Node node = new Node(i, Color.WHITE, null);
+            long start_time = System.nanoTime();
+            int positionsFound = node.addNodes(0, game);
+            long end_time = System.nanoTime();
+            System.out.println("Depth: " + i + " Result: " + positionsFound + " Time: " + (end_time - start_time) / 1e6);
+        }
     }
 }

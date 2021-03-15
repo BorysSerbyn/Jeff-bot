@@ -1,7 +1,5 @@
 package ca.borysserbyn.jeffbot;
 
-import ca.borysserbyn.gui.GameGUI;
-import ca.borysserbyn.gui.TestPanel;
 import ca.borysserbyn.mechanics.*;
 
 import java.util.ArrayList;

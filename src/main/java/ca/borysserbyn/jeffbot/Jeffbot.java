@@ -20,13 +20,13 @@ public class Jeffbot {
     public Jeffbot(Color color, Game game) {
         this.color = color;
         this.game = (Game) game.clone();
-        currentNode = new Node(game, null, maxDepth, maxBreadth, color);
+        currentNode = new Node(maxDepth, color, null);
         buildTree(currentNode, false);
     }
 
     public void setBoard(Game game) {
         this.game = game;
-        resetCurrentNode(game);
+        resetCurrentNode();
     }
 
     public Game getGame() {
@@ -35,13 +35,13 @@ public class Jeffbot {
 
     public Node getNodeByMove(Node node, Move move) {
         return node.getChildNodes().stream()
-                .filter(child -> child.getLastMove().equals(move))
+                .filter(child -> child.getMove().equals(move))
                 .findFirst()
                 .orElse(null);
     }
 
-    public void resetCurrentNode(Game clonedGame) {
-        currentNode = new Node(clonedGame, null, maxDepth, maxBreadth, color);
+    public void resetCurrentNode() {
+        currentNode = new Node(maxDepth, color, null);
     }
 
     public Node getCurrentNode() {
@@ -52,12 +52,8 @@ public class Jeffbot {
         Collections.sort(currentNode.getChildNodes());
         String fen = FenUtils.createFenFromGame(game);
         Node bestMoveNode = currentNode.getChildNodes().get(0);
-        if (bestMoveNode.getCascadedScore() + 1 < currentNode.getCurrentScore()) {
-            secondTry();
-            bestMoveNode = currentNode.getChildNodes().get(0);
-        }
         printThoughtProcess(bestMoveNode);
-        return bestMoveNode.getLastMove();
+        return bestMoveNode.getMove();
     }
 
     public void printThoughtProcess(Node bestMoveNode) {
@@ -81,7 +77,7 @@ public class Jeffbot {
 
     public void secondTry() {
         System.out.println("Reseting the tree, no good moves found");
-        resetCurrentNode(game);
+        resetCurrentNode();
         buildTree(currentNode, true);
         Collections.sort(currentNode.getChildNodes());
     }
@@ -96,7 +92,7 @@ public class Jeffbot {
         if (moveNode == null) {//is there a node in the tree corresponding the the move?
             System.out.println("Couldnt find node: " + move + " in tree.");
             Game clonedGame = (Game) game.clone();
-            resetCurrentNode(clonedGame);
+            resetCurrentNode();
         }else{
             currentNode = moveNode;
         }
@@ -104,11 +100,15 @@ public class Jeffbot {
     }
 
     public void buildTree(Node node, boolean secondTry) {
-        //node.addNodes(0, maxDepth, false);
-        TreeTask rootTask = new TreeTask(node, 0, secondTry);
+
+        int treeSize = node.addNodes(0, (Game) game.clone());
+        System.out.println("Tree built with size: " + treeSize);
+
+        /*TreeTask rootTask = new TreeTask(node, 0, secondTry);
         pool.invoke(rootTask);
-        node.getChildNodes().forEach(Node::inheritChildScore);
-        node.setParentNode(null);
-        System.gc();
+        node.getChildNodes().forEach(Node::inheritChildScore);*/
+
+        /*node.setParentNode(null);
+        System.gc();*/
     }
 }

@@ -1,6 +1,6 @@
 package ca.borysserbyn.mechanics;
 
-import ca.borysserbyn.gui.GameGUI;
+import ca.borysserbyn.gui.GameFrame;
 import ca.borysserbyn.gui.TestPanel;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -110,7 +110,7 @@ public class MoveGenUtilsTest {
     void generateCastlingMovesTest() {
 
         TestPanel testPanel = TestPanel.getSingletonInstance();
-        GameGUI.createJFrame(testPanel);
+        GameFrame.createJFrame(testPanel);
 
         Piece testKing = new Piece(Color.WHITE, PieceName.KING,4, 0);
         String fenStr = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1";

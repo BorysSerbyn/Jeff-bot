@@ -18,10 +18,10 @@ public class TreeTask extends RecursiveAction {
 
     public void compute() {
         if (depth > THRESHOLD) {//switch to single threaded after a certain depth
-            node.addNodes(depth, node.getMaxDepth(), false);
+            //node.addNodes(depth, node.getMaxDepth(), false);
         }else{
             if(node.getChildNodes().isEmpty()){//if node is empty, add children with max depth = 1;
-                node.addNodes(0, 1, secondTry);
+                //node.addNodes(0, 1, secondTry);
             }
             List<TreeTask> subtasks = new ArrayList<>();
             for (Node childNode : node.getChildNodes()) {

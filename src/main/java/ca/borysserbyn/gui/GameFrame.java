@@ -5,11 +5,11 @@ import ca.borysserbyn.mechanics.Game;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-public class GameGUI extends JFrame{
+public class GameFrame extends JFrame{
 
     JPanel newGamePanel = new JPanel();
 
-    public GameGUI(String title){
+    public GameFrame(String title){
         super(title);
         initializeNewGameGUI();
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -21,15 +21,22 @@ public class GameGUI extends JFrame{
 
 
     public void jeffButtonClick(ActionEvent e){
-        this.remove(newGamePanel);
         JeffPanel jeffPanel = new JeffPanel(new Game(1));
-        this.add(jeffPanel);
+        changePanel(jeffPanel);
     }
 
     public void overTheButtonClick(ActionEvent e){
-        this.remove(newGamePanel);
         ChessPanel chessPanel = new ChessPanel(new Game(1));
-        this.add(chessPanel);
+        changePanel(chessPanel);
+    }
+
+    public void changePanel(JPanel newPanel){
+        this.remove(newGamePanel);
+        this.add(newPanel);
+        revalidate();
+        repaint();
+        pack();
+        setMinimumSize(getSize());
     }
 
 
@@ -59,7 +66,7 @@ public class GameGUI extends JFrame{
         Runnable r = new Runnable() {
             @Override
             public void run() {
-                GameGUI newGame = new GameGUI("New Game");
+                GameFrame newGame = new GameFrame("New Game");
             }
         };
         SwingUtilities.invokeLater(r);

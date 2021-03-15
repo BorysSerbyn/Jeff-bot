@@ -71,7 +71,7 @@ public class JeffPanel extends ChessPanel {
                 jeff.updateTree(clonedMove);
                 jeffMove();
                 long end_time = System.nanoTime();
-                System.out.println("computing time " + (end_time - start_time) / 1e6);
+                System.out.println("computing time: " + (end_time - start_time) / 1e6);
             }
         }
 
@@ -80,8 +80,7 @@ public class JeffPanel extends ChessPanel {
 
     //Handles bot movement.
     public void jeffMove() {
-        System.out.println("These are the random seeds " + game.getSeed() + " " + jeff.getCurrentNode().getGame().getSeed());
-        message.setText("Jeff is thinking.");
+        //System.out.println("These are the random seeds " + game.getSeed() + " " + jeff.getGame().getSeed());
         Move bestMoveNodeBoard = jeff.findBestMove();
         Move bestMoveGUIBoard = game.getMoveByClone(bestMoveNodeBoard);
         Move bestMoveJeffBoard = jeff.getGame().getMoveByClone(bestMoveNodeBoard);
