@@ -80,7 +80,6 @@ public abstract class MoveGenUtils {
                 if (isOutOfBounds(tempX, tempY)) {
                     break;
                 }
-                //Piece targetPiece = game.getBoard()[tempX][tempY];
                 Piece targetPiece = game.getPieceByTile(tempX, tempY);
                 if (targetPiece != null && targetPiece.getColor() == piece.getColor()) { //is friendly piece on square
                     break;

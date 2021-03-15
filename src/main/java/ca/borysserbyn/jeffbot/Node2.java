@@ -12,7 +12,7 @@ public class Node2 implements Comparable{
     private Color color;
     private Color opponentColor;
     private ArrayList<Node2> childNodes;
-    private Node parentNode;
+    private Node2 parentNode;
     private float cascadedScore = 0;
     private float currentScore = 0;
     private float pieceValue = 0;
@@ -103,6 +103,24 @@ public class Node2 implements Comparable{
             return 1;
         }
 
+        if (depth > 1) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
+            //if this node already has children, use the cascaded score instead of the current one.
+            float adjustedScore = childNodes.isEmpty() ? currentScore : cascadedScore;
+            float filter = childNodes.isEmpty() ? 0 : 0;
+            for (Node2 siblingNode : parentNode.getChildNodes()) {
+                if(siblingNode.childNodes.isEmpty()){
+                    continue;
+                }
+                double siblingCascadedScore = siblingNode.cascadedScore;
+                //add the value to the adjusted score to keep investigating small losses.
+                if (siblingCascadedScore * valueSign > adjustedScore * valueSign + filter) {//is the current score worse than a siblings
+                    System.out.println("pruned");
+                    cascadedScore = adjustedScore;
+                    return 1;
+                }
+            }
+        }
+
         int positionsFound = 0;
         //tree traversal
         if (!this.getChildNodes().isEmpty()) {//does this node already have children?
@@ -120,6 +138,7 @@ public class Node2 implements Comparable{
                     clonedGame.promotePawn(clonedMove.getPiece(), PieceName.QUEEN);
                 }
                 Node2 childNode = new Node2(maxDepth, color, possibleMove);
+                childNode.parentNode = this;
                 positionsFound += childNode.addNodes(depth + 1, clonedGame);
                 this.addChild(childNode);
             }
