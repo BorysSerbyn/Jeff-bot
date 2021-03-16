@@ -1,6 +1,7 @@
 package ca.borysserbyn.jeffbot;
 
 import ca.borysserbyn.gui.ChessPanel;
+import ca.borysserbyn.mechanics.ObservableGame;
 import ca.borysserbyn.mechanics.*;
 
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ public class Jeffbot {
         buildTree(currentNode, false);
     }
 
-    public void setBoard(Game game) {
+    public void setGame(Game game) {
         this.game = game;
         resetCurrentNode();
     }
@@ -78,13 +79,10 @@ public class Jeffbot {
         Collections.sort(currentNode.getChildNodes());
     }
 
-    public void updateTree(Move move) {
+    public void updateTree() {
+        Move move = game.getLastMove();
         Move clonedMove = (Move) move.clone();
-        Move moveJeffBoard = game.getMoveByClone(move);
-
-        game.movePiece(moveJeffBoard);
         Node moveNode = getNodeByMove(currentNode, clonedMove);
-
         if (moveNode == null) {//is there a node in the tree corresponding the the move?
             System.out.println("Couldnt find node: " + move + " in tree.");
             resetCurrentNode();
@@ -97,23 +95,13 @@ public class Jeffbot {
 
 
     //Handles bot movement.
-    public void movePiece(ChessPanel chessPanel) {
-        Game guiGame = chessPanel.getGame();
-
-        Move bestMoveNodeBoard = findBestMove();
-        Move bestMoveGUIBoard = guiGame.getMoveByClone(bestMoveNodeBoard);
-        Move bestMoveJeffBoard = game.getMoveByClone(bestMoveNodeBoard);
-        guiGame.movePiece(bestMoveGUIBoard);
-
-        if (guiGame.getState() == GameState.PROMOTING_AND_EATING || guiGame.getState() == GameState.PROMOTING_PAWN) {
-            guiGame.promotePawn(bestMoveGUIBoard.getPiece(), PieceName.QUEEN);
-            getGame().promotePawn(bestMoveJeffBoard.getPiece(), PieceName.QUEEN);
-            bestMoveNodeBoard.getPiece().setPieceName(PieceName.QUEEN);
+    public void movePiece(Move move) {
+        Move moveJeffBoard = game.getMoveByClone(move);
+        game.movePiece(moveJeffBoard);
+        if (game.getState() == GameState.PROMOTING_AND_EATING || game.getState() == GameState.PROMOTING_PAWN) {
+            move.getPiece().setPieceName(PieceName.QUEEN);
         }
-
-        chessPanel.initializePieces();
-        chessPanel.endGameMessage();
-        updateTree(bestMoveNodeBoard);
+        updateTree();
     }
 
     public void buildTree(Node node, boolean secondTry) {

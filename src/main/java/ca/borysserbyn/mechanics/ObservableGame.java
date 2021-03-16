@@ -1,4 +1,4 @@
-package ca.borysserbyn.gui.eventmodel;
+package ca.borysserbyn.mechanics;
 
 import ca.borysserbyn.mechanics.Game;
 import ca.borysserbyn.mechanics.Move;
@@ -9,6 +9,16 @@ public class ObservableGame extends Observable {
     Game game;
     public ObservableGame(Game game){
         this.game = game;
+    }
+
+    public void setGame(Game game) {
+        this.game = game;
+    }
+
+    public synchronized void setGameSync(Game game) {
+        this.game = game;
+        super.setChanged();
+        super.notifyObservers();
     }
 
     public synchronized Game getGame(){

@@ -49,7 +49,7 @@ public class TestPanel extends ChessPanel{
     }
 
     public void setGame(Game newGame){
-        game = newGame;
+        setGame(newGame);
         chessBoard.removeAll();
         initializeBoardSquares();
         initializePieces();

@@ -1,5 +1,4 @@
 package ca.borysserbyn.gui;
-import ca.borysserbyn.gui.eventmodel.ObservableGame;
 import ca.borysserbyn.mechanics.*;
 
 import javax.swing.*;
@@ -18,7 +17,7 @@ public class ChessPanel extends JPanel implements Observer {
     protected TileButton originButton;
     protected TileButton[][] tileButtons = new TileButton[8][8];
     protected JScrollPane graveyardScroll;
-    protected Game game;
+    protected ObservableGame observableGame;
     protected boolean isGameOver;
     protected final JLabel message = new JLabel("Have fun!");
     protected JToolBar tools;
@@ -35,18 +34,26 @@ public class ChessPanel extends JPanel implements Observer {
 
     public ChessPanel(Game game) {
         super(new BorderLayout(3, 3));
-        this.game = game;
+        observableGame = new ObservableGame(game);
+        observableGame.addObserver(this);
         tools = new JToolBar();
         initializeGui();
     }
 
-    public Game getGame() {
-        return game;
-    }
-
     @Override
     public void update(Observable source, Object arg1){
+        initializeBoardSquares();
+        initializePieces();
+        this.revalidate();
+        this.repaint();
+    }
 
+    public Game getGame() {
+        return observableGame.getGame();
+    }
+
+    public void setGame(Game game) {
+        observableGame.setGameSync(game);
     }
 
     //Handles pieces/squares being clicked.
@@ -57,7 +64,7 @@ public class ChessPanel extends JPanel implements Observer {
         TileButton selectedButton = (TileButton) e.getSource();
         Piece selectedPiece = selectedButton.getPiece();
         if (originButton == null && selectedPiece != null) { //is there a piece in the selected square and was a piece already selected
-            if (selectedPiece.getColor() == game.getTurn()) {//is it that colors turn to move
+            if (selectedPiece.getColor() == observableGame.getGame().getTurn()) {//is it that colors turn to move
                 originButton = selectedButton;
             }
         } else if (originButton != null) { //is there a piece to be moved
@@ -75,15 +82,16 @@ public class ChessPanel extends JPanel implements Observer {
     public void movePiece(TileButton selectedButton, TileButton originButton) {
         Piece originPiece = originButton.getPiece();
         Move move = new Move(originButton.getPiece(), selectedButton.getXOnBoard(), selectedButton.getYOnBoard());
-        if (game.isMoveLegal(move)) { //is the move legal
-            game.movePiece(move);
+        if (observableGame.getGame().isMoveLegal(move)) { //is the move legal
+            observableGame.movePiece(move);
+
             initializePieces();
-            if (game.getState() == GameState.PROMOTING_AND_EATING || game.getState() == GameState.PROMOTING_PAWN) {
+            if (observableGame.getGame().getState() == GameState.PROMOTING_AND_EATING || observableGame.getGame().getState() == GameState.PROMOTING_PAWN) {
                 displayPromotionWindow(selectedButton);
             }
             endGameMessage();
         }
-        System.out.println(originPiece.getValue(game.getOrientation()));
+        System.out.println(originPiece.getValue(observableGame.getGame().getOrientation()));
         this.originButton = null;
     }
 
@@ -93,16 +101,16 @@ public class ChessPanel extends JPanel implements Observer {
         String choice = (String) JOptionPane.showInputDialog(this, "Choose a piece to promote to.",
                 "Pawn promotion", JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
         PieceName chosenPieceName = PieceName.valueOf(choice);
-        game.promotePawn(selectedButton.getPiece(), chosenPieceName);
+        observableGame.getGame().promotePawn(selectedButton.getPiece(), chosenPieceName);
         selectedButton.updateIcon();
 
     }
     //handles end game detection
     public void endGameMessage() {
-        isGameOver = game.isGameOver();
-        if (game.getState() == GameState.CHECKMATE) {
+        isGameOver = observableGame.getGame().isGameOver();
+        if (observableGame.getGame().getState() == GameState.CHECKMATE) {
             JOptionPane.showMessageDialog(this, "Checkmate!");
-        } else if (game.getState() == GameState.STALEMATE) {
+        } else if (observableGame.getGame().getState() == GameState.STALEMATE) {
             JOptionPane.showMessageDialog(this, "Stalemate!");
 
         }
@@ -115,22 +123,18 @@ public class ChessPanel extends JPanel implements Observer {
         String choice = (String) JOptionPane.showInputDialog(this, "Choose a piece to promote to.",
                 "Pawn promotion", JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
         PieceName chosenPieceName = PieceName.valueOf(choice);
-        game.promotePawn(selectedButton.getPiece(), chosenPieceName);
+        observableGame.getGame().promotePawn(selectedButton.getPiece(), chosenPieceName);
     }
 
     public void clickSaveButton(ActionEvent e) {
-        FileUtils.writeToFile(game);
+        FileUtils.writeToFile(observableGame.getGame());
     }
 
     public void clickRematchButton(ActionEvent e) {
-        game = new Game(game.getOrientation());
+        setGame(new Game(observableGame.getGame().getOrientation()));
         isGameOver = false;
         originButton = null;
         chessBoard.removeAll();
-        initializeBoardSquares();
-        initializePieces();
-        this.revalidate();
-        this.repaint();
     }
 
     public void clickLoadButton(ActionEvent e) {
@@ -138,33 +142,25 @@ public class ChessPanel extends JPanel implements Observer {
         if(newGame == null){
             return;
         }
-        game = newGame;
+        setGame(newGame);
         isGameOver = false;
         originButton = null;
         chessBoard.removeAll();
-        initializeBoardSquares();
-        initializePieces();
-        this.revalidate();
-        this.repaint();
     }
 
 
     public void clickUndoButton(ActionEvent e) {
-        ArrayList<Move> moveHistory = game.getMoveHistory();
-        Game newGame = new Game(game.getOrientation());
-        newGame.setSeed(game.getSeed());
+        ArrayList<Move> moveHistory = observableGame.getGame().getMoveHistory();
+        Game newGame = new Game(observableGame.getGame().getOrientation());
+        newGame.setSeed(observableGame.getGame().getSeed());
         for (int i = 0; i < moveHistory.size() - 1; i++) {
             Move move = newGame.getMoveByClone(moveHistory.get(i));
             newGame.movePiece(move);
         }
-        game = newGame;
+        setGame(newGame);
         isGameOver = false;
         originButton = null;
         chessBoard.removeAll();
-        initializeBoardSquares();
-        initializePieces();
-        this.revalidate();
-        this.repaint();
     }
 
     //Sends piece to the gui graveyard (not the boards)
@@ -273,7 +269,7 @@ public class ChessPanel extends JPanel implements Observer {
             for (int j = 0; j < tileButtons[i].length; j++) {
                 TileButton pieceButton = tileButtons[i][j];
                 //Piece piece = game.getBoard()[i][j];
-                Piece piece = game.getPieceByTile(i, j);
+                Piece piece = observableGame.getGame().getPieceByTile(i, j);
                 if (piece != null) {
                     pieceButton.setPiece(piece);
                 } else {
@@ -283,7 +279,7 @@ public class ChessPanel extends JPanel implements Observer {
         }
 
         graveyardPanel.removeAll();
-        for (Piece deadPiece : game.getEatenPieces()) {
+        for (Piece deadPiece : observableGame.getGame().getEatenPieces()) {
             sendPieceToGraveyard(deadPiece);
         }
     }
