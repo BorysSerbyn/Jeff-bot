@@ -9,8 +9,10 @@ public class Node implements Comparable{
     private int maxDepth;
     private int maxBreadth;
     private Move move;
-    private Color color;
+    private Color jeffColor;
     private Color opponentColor;
+    private Color turnColor;
+    private int turnCount;
     private ArrayList<Node> childNodes;
     private Node parentNode;
     private float cascadedScore = 0;
@@ -18,33 +20,45 @@ public class Node implements Comparable{
     private float pieceValue = 0;
     private int checkmateValue = 0;
     private int stalemateValue = 0;
-    private int valueSign;
 
-    public Node(int maxDepth, Color color, Move move) {
-        this.color = color;
+    public Node(int maxDepth, Color jeffColor, Move move, int turnCount) {
+        this.turnCount = turnCount;
+        this.jeffColor = jeffColor;
         this.move = move;
         this.maxDepth = maxDepth;
         childNodes = new ArrayList<>();
-        opponentColor = color == Color.WHITE ? Color.BLACK : Color.WHITE;
-        if(move != null){
-            valueSign = move.getPiece().getColor() == color ? -1 : 1;
-        }
+        turnColor = turnCount%2 == 0 ? Color.WHITE : Color.BLACK;
+        opponentColor = jeffColor == Color.WHITE ? Color.BLACK : Color.WHITE;
     }
 
     @Override
     public String toString() {
         return "Node{" +
+                "turnCount=" + turnCount +
                 ", move=" + move +
                 ", cascaded score=" + cascadedScore +
                 ", current score=" + currentScore +
                 '}';
     }
 
+    /**
+     * compares two nodes
+     * @param o represents the "other node"
+     * @return -1 : "this" is worse than other node
+     * @return 0 : "this" is equal to other node
+     * @return 1 : "this" is better than other node
+     */
     @Override
     public int compareTo(Object o) {
-        Node node = (Node) o;
-        double scoreDifference = (node.cascadedScore - this.cascadedScore) * valueSign;
-        return (int) Math.signum(scoreDifference);
+        Node otherNode = (Node) o;
+        int minMaxValue = jeffColor == move.getPiece().getColor() ? 1 : -1;
+        if(otherNode.cascadedScore > cascadedScore){
+            return minMaxValue;
+        }else if(otherNode.cascadedScore < cascadedScore){
+            return -minMaxValue;
+        }else{
+            return 0;
+        }
     }
 
     public Move getMove() {
@@ -79,6 +93,9 @@ public class Node implements Comparable{
         return pieceValue;
     }
 
+    public void setCascadedScore(float cascadedScore) {
+        this.cascadedScore = cascadedScore;
+    }
 
     public ArrayList<Node> getChildNodes() {
         return childNodes;
@@ -99,8 +116,8 @@ public class Node implements Comparable{
      */
 
     public void scoreNode(Game game) {
-        float castlingValue = game.castlingValue(color) - game.castlingValue(opponentColor);
-        pieceValue = game.getGameValueByColor(color);
+        float castlingValue = game.castlingValue(jeffColor) - game.castlingValue(opponentColor);
+        pieceValue = game.getGameValueByColor(jeffColor);
         float score = pieceValue + checkmateValue * 20 + castlingValue/12;
         //substract stalemate value if you are winning, do nothing if you are losing.
         score -= score > 0 ? stalemateValue * 20 : 0;
@@ -114,7 +131,7 @@ public class Node implements Comparable{
         }
         cascadedScore = childNodes.get(0).cascadedScore;
         for (Node childNode : childNodes) {
-            if(valueSign < 0){
+            if(jeffColor == turnColor){
                 if(cascadedScore < childNode.cascadedScore){
                     cascadedScore = childNode.cascadedScore;
                 }
@@ -132,7 +149,7 @@ public class Node implements Comparable{
         if (depth >= maxDepth || game.isGameOver()) {//is game over or desired depth reached?
             int moveCount = 0;
             if (game.getState() == GameState.CHECKMATE) {
-                this.checkmateValue = valueSign;
+                this.checkmateValue = jeffColor == move.getPiece().getColor() ? 1 : -1;
             } else if (game.getState() == GameState.STALEMATE) {
                 stalemateValue = 1;
             }else{
@@ -145,7 +162,7 @@ public class Node implements Comparable{
         scoreNode(game);
 
 
-        if (depth > 1) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
+        if (depth > 2) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
             //if this node already has children, use the cascaded score instead of the current one.
             float adjustedScore = childNodes.isEmpty() ? currentScore : cascadedScore;
             float filter = 0f;
@@ -154,11 +171,19 @@ public class Node implements Comparable{
                     continue;
                 }
                 double siblingCascadedScore = siblingNode.cascadedScore;
-                //add the value to the adjusted score to keep investigating small losses.
-                if (siblingCascadedScore * valueSign > adjustedScore * valueSign + filter) {//is the current score worse than a siblings
-                    cascadedScore = adjustedScore;
-                    return 1;
+
+                if(jeffColor != game.getTurn()){
+                    if(siblingCascadedScore > adjustedScore){
+                        cascadedScore = adjustedScore;
+                        return 1;
+                    }
+                }else{
+                    if(siblingCascadedScore < adjustedScore){
+                        cascadedScore = adjustedScore;
+                        return 1;
+                    }
                 }
+                //add the value to the adjusted score to keep investigating small losses.
             }
         }
 
@@ -166,10 +191,14 @@ public class Node implements Comparable{
         //tree traversal
         if (!this.getChildNodes().isEmpty()) {//does this node already have children?
             for (Node childNode : this.getChildNodes()) {
-                positionsFound += childNode.addNodes(depth + 1, game);
+                Game clonedGame = (Game) game.clone();
+                Move clonedMove = clonedGame.getMoveByClone(childNode.move);
+                clonedGame.movePiece(clonedMove);
+                positionsFound += childNode.addNodes(depth + 1, clonedGame);
             }
         } else {
             ArrayList<Move> allMovesList = game.generateLegalMovesByColor(game.getTurn());
+
             for (Move possibleMove : allMovesList) {
                 Game clonedGame = (Game) game.clone();
                 Move clonedMove = clonedGame.getMoveByClone(possibleMove);
@@ -178,7 +207,7 @@ public class Node implements Comparable{
                 if (isPromoting(clonedGame)) {
                     clonedGame.promotePawn(clonedMove.getPiece(), PieceName.QUEEN);
                 }
-                Node childNode = new Node(maxDepth, color, possibleMove);
+                Node childNode = new Node(maxDepth, jeffColor, possibleMove, clonedGame.getTurnCounter());
                 childNode.parentNode = this;
                 positionsFound += childNode.addNodes(depth + 1, clonedGame);
                 this.addChild(childNode);
@@ -208,7 +237,7 @@ public class Node implements Comparable{
             if (isPromoting(clonedGame)) {
                 clonedGame.promotePawn(clonedMove.getPiece(), PieceName.QUEEN);
             }
-            Node childNode = new Node(maxDepth, color, possibleMove);
+            Node childNode = new Node(maxDepth, jeffColor, possibleMove, clonedGame.getTurnCounter());
 
             positionsFound += childNode.addNodes2(depth + 1, clonedGame) + ", ";
             this.addChild(childNode);
@@ -238,7 +267,7 @@ public class Node implements Comparable{
 
         for (int i = 1; i <= 5; i++) {
             Game game = new Game(1);
-            Node node = new Node(i, Color.WHITE, null);
+            Node node = new Node(i, Color.WHITE, null, game.getTurnCounter());
             long start_time = System.nanoTime();
             int positionsFound = node.addNodes(0, game);
             long end_time = System.nanoTime();

@@ -15,7 +15,7 @@ import java.util.Random;
 
 public class JeffPanel extends ChessPanel {
     private Jeffbot jeff;
-    private Color jeffColor = Color.BLACK;
+    private Color jeffColor = Color.WHITE;
 
     public JeffPanel(Game game) {
         super(game);
@@ -62,17 +62,23 @@ public class JeffPanel extends ChessPanel {
             initializePieces();
             endGameMessage();
 
-            System.out.println("turn: " + game.getTurnCounter() + " state: " + game.getState());
+            System.out.println();
+            System.out.println(ANSI_RED + "###############################################" + ANSI_RESET);
+            System.out.println("turn: " + game.getTurnCounter());
+            System.out.println("state: " + game.getState());
+
             if (game.getState() == GameState.PROMOTING_AND_EATING || game.getState() == GameState.PROMOTING_PAWN) {
                 displayPromotionWindow(selectedButton, clonedPiece);
             }
             if (!isGameOver) {
+                Thread thread = new Thread(() -> {});
                 long start_time = System.nanoTime();
                 jeff.updateTree(clonedMove);
                 jeffMove();
                 long end_time = System.nanoTime();
                 System.out.println("computing time: " + (end_time - start_time) / 1e6);
             }
+            System.out.println();
         }
 
         this.originButton = null;
@@ -91,10 +97,8 @@ public class JeffPanel extends ChessPanel {
             jeff.getGame().promotePawn(bestMoveJeffBoard.getPiece(), PieceName.QUEEN);
             bestMoveNodeBoard.getPiece().setPieceName(PieceName.QUEEN);
         }
-        System.out.println(game.getState());
         initializePieces();
         endGameMessage();
-        message.setText("Jeff is ready.");
         jeff.updateTree(bestMoveNodeBoard);
     }
 

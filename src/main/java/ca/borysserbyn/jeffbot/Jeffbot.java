@@ -10,8 +10,7 @@ import java.util.Collections;
 import java.util.concurrent.ForkJoinPool;
 
 public class Jeffbot {
-    private static int maxDepth = 5;
-    private static int maxBreadth = 20;
+    private static int maxDepth = 4;
     private static final ForkJoinPool pool = new ForkJoinPool();
     private Game game;
     private Color color;
@@ -20,7 +19,7 @@ public class Jeffbot {
     public Jeffbot(Color color, Game game) {
         this.color = color;
         this.game = (Game) game.clone();
-        currentNode = new Node(maxDepth, color, null);
+        currentNode = new Node(maxDepth, color, null, game.getTurnCounter());
         buildTree(currentNode, false);
     }
 
@@ -41,7 +40,7 @@ public class Jeffbot {
     }
 
     public void resetCurrentNode() {
-        currentNode = new Node(maxDepth, color, null);
+        currentNode = new Node(maxDepth, color, null, game.getTurnCounter());
     }
 
     public Node getCurrentNode() {
@@ -50,7 +49,6 @@ public class Jeffbot {
 
     public Move findBestMove() {
         Collections.sort(currentNode.getChildNodes());
-        String fen = FenUtils.createFenFromGame(game);
         Node bestMoveNode = currentNode.getChildNodes().get(0);
         printThoughtProcess(bestMoveNode);
         return bestMoveNode.getMove();
@@ -91,10 +89,10 @@ public class Jeffbot {
 
         if (moveNode == null) {//is there a node in the tree corresponding the the move?
             System.out.println("Couldnt find node: " + move + " in tree.");
-            Game clonedGame = (Game) game.clone();
             resetCurrentNode();
         }else{
             currentNode = moveNode;
+            //System.out.println("current node: " + currentNode + " move: " + move);
         }
         buildTree(currentNode, false);
     }
@@ -108,7 +106,7 @@ public class Jeffbot {
         pool.invoke(rootTask);
         node.getChildNodes().forEach(Node::inheritChildScore);*/
 
-        /*node.setParentNode(null);
-        System.gc();*/
+        node.setParentNode(null);
+        System.gc();
     }
 }

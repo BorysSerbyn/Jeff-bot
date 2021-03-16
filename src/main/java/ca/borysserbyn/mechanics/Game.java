@@ -624,9 +624,9 @@ public class Game implements Cloneable, Serializable, Comparable {
 
 
         if(orientation == 1){
-            rookXMove = signedXMove < 0 ? 2 : -3; //short if true
-        }else{
             rookXMove = signedXMove > 0 ? -2 : 3; //short if true
+        }else{
+            rookXMove = signedXMove < 0 ? 2 : -3; //short if true
         }
 
         rookX = signedXMove < 0 ? 0 : 7;
