@@ -1,4 +1,5 @@
 package ca.borysserbyn.gui;
+import ca.borysserbyn.gui.eventmodel.ObservableGame;
 import ca.borysserbyn.mechanics.*;
 
 import javax.swing.*;
@@ -8,8 +9,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Observable;
+import java.util.Observer;
 
-public class ChessPanel extends JPanel {
+public class ChessPanel extends JPanel implements Observer {
     protected JPanel chessBoard;
     protected JPanel graveyardPanel;
     protected TileButton originButton;
@@ -37,6 +40,14 @@ public class ChessPanel extends JPanel {
         initializeGui();
     }
 
+    public Game getGame() {
+        return game;
+    }
+
+    @Override
+    public void update(Observable source, Object arg1){
+
+    }
 
     //Handles pieces/squares being clicked.
     public void clickTile(ActionEvent e) {

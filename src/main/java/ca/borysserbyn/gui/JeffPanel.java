@@ -9,11 +9,14 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class JeffPanel extends ChessPanel {
+import static java.awt.event.ActionEvent.ACTION_PERFORMED;
+
+public class JeffPanel extends ChessPanel{
     private Jeffbot jeff;
     private Color jeffColor = Color.WHITE;
 
@@ -70,36 +73,14 @@ public class JeffPanel extends ChessPanel {
             if (game.getState() == GameState.PROMOTING_AND_EATING || game.getState() == GameState.PROMOTING_PAWN) {
                 displayPromotionWindow(selectedButton, clonedPiece);
             }
+
             if (!isGameOver) {
-                Thread thread = new Thread(() -> {});
-                long start_time = System.nanoTime();
-                jeff.updateTree(clonedMove);
-                jeffMove();
-                long end_time = System.nanoTime();
-                System.out.println("computing time: " + (end_time - start_time) / 1e6);
+
             }
             System.out.println();
         }
 
         this.originButton = null;
-    }
-
-    //Handles bot movement.
-    public void jeffMove() {
-        //System.out.println("These are the random seeds " + game.getSeed() + " " + jeff.getGame().getSeed());
-        Move bestMoveNodeBoard = jeff.findBestMove();
-        Move bestMoveGUIBoard = game.getMoveByClone(bestMoveNodeBoard);
-        Move bestMoveJeffBoard = jeff.getGame().getMoveByClone(bestMoveNodeBoard);
-        game.movePiece(bestMoveGUIBoard);
-
-        if (game.getState() == GameState.PROMOTING_AND_EATING || game.getState() == GameState.PROMOTING_PAWN) {
-            game.promotePawn(bestMoveGUIBoard.getPiece(), PieceName.QUEEN);
-            jeff.getGame().promotePawn(bestMoveJeffBoard.getPiece(), PieceName.QUEEN);
-            bestMoveNodeBoard.getPiece().setPieceName(PieceName.QUEEN);
-        }
-        initializePieces();
-        endGameMessage();
-        jeff.updateTree(bestMoveNodeBoard);
     }
 
     @Override
@@ -129,7 +110,7 @@ public class JeffPanel extends ChessPanel {
 
         jeff.setBoard((Game) game.clone());
         if (jeffColor == game.getTurn()) {
-            jeffMove();
+            jeff.movePiece(this);
         }
     }
 
@@ -150,7 +131,7 @@ public class JeffPanel extends ChessPanel {
 
         jeff.setBoard((Game) game.clone());
         if (jeffColor == game.getTurn()) {
-            jeffMove();
+            jeff.movePiece(this);
         }
     }
 
@@ -197,7 +178,7 @@ public class JeffPanel extends ChessPanel {
     public void initializeJeff(){
         jeff = new Jeffbot(jeffColor, game);
         if (jeffColor == game.getTurn()) {
-            jeffMove();
+            jeff.movePiece(this);
         }
     }
 }

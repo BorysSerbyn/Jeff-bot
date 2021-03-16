@@ -1,9 +1,7 @@
 package ca.borysserbyn.jeffbot;
 
-import ca.borysserbyn.mechanics.FenUtils;
-import ca.borysserbyn.mechanics.Game;
-import ca.borysserbyn.mechanics.Color;
-import ca.borysserbyn.mechanics.Move;
+import ca.borysserbyn.gui.ChessPanel;
+import ca.borysserbyn.mechanics.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,6 +93,27 @@ public class Jeffbot {
             //System.out.println("current node: " + currentNode + " move: " + move);
         }
         buildTree(currentNode, false);
+    }
+
+
+    //Handles bot movement.
+    public void movePiece(ChessPanel chessPanel) {
+        Game guiGame = chessPanel.getGame();
+
+        Move bestMoveNodeBoard = findBestMove();
+        Move bestMoveGUIBoard = guiGame.getMoveByClone(bestMoveNodeBoard);
+        Move bestMoveJeffBoard = game.getMoveByClone(bestMoveNodeBoard);
+        guiGame.movePiece(bestMoveGUIBoard);
+
+        if (guiGame.getState() == GameState.PROMOTING_AND_EATING || guiGame.getState() == GameState.PROMOTING_PAWN) {
+            guiGame.promotePawn(bestMoveGUIBoard.getPiece(), PieceName.QUEEN);
+            getGame().promotePawn(bestMoveJeffBoard.getPiece(), PieceName.QUEEN);
+            bestMoveNodeBoard.getPiece().setPieceName(PieceName.QUEEN);
+        }
+
+        chessPanel.initializePieces();
+        chessPanel.endGameMessage();
+        updateTree(bestMoveNodeBoard);
     }
 
     public void buildTree(Node node, boolean secondTry) {
