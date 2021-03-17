@@ -10,4 +10,4 @@ To speed things up, I implemented alpha beta pruning, which prunes branches if t
 
 At this moment, Jeff can outperform stock fish level 3 (lichess' chess engine). Ultimately, I'd like for Jeff to be able to beat level 5.
 
-![diagram](./docs/tree building sequence diagram.png)
+![diagram](/docs/tree building sequence diagram.png)
