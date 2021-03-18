@@ -107,7 +107,7 @@ public class SimpleNode {
         GameGUI.createJFrame(testPanel);*/
 
         for (int i = 1; i <= 5; i++) {
-            Game game = FenUtils.createGameFromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            Game game = NotationUtils.createGameFromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
             SimpleNode node = new SimpleNode(i, Color.WHITE, null);
             long start_time = System.nanoTime();

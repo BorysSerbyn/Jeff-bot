@@ -1,8 +1,6 @@
 package ca.borysserbyn.mechanics;
 
 import ca.borysserbyn.jeffbot.SimpleNode;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import java.util.*;
@@ -16,7 +14,7 @@ public class SimpleNodeTest {
         //GameGUI.createJFrame(TestPanel.getSingletonInstance());
         try{
             String expString = FileUtils.readTreeFile();
-            Game game = FenUtils.createGameFromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            Game game = NotationUtils.createGameFromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
             SimpleNode node = new SimpleNode(5, Color.WHITE, null);
             String actString = tapSystemOut(() -> {
                 node.addNodes(0, game);
@@ -55,7 +53,7 @@ public class SimpleNodeTest {
     @Test
     void addNodesTest1(){
         //GameGUI.createJFrame(TestPanel.getSingletonInstance());
-        Game game = FenUtils.createGameFromFen("rnbg1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+        Game game = NotationUtils.createGameFromFen("rnbg1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
         SimpleNode node = new SimpleNode(2, Color.WHITE, null);
         String actualMoves = node.addNodes2(0, game);
         String expectedMoves = FileUtils.readTreeFile();
@@ -64,7 +62,7 @@ public class SimpleNodeTest {
 
     @Test
     void addNodesTest2(){
-        Game game = FenUtils.createGameFromFen("rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R b KQkq - 0 1");
+        Game game = NotationUtils.createGameFromFen("rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R b KQkq - 0 1");
         SimpleNode node = new SimpleNode(1, Color.WHITE, null);
         String actualMoves = node.addNodes2(0, game);
         String expectedMoves = "test";
@@ -73,7 +71,7 @@ public class SimpleNodeTest {
 
     @Test
     void addNodesTest3(){
-        Game game = FenUtils.createGameFromFen("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1");
+        Game game = NotationUtils.createGameFromFen("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1");
         SimpleNode node = new SimpleNode(1, Color.WHITE, null);
         String actualMoves = node.addNodes2(0, game);
         String expectedMoves = "test";
@@ -82,7 +80,7 @@ public class SimpleNodeTest {
 
     @Test
     void addNodesTest4(){
-        Game game = FenUtils.createGameFromFen("rnbg1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+        Game game = NotationUtils.createGameFromFen("rnbg1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
         SimpleNode node = new SimpleNode(1, Color.WHITE, null);
         int[] actualMoves = new int[5];
         int[] expectedMoves = new int[]{44, 1486, 62379, 2103487, 89941194};

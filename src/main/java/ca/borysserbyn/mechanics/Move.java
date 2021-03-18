@@ -31,6 +31,16 @@ public class Move implements Cloneable, Serializable {
         return "" + pieceLetter + (piece.getY() + 1) + targetLetter + (y+1);
     }
 
+    public String toPGNNotation(){
+        String pgnStr = "";
+        char pieceLetter = (char) (piece.getX() + 97);
+        char targetLetter = (char) (x + 97);
+        pgnStr += piece.getPieceName().getSymbol();
+        pgnStr += targetLetter;
+        pgnStr += y+1;
+        return pgnStr;
+    }
+
     @Override
     public String toString() {
         return piece.toString() + " TO--> " + "(" + x + ", " + y + ")";

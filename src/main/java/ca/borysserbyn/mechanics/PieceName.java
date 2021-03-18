@@ -83,4 +83,23 @@ public enum PieceName {
                 return null;
         }
     }
+
+    public String getSymbol(){
+        switch (this) {
+            case BISHOP:
+                return "B";
+            case KNIGHT:
+                return "N";
+            case PAWN:
+                return "";
+            case ROOK:
+                return "R";
+            case KING:
+                return "K";
+            case QUEEN:
+                return "Q";
+            default:
+                return null;
+        }
+    }
 }

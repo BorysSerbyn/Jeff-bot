@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.concurrent.ForkJoinPool;
 
 public class Jeffbot {
-    private static int maxDepth = 4;
+    private int maxDepth = 4;
     private static final ForkJoinPool pool = new ForkJoinPool();
     private Game game;
     private Color color;
@@ -18,13 +18,17 @@ public class Jeffbot {
     public Jeffbot(Color color, Game game) {
         this.color = color;
         this.game = (Game) game.clone();
-        currentNode = new Node(maxDepth, color, null, game.getTurnCounter());
-        buildTree(currentNode, false);
+    }
+
+    public Jeffbot(Color color, Game game, int maxDepth) {
+        this.maxDepth = maxDepth;
+        this.color = color;
+        this.game = (Game) game.clone();
     }
 
     public void setGame(Game game) {
         this.game = game;
-        resetCurrentNode();
+        updateTree();
     }
 
     public Game getGame() {
@@ -80,39 +84,36 @@ public class Jeffbot {
     }
 
     public void updateTree() {
-        Move move = game.getLastMove();
-        Move clonedMove = (Move) move.clone();
-        Node moveNode = getNodeByMove(currentNode, clonedMove);
-        if (moveNode == null) {//is there a node in the tree corresponding the the move?
-            System.out.println("Couldnt find node: " + move + " in tree.");
+        Move jeffMove;
+        Move opponentMove;
+        Node jeffMoveNode;
+        Node opponentMoveNode;
+
+        if(game.getTurnCounter() == 0){
+            opponentMoveNode = null;
+        }else if(game.getTurnCounter() == 1){
+            opponentMove = game.getMoveByIndex(0);
+            opponentMoveNode = new Node(maxDepth, color, (Move) opponentMove.clone(), game.getTurnCounter());
+        }else{
+            jeffMove = game.getMoveByIndex(1);
+            opponentMove = game.getMoveByIndex(0);
+            jeffMoveNode = currentNode.getChildNodes().get(0);
+            opponentMoveNode = getNodeByMove(jeffMoveNode, opponentMove);
+        }
+
+        if (opponentMoveNode == null) {//is there a node in the tree corresponding to the move?
+            System.out.println("Couldnt find node: " + opponentMoveNode);
             resetCurrentNode();
         }else{
-            currentNode = moveNode;
-            //System.out.println("current node: " + currentNode + " move: " + move);
+            currentNode = opponentMoveNode;
         }
         buildTree(currentNode, false);
-    }
-
-
-    //Handles bot movement.
-    public void movePiece(Move move) {
-        Move moveJeffBoard = game.getMoveByClone(move);
-        game.movePiece(moveJeffBoard);
-        if (game.getState() == GameState.PROMOTING_AND_EATING || game.getState() == GameState.PROMOTING_PAWN) {
-            move.getPiece().setPieceName(PieceName.QUEEN);
-        }
-        updateTree();
     }
 
     public void buildTree(Node node, boolean secondTry) {
 
         int treeSize = node.addNodes(0, (Game) game.clone());
         System.out.println("Tree built with size: " + treeSize);
-
-        /*TreeTask rootTask = new TreeTask(node, 0, secondTry);
-        pool.invoke(rootTask);
-        node.getChildNodes().forEach(Node::inheritChildScore);*/
-
         node.setParentNode(null);
         System.gc();
     }

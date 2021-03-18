@@ -4,6 +4,7 @@ package ca.borysserbyn.mechanics;
 import ca.borysserbyn.gui.TestPanel;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -66,7 +67,7 @@ public class Game implements Cloneable, Serializable, Comparable {
 
     @Override
     public Object clone() {
-        Game clonedGame = new Game(orientation,turn,turnCounter,fiftyMoveClock,graveyard,whiteCastleState,blackCastleState,state,seed);
+        Game clonedGame = new Game(orientation, turn, turnCounter, fiftyMoveClock, graveyard, whiteCastleState, blackCastleState, state, seed);
 
         ArrayList<Piece> clonedPieces = new ArrayList();
         for (Piece piece : pieces) clonedPieces.add((Piece) piece.clone());
@@ -108,6 +109,22 @@ public class Game implements Cloneable, Serializable, Comparable {
         return copiedArray;
     }
 
+    public void setWhiteCastleState(int whiteCastleState) {
+        this.whiteCastleState = whiteCastleState;
+    }
+
+    public void setBlackCastleState(int blackCastleState) {
+        this.blackCastleState = blackCastleState;
+    }
+
+    public int getWhiteCastleState() {
+        return whiteCastleState;
+    }
+
+    public int getBlackCastleState() {
+        return blackCastleState;
+    }
+
     public boolean[] getEnPassantConditionsWhite() {
         return enPassantConditionsWhite;
     }
@@ -132,7 +149,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         return board;
     }
 
-    public int getSeed(){
+    public int getSeed() {
         return seed;
     }
 
@@ -163,7 +180,7 @@ public class Game implements Cloneable, Serializable, Comparable {
     }
 
     public Piece getPieceByTile(int x, int y) {
-        if(x == -1){
+        if (x == -1) {
             return null;
         }
         return board[x][y];
@@ -224,6 +241,15 @@ public class Game implements Cloneable, Serializable, Comparable {
 
     public ArrayList<Move> getMoveHistory() {
         return moveHistory;
+    }
+
+
+    public ArrayList<Move> getHistory() {
+        return moveHistory;
+    }
+
+    public Move getMoveByIndex(int index) {
+        return moveHistory.get(moveHistory.size()-index-1);
     }
 
     public Move getLastMove() {
@@ -304,18 +330,18 @@ public class Game implements Cloneable, Serializable, Comparable {
      * the following methods are used by the scoring function in node class
      */
 
-    public int castlingValue(Color targetColor){
+    public int castlingValue(Color targetColor) {
         int value = 0;
         int castleState = targetColor == Color.WHITE ? whiteCastleState : blackCastleState;
         boolean[] castlingConditions = targetColor == Color.WHITE ? castlingConditionsWhite : castlingConditionsBlack;
-        if(castleState == 0){
-            for(boolean condition : castlingConditions){
-                if(condition == true){
+        if (castleState == 0) {
+            for (boolean condition : castlingConditions) {
+                if (condition == true) {
                     value++;
                 }
             }
-        }else{
-            value = 3;
+        } else {
+            value = 4;
         }
         return value;
     }
@@ -438,7 +464,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (!isPieceThreatened(king)) {
             return false;
         }
-        if(canPieceMove(king)){
+        if (canPieceMove(king)) {
             return false;
         }
         for (Piece piece : getUneatenPiecesByColor(turn)) {
@@ -462,7 +488,7 @@ public class Game implements Cloneable, Serializable, Comparable {
             //System.out.println("threefold repetition");
             return true;
         }
-        if(fiftyMoveClock >= 50){
+        if (fiftyMoveClock >= 50) {
             //System.out.println("fifty moves reached");
             return true;
         }
@@ -519,17 +545,8 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (moveHistory.size() < 8) {
             return false;
         }
-
-        int firstMoveIndex = moveHistory.size() < 8 ? 0 : moveHistory.size() - 8;
-        Move whiteFirst = moveHistory.get(firstMoveIndex);
-        Move blackFirst = moveHistory.get(firstMoveIndex + 1);
-
-
-        for (int i = firstMoveIndex; i < moveHistory.size(); i = i + 4) {
-            if (!moveHistory.get(i).equals(whiteFirst)) {
-                return false;
-            }
-            if (!moveHistory.get(i + 1).equals(blackFirst)) {
+        for (int i = moveHistory.size() - 8; i < moveHistory.size()-4; i++) {
+            if (!moveHistory.get(i).equals(moveHistory.get(i+4))) {
                 return false;
             }
         }
@@ -537,21 +554,21 @@ public class Game implements Cloneable, Serializable, Comparable {
     }
 
     public boolean canPieceMove(Piece piece) {
-        if(piece.generateMoves(this).isEmpty()){
+        if (piece.generateMoves(this).isEmpty()) {
             return false;
         }
         return true;
     }
 
 
-    public void buildBoard(){
+    public void buildBoard() {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 board[i][j] = null;
             }
         }
-        for(Piece piece: pieces){
-            if(piece.getX() != -1){
+        for (Piece piece : pieces) {
+            if (piece.getX() != -1) {
                 board[piece.getX()][piece.getY()] = piece;
             }
         }
@@ -570,7 +587,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         setState(GameState.NEUTRAL);
         updateEnPassantConditions(piece.getColor());
 
-        if(piece.getPieceName() == PieceName.PAWN || targetPiece != null){ //reset 50 move clock if rules are met
+        if (piece.getPieceName() == PieceName.PAWN || targetPiece != null) { //reset 50 move clock if rules are met
             fiftyMoveClock = 0;
         }
 
@@ -578,7 +595,7 @@ public class Game implements Cloneable, Serializable, Comparable {
             setState(GameState.PROMOTING_PAWN);
         }
         if (targetPiece != null) {//if a piece is to be eaten
-            if(targetPiece.getPieceName() == PieceName.ROOK){//cant castle on that side if piece is eaten
+            if (targetPiece.getPieceName() == PieceName.ROOK) {//cant castle on that side if piece is eaten
                 updateCastlingConditions(targetPiece);
             }
             targetPiece.discardPiece();
@@ -607,7 +624,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         buildBoard();
     }
 
-    public void discardPiece(Piece piece){
+    public void discardPiece(Piece piece) {
         piece.discardPiece();
         buildBoard();
     }
@@ -623,9 +640,9 @@ public class Game implements Cloneable, Serializable, Comparable {
         int signedXMove = destinationX - pieceX;
 
 
-        if(orientation == 1){
+        if (orientation == 1) {
             rookXMove = signedXMove > 0 ? -2 : 3; //short if true
-        }else{
+        } else {
             rookXMove = signedXMove < 0 ? 2 : -3; //short if true
         }
 
@@ -826,7 +843,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         }
     }
 
-    public int pawnOrientationByColor(Color color){
+    public int pawnOrientationByColor(Color color) {
         if (orientation == 1) {
             if (color == Color.BLACK) {
                 return -1;
@@ -1053,7 +1070,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (getPieceByTile(castleX, y) == null) {
             return false;
         }
-        if(getPieceByTile(move.getX(), move.getY()) != null){ //is there a piece where king is trying to move
+        if (getPieceByTile(move.getX(), move.getY()) != null) { //is there a piece where king is trying to move
             return false;
         }
         if (isPieceInTheWay(move)) {//is a piece between the king and the rook
@@ -1138,9 +1155,9 @@ public class Game implements Cloneable, Serializable, Comparable {
         Game clonedGame = (Game) this.clone();
         Move clonedMove = clonedGame.getMoveByClone(move);
         Piece clonedPiece = clonedMove.getPiece();
-        if(move.getX() == -1){
+        if (move.getX() == -1) {
             clonedGame.discardPiece(clonedPiece);
-        }else{
+        } else {
             clonedGame.movePiece(clonedMove);
         }
         Piece clonedKing = clonedGame.getPieceByName(PieceName.KING, clonedPiece.getColor());

@@ -13,7 +13,7 @@ import java.util.Random;
 
 public class JeffPanel extends ChessPanel implements Observer {
     private Jeffbot jeff;
-    private Color jeffColor = Color.WHITE;
+    private Color jeffColor = Color.BLACK;
 
     public JeffPanel(Game game) {
         super(game);
@@ -21,15 +21,16 @@ public class JeffPanel extends ChessPanel implements Observer {
         initializeJeff();
     }
 
-
     @Override
     public void update(Observable source, Object arg1){
+        initializeJeff();
         chessBoard.removeAll();
         initializeBoardSquares();
         initializePieces();
-        this.revalidate();
-        this.repaint();
+        revalidate();
+        repaint();
     }
+
 
     @Override
     //Handles pieces/squares being clicked.
@@ -67,37 +68,19 @@ public class JeffPanel extends ChessPanel implements Observer {
 
         if (observableGame.getGame().isMoveLegal(move)) { //is the move legal
             observableGame.movePiece(move);
-            initializePieces();
             endGameMessage();
-
-            System.out.println();
-            System.out.println(ANSI_RED + "###############################################" + ANSI_RESET);
             System.out.println("turn: " + observableGame.getGame().getTurnCounter());
             System.out.println("state: " + observableGame.getGame().getState());
+            System.out.println(ANSI_RED + "###############################################" + ANSI_RESET);
+            System.out.println();
 
             if (observableGame.getGame().getState() == GameState.PROMOTING_AND_EATING || observableGame.getGame().getState() == GameState.PROMOTING_PAWN) {
                 displayPromotionWindow(selectedButton, clonedPiece);
             }
-
-            if (!isGameOver) {
-                long start_time = System.nanoTime();
-                jeff.movePiece(observableGame.getGame().getLastMove());
-                jeffMovePiece();
-                long end_time = System.nanoTime();
-                System.out.println("calculation time: " + (end_time - start_time) / 1e6);
-            }
-
             System.out.println();
         }
 
         this.originButton = null;
-    }
-
-    public void jeffMovePiece(){
-        Move bestMove = jeff.findBestMove();
-        jeff.movePiece(bestMove);
-        Move clonedMove = observableGame.getGame().getMoveByClone(bestMove);
-        observableGame.movePiece(clonedMove);
     }
 
     @Override
@@ -119,25 +102,17 @@ public class JeffPanel extends ChessPanel implements Observer {
         setGame(new Game(observableGame.getGame().getOrientation()));
         isGameOver = false;
         originButton = null;
-        jeff.setGame((Game) observableGame.getGame().clone());
-        if (jeffColor == observableGame.getGame().getTurn()) {
-            jeffMovePiece();
-        }
     }
 
     @Override
     public void clickLoadButton(ActionEvent e) {
-        Game newGame = FileUtils.readFile();
+        Game newGame = FileUtils.readSerializedGame();
         if (newGame == null) {
             return;
         }
         setGame(newGame);
         isGameOver = false;
         originButton = null;
-        jeff.setGame((Game) observableGame.getGame().clone());
-        if (jeffColor == observableGame.getGame().getTurn()) {
-            jeffMovePiece();
-        }
     }
 
     @Override
@@ -174,9 +149,16 @@ public class JeffPanel extends ChessPanel implements Observer {
     }
 
     public void initializeJeff(){
-        jeff = new Jeffbot(jeffColor, observableGame.getGame());
-        if (jeffColor == observableGame.getGame().getTurn()) {
-            jeffMovePiece();
+        if(jeff == null){
+            jeff = new Jeffbot(jeffColor, observableGame.getGame());
+        }
+        if (jeffColor == observableGame.getGame().getTurn() && !isGameOver) {
+            long start_time = System.nanoTime();
+            jeff.setGame(observableGame.getGame());
+            Move bestMove = observableGame.getGame().getMoveByClone(jeff.findBestMove());
+            observableGame.getGame().movePiece(bestMove);
+            long end_time = System.nanoTime();
+            System.out.println("calculation time: " + (end_time - start_time) / 1e6);
         }
     }
 }

@@ -42,6 +42,7 @@ public class ChessPanel extends JPanel implements Observer {
 
     @Override
     public void update(Observable source, Object arg1){
+        chessBoard.removeAll();
         initializeBoardSquares();
         initializePieces();
         this.revalidate();
@@ -134,18 +135,16 @@ public class ChessPanel extends JPanel implements Observer {
         setGame(new Game(observableGame.getGame().getOrientation()));
         isGameOver = false;
         originButton = null;
-        chessBoard.removeAll();
     }
 
     public void clickLoadButton(ActionEvent e) {
-        Game newGame = FileUtils.readFile();
+        Game newGame = FileUtils.readSerializedGame();
         if(newGame == null){
             return;
         }
         setGame(newGame);
         isGameOver = false;
         originButton = null;
-        chessBoard.removeAll();
     }
 
 
@@ -160,7 +159,6 @@ public class ChessPanel extends JPanel implements Observer {
         setGame(newGame);
         isGameOver = false;
         originButton = null;
-        chessBoard.removeAll();
     }
 
     //Sends piece to the gui graveyard (not the boards)

@@ -118,7 +118,7 @@ public class Node implements Comparable{
     public void scoreNode(Game game) {
         float castlingValue = game.castlingValue(jeffColor) - game.castlingValue(opponentColor);
         pieceValue = game.getGameValueByColor(jeffColor);
-        float score = pieceValue + checkmateValue * 20 + castlingValue/12;
+        float score = pieceValue + checkmateValue * 20 + castlingValue/8;
         //substract stalemate value if you are winning, do nothing if you are losing.
         score -= score > 0 ? stalemateValue * 20 : 0;
         this.currentScore = score;
@@ -146,6 +146,7 @@ public class Node implements Comparable{
 
 
     public int addNodes(int depth, Game game) {
+
         if (depth >= maxDepth || game.isGameOver()) {//is game over or desired depth reached?
             int moveCount = 0;
             if (game.getState() == GameState.CHECKMATE) {
@@ -159,32 +160,30 @@ public class Node implements Comparable{
             cascadedScore = currentScore;
             return moveCount;
         }
+
         scoreNode(game);
 
-
-        if (depth > 2) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
+        if (depth > 2 && !parentNode.getChildNodes().isEmpty()) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
             //if this node already has children, use the cascaded score instead of the current one.
-            float adjustedScore = childNodes.isEmpty() ? currentScore : cascadedScore;
-            float filter = 0f;
-            for (Node siblingNode : parentNode.getChildNodes()) {
-                if(siblingNode.childNodes.isEmpty()){
-                    continue;
+            float casOrCurScore = childNodes.isEmpty() ? currentScore : cascadedScore;
+            float filter = 0.1f;
+            ArrayList<Node> siblingList = parentNode.getChildNodes();
+            Node bestSibling = siblingList.get(0);
+            double bestSiblingCascadedScore = bestSibling.cascadedScore;
+            if(jeffColor != game.getTurn()){
+                if(bestSiblingCascadedScore > casOrCurScore + filter){
+                    cascadedScore = casOrCurScore;
+                    return 1;
                 }
-                double siblingCascadedScore = siblingNode.cascadedScore;
-
-                if(jeffColor != game.getTurn()){
-                    if(siblingCascadedScore > adjustedScore){
-                        cascadedScore = adjustedScore;
-                        return 1;
-                    }
-                }else{
-                    if(siblingCascadedScore < adjustedScore){
-                        cascadedScore = adjustedScore;
-                        return 1;
-                    }
+            }else{
+                if(bestSiblingCascadedScore + filter < casOrCurScore){
+                    cascadedScore = casOrCurScore;
+                    return 1;
                 }
-                //add the value to the adjusted score to keep investigating small losses.
             }
+            int index = siblingList.indexOf(this);
+            siblingList.remove(index);
+            siblingList.add(0,this);
         }
 
         int positionsFound = 0;
@@ -209,8 +208,8 @@ public class Node implements Comparable{
                 }
                 Node childNode = new Node(maxDepth, jeffColor, possibleMove, clonedGame.getTurnCounter());
                 childNode.parentNode = this;
-                positionsFound += childNode.addNodes(depth + 1, clonedGame);
                 this.addChild(childNode);
+                positionsFound += childNode.addNodes(depth + 1, clonedGame);
             }
         }
         if(depth == 1){
@@ -220,51 +219,7 @@ public class Node implements Comparable{
         return positionsFound;
     }
 
-    public String addNodes2(int depth, Game game) {
-        if (depth >= maxDepth) {
-            return move.toString();
-        }
-        ArrayList<Move> allMovesList = game.generateLegalMovesByColor(game.getTurn());
-        String positionsFound = "";
-        if (move != null) {
-            positionsFound += move.toString()+ ":     ";
-        }
-        for (Move possibleMove : allMovesList) {
-            Game clonedGame = (Game) game.clone();
-            Move clonedMove = clonedGame.getMoveByClone(possibleMove);
-            clonedGame.movePiece(clonedMove);
-
-            if (isPromoting(clonedGame)) {
-                clonedGame.promotePawn(clonedMove.getPiece(), PieceName.QUEEN);
-            }
-            Node childNode = new Node(maxDepth, jeffColor, possibleMove, clonedGame.getTurnCounter());
-
-            positionsFound += childNode.addNodes2(depth + 1, clonedGame) + ", ";
-            this.addChild(childNode);
-        }
-        positionsFound += "\n";
-        return positionsFound;
-    }
-
     public static void main(String[] args) {
-//        Game game = FenUtils.createGameFromFen("rnbg1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
-//        SimpleNode node = new SimpleNode(2, Color.WHITE, null);
-//        String moves = node.addNodes2(0, game);
-//        FileUtils.writeToFile(moves);
-
-        //Game game = FenUtils.createGameFromFen("rnbg1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
-
-        /*for (int i = 1; i <= 4; i++) {
-            Game game = FenUtils.createGameFromFen("rnQq1k1r/pp2bppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R b KQ - 1 8");
-            SimpleNode node = new SimpleNode(i, Color.WHITE, null);
-            long start_time = System.nanoTime();
-            int positionsFound = node.addNodes(0, game);
-            long end_time = System.nanoTime();
-            System.out.println("Depth: " + i + " Result: " + positionsFound + " Time: " + (end_time - start_time) / 1e6);
-        }*/
-
-        //GameGUI.createJFrame(TestPanel.getSingletonInstance());
-
         for (int i = 1; i <= 5; i++) {
             Game game = new Game(1);
             Node node = new Node(i, Color.WHITE, null, game.getTurnCounter());

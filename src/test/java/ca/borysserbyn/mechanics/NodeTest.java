@@ -1,5 +1,6 @@
 package ca.borysserbyn.mechanics;
 
+import ca.borysserbyn.jeffbot.Jeffbot;
 import ca.borysserbyn.jeffbot.Node;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -15,4 +16,6 @@ public class NodeTest {
         int actual = node.compareTo(otherNode);
         Assertions.assertEquals(expected, actual);
     }
+
+
 }

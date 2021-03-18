@@ -65,7 +65,7 @@ public class FileUtils {
         return null;
     }
 
-    public static Game readFile(){
+    public static Game readSerializedGame(){
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(savedGamesDir);
         if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
@@ -77,6 +77,18 @@ public class FileUtils {
             }catch(IOException e){
                 System.out.println(e.getMessage());
             }
+        }
+        return null;
+    }
+
+    public static Game readGameByPath(String pathStr){
+        File file = new File(pathStr);
+        try{
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            Game game = (Game) (new Gson().fromJson(br, Game.class)).clone();
+            return game;
+        }catch(IOException e){
+            System.out.println(e.getMessage());
         }
         return null;
     }
