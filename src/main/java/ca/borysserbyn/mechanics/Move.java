@@ -53,24 +53,33 @@ public class Move implements Cloneable, Serializable {
 
     public String toPGNNotation() {
         String pgnStr = "";
-        char pieceLetter = (char) (piece.getX() + 97);
+        String pieceName = piece.getPieceName().getSymbol();
         char targetLetter = (char) (x + 97);
+
+        if(promotionSnapShot != PieceName.UNDEFINED){
+            pieceName += "=" + promotionSnapShot.getSymbol();
+        }
+
         if (stateSnapShot == GameState.CASTLING_LONG){
-            pgnStr += "O-O";
+            pgnStr = "O-O";
         }else if(stateSnapShot == GameState.CASTLING_SHORT){
-            pgnStr += "O-O-O";
-        }else if(stateSnapShot == GameState.PIECE_EATEN){
-            pgnStr += piece.getPieceName().getSymbol();
+            pgnStr = "O-O-O";
+        }
+
+        if(stateSnapShot == GameState.PIECE_EATEN){
+            pgnStr += pieceName;
             pgnStr += "x";
             pgnStr += targetLetter;
             pgnStr += y+1;
         }else if(stateSnapShot == GameState.CHECKMATE){
-            pgnStr += piece.getPieceName().getSymbol();
+            pgnStr += pieceName;
             pgnStr += targetLetter;
             pgnStr += y+1;
             pgnStr += "#";
-        }else if(stateSnapShot == GameState.PROMOTING_PAWN){
-
+        }else if(stateSnapShot == GameState.NEUTRAL){
+            pgnStr += pieceName;
+            pgnStr += targetLetter;
+            pgnStr += y+1;
         }
 
         return pgnStr;

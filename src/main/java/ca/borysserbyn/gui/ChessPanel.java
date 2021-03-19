@@ -5,6 +5,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -134,6 +136,23 @@ public class ChessPanel extends JPanel implements Observer {
         originButton = null;
     }
 
+    public void clickCopyFen(ActionEvent e) {
+        String str = NotationUtils.createFenFromGame(observableGame.getGame());
+        copyToClipBoard(str);
+    }
+
+    public void clickCopyPgn(ActionEvent e) {
+        String str = NotationUtils.gameToPGN(observableGame.getGame());
+        copyToClipBoard(str);
+    }
+
+    public void copyToClipBoard(String str){
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Clipboard clipboard = toolkit.getSystemClipboard();
+        StringSelection strSel = new StringSelection(str);
+        clipboard.setContents(strSel, null);
+    }
+
 
     public void clickUndoButton(ActionEvent e) {
         ArrayList<Move> moveHistory = observableGame.getGame().getMoveHistory();
@@ -178,6 +197,14 @@ public class ChessPanel extends JPanel implements Observer {
         JButton loadButton = new JButton("Load");
         loadButton.addActionListener(this::clickLoadButton);
         tools.add(loadButton);
+        JButton copyFENButton = new JButton("Copy FEN");
+        copyFENButton.addActionListener(this::clickCopyFen);
+        tools.add(copyFENButton);
+        JButton copyPGNButton = new JButton("Copy PGN");
+        copyPGNButton.addActionListener(this::clickCopyPgn);
+        tools.add(copyPGNButton);
+
+
         tools.addSeparator();
         JButton helpButton = new JButton("Help");
         tools.add(helpButton);

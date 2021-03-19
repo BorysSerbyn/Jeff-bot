@@ -187,26 +187,9 @@ public class NotationUtils {
     public static String gameToPGN(Game game){
         String pgnStr = "";
         ArrayList<Move> history = game.getHistory();
-        for (int i = 0; i < history.size(); i=i+2) {
-            Move whiteMove = history.get(i);
-            Move blackMove = history.get(i+1);
-            pgnStr += (i/2 + 1)+ ". ";
-            pgnStr += moveToPgn(whiteMove);
-            pgnStr += moveToPgn(blackMove);
-        }
-        return pgnStr;
-    }
-
-    public static String moveToPgn(Move move){
-        String pgnStr = "";
-        int xMove = move.getX()-move.getPiece().getX();
-        if(move.getPiece().getPieceName() == PieceName.KING && Math.abs(xMove) == 2){
-            if(move.getX()-move.getPiece().getX() < 0){
-                pgnStr += "O-O ";
-            }else{
-                pgnStr += "O-O-O ";
-            }
-        }else{
+        for (int i = 0; i < history.size(); i++) {
+            Move move = history.get(i);
+            pgnStr += i%2 == 0 ? (i/2 + 1)+ ". " : "";
             pgnStr += move.toPGNNotation() + " ";
         }
         return pgnStr;
