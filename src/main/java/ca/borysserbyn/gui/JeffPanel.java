@@ -44,45 +44,10 @@ public class JeffPanel extends ChessPanel implements Observer {
     @Override
     //Handles pieces/squares being clicked.
     public void clickTile(ActionEvent e) {
-        if (isGameOver) {
-            return;
-        }
         if (jeffColor == observableGame.getGame().getTurn()) {
             return;
         }
-        TileButton selectedButton = (TileButton) e.getSource();
-        Piece selectedPiece = selectedButton.getPiece();
-        if (originButton == null && selectedPiece != null) { //is there a piece in the selected square and was a piece already selected
-            if (selectedPiece.getColor() == observableGame.getGame().getTurn()) {//is it that colors turn to move
-                originButton = selectedButton;
-            }
-        } else if (originButton != null) { //is there a piece to be moved
-            if (selectedPiece == null) {
-                movePiece(selectedButton, originButton);
-            } else if (selectedPiece.getColor() == originButton.getPiece().getColor()) {
-                originButton = selectedButton;
-            } else {
-                movePiece(selectedButton, originButton);
-            }
-        }
-    }
-
-    @Override
-    public void clickRematchButton(ActionEvent e) {
-        setGame(new Game(observableGame.getGame().getOrientation()));
-        isGameOver = false;
-        originButton = null;
-    }
-
-    @Override
-    public void clickLoadButton(ActionEvent e) {
-        Game newGame = FileUtils.readSerializedGame();
-        if (newGame == null) {
-            return;
-        }
-        setGame(newGame);
-        isGameOver = false;
-        originButton = null;
+        super.clickTile(e);
     }
 
     @Override

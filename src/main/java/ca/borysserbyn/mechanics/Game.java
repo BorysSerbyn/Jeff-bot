@@ -682,7 +682,8 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (piece.getPieceName() == PieceName.ROOK) {//turns off castling condition for a specific rook if it moves.
             if (piece.getX() == 0) {
                 castlingConditions[0] = false;
-            } else {
+            } else if(piece.getX() == 7) {
+
                 castlingConditions[2] = false;
             }
         }
@@ -1062,13 +1063,14 @@ public class Game implements Cloneable, Serializable, Comparable {
         int xMove = Math.abs(signedXMove);
         int yMove = Math.abs(signedYMove);
 
-        boolean[] casltingConditions = piece.getColor() == Color.WHITE ? castlingConditionsWhite : castlingConditionsBlack;
-        boolean kingCondition = casltingConditions[1];
+        boolean[] castlingConditions = piece.getColor() == Color.WHITE ? castlingConditionsWhite : castlingConditionsBlack;
+        boolean kingCondition = castlingConditions[1];
         boolean castleCondition;
         int castleX;
 
-        castleCondition = signedXMove < 0 ? casltingConditions[0] : casltingConditions[2];
+        castleCondition = signedXMove < 0 ? castlingConditions[0] : castlingConditions[2];
         castleX = signedXMove < 0 ? 0 : 7;
+
 
         if (yMove != 0) {
             return false;
