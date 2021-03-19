@@ -10,4 +10,5 @@ public enum GameState {
     PROMOTING_AND_EATING,
     STALEMATE,
     CHECKMATE,
+    UNDEFINED
 }

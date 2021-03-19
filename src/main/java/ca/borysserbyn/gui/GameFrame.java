@@ -1,6 +1,7 @@
 package ca.borysserbyn.gui;
 
 import ca.borysserbyn.mechanics.Game;
+import ca.borysserbyn.mechanics.NotationUtils;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

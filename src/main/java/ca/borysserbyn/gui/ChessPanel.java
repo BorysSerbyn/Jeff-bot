@@ -83,29 +83,26 @@ public class ChessPanel extends JPanel implements Observer {
     public void movePiece(TileButton selectedButton, TileButton originButton) {
         Piece originPiece = originButton.getPiece();
         Move move = new Move(originButton.getPiece(), selectedButton.getXOnBoard(), selectedButton.getYOnBoard());
-        if (observableGame.getGame().isMoveLegal(move)) { //is the move legal
-            observableGame.movePiece(move);
 
-            initializePieces();
-            if (observableGame.getGame().getState() == GameState.PROMOTING_AND_EATING || observableGame.getGame().getState() == GameState.PROMOTING_PAWN) {
-                displayPromotionWindow(selectedButton);
+        if (observableGame.getGame().isMoveLegal(move)) { //is the move legal
+            if (observableGame.getGame().isPawnPromotionLegal(move)) {
+                displayPromotionWindow(selectedButton, move);
             }
+            observableGame.movePiece(move);
             endGameMessage();
         }
-        System.out.println(originPiece.getValue(observableGame.getGame().getOrientation()));
         this.originButton = null;
     }
 
     //Popup that lets you choose which piece to promote a back rank pawn to
-    public void displayPromotionWindow(TileButton selectedButton) {
+    public void displayPromotionWindow(TileButton selectedButton, Move move) {
         String[] choices = {"QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"};
         String choice = (String) JOptionPane.showInputDialog(this, "Choose a piece to promote to.",
                 "Pawn promotion", JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
         PieceName chosenPieceName = PieceName.valueOf(choice);
-        observableGame.getGame().promotePawn(selectedButton.getPiece(), chosenPieceName);
-        selectedButton.updateIcon();
-
+        move.setPromotionSnapShot(chosenPieceName);
     }
+
     //handles end game detection
     public void endGameMessage() {
         isGameOver = observableGame.getGame().isGameOver();
@@ -115,16 +112,6 @@ public class ChessPanel extends JPanel implements Observer {
             JOptionPane.showMessageDialog(this, "Stalemate!");
 
         }
-    }
-
-
-    //Popup that lets you choose which piece to promote a back rank pawn to
-    public void displayPromotionWindow(TileButton selectedButton, Piece clonedPiece) {
-        String[] choices = {"QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"};
-        String choice = (String) JOptionPane.showInputDialog(this, "Choose a piece to promote to.",
-                "Pawn promotion", JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
-        PieceName chosenPieceName = PieceName.valueOf(choice);
-        observableGame.getGame().promotePawn(selectedButton.getPiece(), chosenPieceName);
     }
 
     public void clickSaveButton(ActionEvent e) {

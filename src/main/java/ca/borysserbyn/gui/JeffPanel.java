@@ -13,12 +13,17 @@ import java.util.Random;
 
 public class JeffPanel extends ChessPanel implements Observer {
     private Jeffbot jeff;
-    private Color jeffColor = Color.BLACK;
+    private Color jeffColor = Color.WHITE;
 
     public JeffPanel(Game game) {
         super(game);
         addSeedButton();
         initializeJeff();
+        chessBoard.removeAll();
+        initializeBoardSquares();
+        initializePieces();
+        revalidate();
+        repaint();
     }
 
     @Override
@@ -29,6 +34,10 @@ public class JeffPanel extends ChessPanel implements Observer {
         initializePieces();
         revalidate();
         repaint();
+        System.out.println("turn: " + observableGame.getGame().getTurnCounter());
+        System.out.println("state: " + observableGame.getGame().getState());
+        System.out.println(ANSI_RED + "###############################################" + ANSI_RESET);
+        System.out.println();
     }
 
 
@@ -59,45 +68,6 @@ public class JeffPanel extends ChessPanel implements Observer {
     }
 
     @Override
-    //Handles piece movement in the gui and calls it in the logic of the board.
-    public void movePiece(TileButton selectedButton, TileButton originButton) {
-        Piece originPiece = originButton.getPiece();
-        Move move = new Move(originPiece, selectedButton.getXOnBoard(), selectedButton.getYOnBoard());
-        Move clonedMove = (Move) move.clone();
-        Piece clonedPiece = clonedMove.getPiece();
-
-        if (observableGame.getGame().isMoveLegal(move)) { //is the move legal
-            observableGame.movePiece(move);
-            endGameMessage();
-            System.out.println("turn: " + observableGame.getGame().getTurnCounter());
-            System.out.println("state: " + observableGame.getGame().getState());
-            System.out.println(ANSI_RED + "###############################################" + ANSI_RESET);
-            System.out.println();
-
-            if (observableGame.getGame().getState() == GameState.PROMOTING_AND_EATING || observableGame.getGame().getState() == GameState.PROMOTING_PAWN) {
-                displayPromotionWindow(selectedButton, clonedPiece);
-            }
-            System.out.println();
-        }
-
-        this.originButton = null;
-    }
-
-    @Override
-    //Popup that lets you choose which piece to promote a back rank pawn to
-    public void displayPromotionWindow(TileButton selectedButton, Piece clonedPiece) {
-        String[] choices = {"QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"};
-        String choice = (String) JOptionPane.showInputDialog(this, "Choose a piece to promote to.",
-                "Pawn promotion", JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
-        PieceName chosenPieceName = PieceName.valueOf(choice);
-        observableGame.getGame().promotePawn(selectedButton.getPiece(), chosenPieceName);
-        Piece jeffPiece = jeff.getGame().getPieceByClone(clonedPiece);
-        jeff.getGame().promotePawn(jeffPiece, chosenPieceName);
-        clonedPiece.setPieceName(chosenPieceName);
-        selectedButton.updateIcon();
-    }
-
-    @Override
     public void clickRematchButton(ActionEvent e) {
         setGame(new Game(observableGame.getGame().getOrientation()));
         isGameOver = false;
@@ -118,9 +88,7 @@ public class JeffPanel extends ChessPanel implements Observer {
     @Override
     public void clickUndoButton(ActionEvent e) {
         if (observableGame.getGame().getTurnCounter() > 2 && observableGame.getGame().getTurn() != jeffColor) {//is there a move to go back to? is jeff done thinking?
-
             ArrayList<Move> moveHistory = observableGame.getGame().getMoveHistory();
-
             Game newGame = new Game(observableGame.getGame().getOrientation());
             newGame.setSeed(observableGame.getGame().getSeed());
             //take two moves off the top, (yours and jeffs)
@@ -128,10 +96,9 @@ public class JeffPanel extends ChessPanel implements Observer {
                 Move move = newGame.getMoveByClone(moveHistory.get(i));
                 newGame.movePiece(move);
             }
-
-            setGame(newGame);
             isGameOver = false;
             originButton = null;
+            setGame(newGame);
         }
     }
 
@@ -152,7 +119,8 @@ public class JeffPanel extends ChessPanel implements Observer {
         if(jeff == null){
             jeff = new Jeffbot(jeffColor, observableGame.getGame());
         }
-        if (jeffColor == observableGame.getGame().getTurn() && !isGameOver) {
+
+        if (jeffColor == observableGame.getGame().getTurn() && !observableGame.getGame().isGameOver()) {
             long start_time = System.nanoTime();
             jeff.setGame(observableGame.getGame());
             Move bestMove = observableGame.getGame().getMoveByClone(jeff.findBestMove());

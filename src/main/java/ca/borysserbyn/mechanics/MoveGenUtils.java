@@ -115,21 +115,11 @@ public abstract class MoveGenUtils {
             if (isOutOfBounds(tempX, tempY)) {
                 continue;
             }
+            if(tempY == 7 || tempY == 0){
+                move.setPromotionSnapShot(PieceName.QUEEN);
+            }
             boolean pawnTest = game.isPawnMove1Legal(move);
             boolean moveCheck = Math.abs(transformation[1]) == 1 ? game.isPawnMove1Legal(move) : game.isPawnMove2Legal(move);
-
-            /*if(Math.abs(transformation[1]) == 1) {
-                TestPanel testPanel = TestPanel.getSingletonInstance();
-                testPanel.setGame(game);
-                testPanel.hilightTileRed(piece.getX(), piece.getY());
-                testPanel.hilightTileBlue(tempX, tempY);
-                try{
-                    Thread.sleep(1000);
-                }catch(Exception e){
-                    System.out.println("fuckie");
-                }
-            }*/
-
             if (moveCheck) {
                 if (isDangerous) {
                     if (!game.willKingBeChecked(move)) {
@@ -173,6 +163,9 @@ public abstract class MoveGenUtils {
 
             if (isOutOfBounds(tempX, tempY)) {
                 continue;
+            }
+            if(tempY == 7 || tempY == 0){
+                move.setPromotionSnapShot(PieceName.QUEEN);
             }
             if(game.isPawnEatLegal(move)){
                 if (isDangerous) {

@@ -2,6 +2,7 @@ package ca.borysserbyn.jeffbot;
 
 import ca.borysserbyn.mechanics.*;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class Node implements Comparable{
@@ -15,7 +16,7 @@ public class Node implements Comparable{
     private int turnCount;
     private ArrayList<Node> childNodes;
     private Node parentNode;
-    private float cascadedScore = 0;
+    private float cascadedScore = 1000;
     private float currentScore = 0;
     private float pieceValue = 0;
     private int checkmateValue = 0;
@@ -50,7 +51,9 @@ public class Node implements Comparable{
      */
     @Override
     public int compareTo(Object o) {
+
         Node otherNode = (Node) o;
+
         int minMaxValue = jeffColor == move.getPiece().getColor() ? 1 : -1;
         if(otherNode.cascadedScore > cascadedScore){
             return minMaxValue;
@@ -116,12 +119,7 @@ public class Node implements Comparable{
      */
 
     public void scoreNode(Game game) {
-        float castlingValue = game.castlingValue(jeffColor) - game.castlingValue(opponentColor);
-        pieceValue = game.getGameValueByColor(jeffColor);
-        float score = pieceValue + checkmateValue * 20 + castlingValue/8;
-        //substract stalemate value if you are winning, do nothing if you are losing.
-        score -= score > 0 ? stalemateValue * 20 : 0;
-        this.currentScore = score;
+        this.currentScore = game.scorePosition(jeffColor);
     }
 
     //inherits min or max child cascadedScore depending on board turn
@@ -132,21 +130,15 @@ public class Node implements Comparable{
         cascadedScore = childNodes.get(0).cascadedScore;
         for (Node childNode : childNodes) {
             if(jeffColor == turnColor){
-                if(cascadedScore < childNode.cascadedScore){
-                    cascadedScore = childNode.cascadedScore;
-                }
+                cascadedScore = Math.max(childNode.cascadedScore, cascadedScore);
             }else{
-                if(cascadedScore > childNode.cascadedScore){
-                    cascadedScore = childNode.cascadedScore;
-                }
+                cascadedScore = Math.min(childNode.cascadedScore, cascadedScore);
             }
             //cascadedScore = childNode.cascadedScore * childNode.valueSign > cascadedScore * childNode.valueSign ? cascadedScore : childNode.cascadedScore;
         }
     }
 
-
     public int addNodes(int depth, Game game) {
-
         if (depth >= maxDepth || game.isGameOver()) {//is game over or desired depth reached?
             int moveCount = 0;
             if (game.getState() == GameState.CHECKMATE) {
@@ -160,31 +152,7 @@ public class Node implements Comparable{
             cascadedScore = currentScore;
             return moveCount;
         }
-
         scoreNode(game);
-
-        if (depth > 2 && !parentNode.getChildNodes().isEmpty()) {//reliable pruning should start after layer 2 so that it doesnt prune useful branches
-            //if this node already has children, use the cascaded score instead of the current one.
-            float casOrCurScore = childNodes.isEmpty() ? currentScore : cascadedScore;
-            float filter = 0.1f;
-            ArrayList<Node> siblingList = parentNode.getChildNodes();
-            Node bestSibling = siblingList.get(0);
-            double bestSiblingCascadedScore = bestSibling.cascadedScore;
-            if(jeffColor != game.getTurn()){
-                if(bestSiblingCascadedScore > casOrCurScore + filter){
-                    cascadedScore = casOrCurScore;
-                    return 1;
-                }
-            }else{
-                if(bestSiblingCascadedScore + filter < casOrCurScore){
-                    cascadedScore = casOrCurScore;
-                    return 1;
-                }
-            }
-            int index = siblingList.indexOf(this);
-            siblingList.remove(index);
-            siblingList.add(0,this);
-        }
 
         int positionsFound = 0;
         //tree traversal
@@ -203,9 +171,10 @@ public class Node implements Comparable{
                 Move clonedMove = clonedGame.getMoveByClone(possibleMove);
                 clonedGame.movePiece(clonedMove);
 
-                if (isPromoting(clonedGame)) {
-                    clonedGame.promotePawn(clonedMove.getPiece(), PieceName.QUEEN);
+                if (possibleMove.getPromotionSnapShot() != PieceName.UNDEFINED) {
+                    clonedGame.promotePawn(possibleMove);
                 }
+
                 Node childNode = new Node(maxDepth, jeffColor, possibleMove, clonedGame.getTurnCounter());
                 childNode.parentNode = this;
                 this.addChild(childNode);
@@ -217,6 +186,60 @@ public class Node implements Comparable{
         }
         inheritChildScore();
         return positionsFound;
+    }
+
+    public float[] testMinimax(int depth, Game game, float alpha, float beta){
+        if (depth >= maxDepth || game.isGameOver()) {//is game over or desired depth reached?
+            float moveCount = 0.f;
+            if (game.getState() == GameState.CHECKMATE) {
+                this.checkmateValue = jeffColor == move.getPiece().getColor() ? 1 : -1;
+            } else if (game.getState() == GameState.STALEMATE) {
+                stalemateValue = 1;
+            }else{
+                moveCount = 1;
+            }
+            scoreNode(game);
+            cascadedScore = currentScore;
+            return new float[]{cascadedScore, moveCount};
+        }
+
+        int positionsFound = 0;
+
+        ArrayList<Move> allMovesList = game.generateLegalMovesByColor(game.getTurn());
+        MoveComparator moveComparator = new MoveComparator(game);
+        allMovesList.sort(moveComparator);
+
+        float maxChildScore = -10000;
+        float minChildScore = 10000;
+        for (Move possibleMove : allMovesList) {
+            Game clonedGame = (Game) game.clone();
+            Move clonedMove = clonedGame.getMoveByClone(possibleMove);
+            clonedGame.movePiece(clonedMove);
+
+            Node childNode = new Node(maxDepth, jeffColor, possibleMove, clonedGame.getTurnCounter());
+            childNode.parentNode = this;
+            this.addChild(childNode);
+            float[] childResult = childNode.testMinimax(depth + 1, clonedGame, alpha, beta);
+            float childScore = childResult[0];
+            positionsFound += childResult[1];
+
+            if(turnColor == jeffColor){
+                maxChildScore = Math.max(maxChildScore, childScore);
+                alpha = Math.max(alpha, childScore);
+                cascadedScore = maxChildScore;
+                if(beta <= alpha){
+                    break;
+                }
+            }else{
+                minChildScore = Math.min(minChildScore, childScore);
+                beta = Math.min(beta, childScore);
+                cascadedScore = minChildScore;
+                if(beta <= alpha){
+                    break;
+                }
+            }
+        }
+        return new float[]{cascadedScore, positionsFound};
     }
 
     public static void main(String[] args) {

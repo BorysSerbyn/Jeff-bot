@@ -62,8 +62,13 @@ public class Jeffbot {
         while (true) {
             ArrayList<Node> siblings = bestNode.getParentNode().getChildNodes();
             Collections.sort(siblings);
+            System.out.print("Siblings: ");
             for (Node child : siblings) {
-                System.out.print(child.getCascadedScore() + ", ");
+                if(child == bestNode){
+                    System.out.print( ChessPanel.ANSI_RED+ child.getCascadedScore() + ", " +ChessPanel.ANSI_RESET);
+                }else{
+                    System.out.print(child.getCascadedScore() + ", ");
+                }
             }
             System.out.println();
             System.out.println(bestNode);
@@ -84,36 +89,37 @@ public class Jeffbot {
     }
 
     public void updateTree() {
-        Move jeffMove;
         Move opponentMove;
         Node jeffMoveNode;
-        Node opponentMoveNode;
 
-        if(game.getTurnCounter() == 0){
-            opponentMoveNode = null;
-        }else if(game.getTurnCounter() == 1){
-            opponentMove = game.getMoveByIndex(0);
-            opponentMoveNode = new Node(maxDepth, color, (Move) opponentMove.clone(), game.getTurnCounter());
-        }else{
-            jeffMove = game.getMoveByIndex(1);
+        try{
             opponentMove = game.getMoveByIndex(0);
             jeffMoveNode = currentNode.getChildNodes().get(0);
-            opponentMoveNode = getNodeByMove(jeffMoveNode, opponentMove);
+            currentNode = getNodeByMove(jeffMoveNode, opponentMove);
+        }catch(Exception e){
+            try{
+                opponentMove = game.getMoveByIndex(0);
+                currentNode = new Node(maxDepth, color, (Move) opponentMove.clone(), game.getTurnCounter());
+            }catch(Exception e2){
+                System.out.println("Couldnt find node");
+                resetCurrentNode();
+            }
         }
-
-        if (opponentMoveNode == null) {//is there a node in the tree corresponding to the move?
-            System.out.println("Couldnt find node: " + opponentMoveNode);
-            resetCurrentNode();
-        }else{
-            currentNode = opponentMoveNode;
-        }
+        resetCurrentNode();
         buildTree(currentNode, false);
     }
 
     public void buildTree(Node node, boolean secondTry) {
 
-        int treeSize = node.addNodes(0, (Game) game.clone());
-        System.out.println("Tree built with size: " + treeSize);
+        /*int treeSize = node.addNodes(0, (Game) game.clone());
+        System.out.println("Tree built with size: " + treeSize);*/
+        Game clonedGame = (Game) game.clone();
+        float[] positionResult = node.testMinimax(0, clonedGame, -10000, 10000);
+        float positionScore = positionResult[0];
+        float nodeCount = positionResult[1];
+        System.out.println("Positions evaluated: " + nodeCount);
+        System.out.println("Base score: " + positionScore + "\n");
+
         node.setParentNode(null);
         System.gc();
     }

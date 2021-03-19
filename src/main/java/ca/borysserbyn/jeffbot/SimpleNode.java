@@ -45,9 +45,10 @@ public class SimpleNode {
             Move clonedMove = clonedGame.getMoveByClone(possibleMove);
             clonedGame.movePiece(clonedMove);
 
-            if (isPromoting(clonedGame)) {
-                clonedGame.promotePawn(clonedMove.getPiece(), PieceName.QUEEN);
+            if (possibleMove.getPromotionSnapShot() != PieceName.UNDEFINED) {
+                clonedGame.promotePawn(possibleMove);
             }
+
             SimpleNode childNode = new SimpleNode(maxDepth, color, possibleMove);
             positionsFound += childNode.addNodes(depth + 1, clonedGame);
             this.addChild(childNode);
@@ -74,8 +75,8 @@ public class SimpleNode {
             Move clonedMove = clonedGame.getMoveByClone(possibleMove);
             clonedGame.movePiece(clonedMove);
 
-            if (isPromoting(clonedGame)) {
-                clonedGame.promotePawn(clonedMove.getPiece(), PieceName.QUEEN);
+            if (possibleMove.getPromotionSnapShot() != PieceName.UNDEFINED) {
+                clonedGame.promotePawn(possibleMove);
             }
             SimpleNode childNode = new SimpleNode(maxDepth, color, possibleMove);
 

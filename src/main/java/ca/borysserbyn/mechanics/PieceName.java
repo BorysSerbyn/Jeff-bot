@@ -8,7 +8,8 @@ public enum PieceName {
     BISHOP,
     ROOK,
     QUEEN,
-    KING;
+    KING,
+    UNDEFINED;
 
     private static final float[][] pawnPositionValue = new float[][]{
             {1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f},

@@ -31,11 +31,13 @@ public class Game implements Cloneable, Serializable, Comparable {
 
     private ArrayList<Move> moveHistory;
     private GameState state;
+    private PieceName promotionState;
     private int seed;
 
 
     public Game(int orientation) {
         this.state = GameState.NEUTRAL;
+        this.promotionState = null;
         this.turnCounter = 0;
         this.orientation = orientation;
         this.graveyard = new int[]{-1, -1};
@@ -53,7 +55,8 @@ public class Game implements Cloneable, Serializable, Comparable {
         buildBoard();
     }
 
-    public Game(int orientation, Color turn, int turnCounter, int fiftyMoveClock, int[] graveyard, int whiteCastleState, int blackCastleState, GameState state, int seed) {
+    public Game(int orientation, Color turn, int turnCounter, int fiftyMoveClock, int[] graveyard, int whiteCastleState, int blackCastleState,
+                GameState state, int seed, PieceName promotionState) {
         this.orientation = orientation;
         this.turn = turn;
         this.turnCounter = turnCounter;
@@ -63,11 +66,12 @@ public class Game implements Cloneable, Serializable, Comparable {
         this.blackCastleState = blackCastleState;
         this.state = state;
         this.seed = seed;
+        this.promotionState = promotionState;
     }
 
     @Override
     public Object clone() {
-        Game clonedGame = new Game(orientation, turn, turnCounter, fiftyMoveClock, graveyard, whiteCastleState, blackCastleState, state, seed);
+        Game clonedGame = new Game(orientation, turn, turnCounter, fiftyMoveClock, graveyard, whiteCastleState, blackCastleState, state, seed, null);
 
         ArrayList<Piece> clonedPieces = new ArrayList();
         for (Piece piece : pieces) clonedPieces.add((Piece) piece.clone());
@@ -91,13 +95,20 @@ public class Game implements Cloneable, Serializable, Comparable {
     @Override
     public int compareTo(Object o) {
         Game otherGame = (Game) o;
+        float scorePosition = scorePosition(turn);
+        float otherScore = otherGame.scorePosition(turn);
+        return (int) Math.signum(scorePosition - otherScore);
+    }
 
-        int otherGameCheckState = otherGame.isKingChecked() ? 1 : -1;
-        int otherGameState = otherGame.getState() != GameState.NEUTRAL ? 1 : -1;
-        int boardCheckState = this.isKingChecked() ? -1 : 1;
-        int boardState = this.getState() != GameState.NEUTRAL ? -1 : 1;
-
-        return boardState + boardCheckState + otherGameState + otherGameCheckState;
+    public float scorePosition(Color color){
+        Color otherColor = color == Color.WHITE ? Color.BLACK : Color.WHITE;
+        float castlingValue = castlingValue(color) - castlingValue(otherColor);
+        float pieceValue = getGameValueByColor(color);
+        float checkmateValue = state == GameState.CHECKMATE ? 1 : 0;
+        float stalemateValue = state == GameState.STALEMATE ? 1 : 0;
+        float score = pieceValue + checkmateValue * 20 + castlingValue/8;
+        score -= score > 0 ? stalemateValue * 20 : 0;
+        return score;
     }
 
     //copys an array of bools (conditions) for the clone function
@@ -202,9 +213,11 @@ public class Game implements Cloneable, Serializable, Comparable {
         return null;
     }
 
-    public Move getMoveByClone(Move clonedMove) {
-        Piece piece = getPieceByClone(clonedMove.getPiece());
-        return new Move(piece, clonedMove.getX(), clonedMove.getY());
+    public Move getMoveByClone(Move move) {
+        Piece piece = getPieceByClone(move.getPiece());
+        Move clonedMove = (Move) move.clone();
+        clonedMove.setPiece(piece);
+        return clonedMove;
     }
 
     public Piece getPieceByName(PieceName pieceName, Color color) {
@@ -303,6 +316,7 @@ public class Game implements Cloneable, Serializable, Comparable {
     //adds last move to appropriate array to track threefold repetitions
     public void addLastMove(Move move) {
         Move archivedMove = (Move) move.clone();
+        archivedMove.setStateSnapShot(state);
         moveHistory.add(archivedMove);
     }
 
@@ -592,7 +606,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         }
 
         if (piece.getPieceName() == PieceName.PAWN && isPawnPromotionLegal(move)) {
-            setState(GameState.PROMOTING_PAWN);
+            promotePawn(move);
         }
         if (targetPiece != null) {//if a piece is to be eaten
             if (targetPiece.getPieceName() == PieceName.ROOK) {//cant castle on that side if piece is eaten
@@ -601,9 +615,6 @@ public class Game implements Cloneable, Serializable, Comparable {
             targetPiece.discardPiece();
             //discardPiece(targetPiece);
             setState(GameState.PIECE_EATEN);
-            if (piece.getPieceName() == PieceName.PAWN && isPawnPromotionLegal(move)) {//is eating while promoting?
-                setState(GameState.PROMOTING_AND_EATING);
-            }
         }
         if (piece.getPieceName() == PieceName.PAWN && isPawnMove2Legal(move)) {//is this piece a pawn moving up 2?
             boolean[] targetConditions = piece.getColor() == Color.WHITE ? enPassantConditionsWhite : enPassantConditionsBlack;
@@ -686,8 +697,9 @@ public class Game implements Cloneable, Serializable, Comparable {
         }
     }
 
-    public void promotePawn(Piece piece, PieceName pieceName) {
-        piece.setPieceName(pieceName);
+    public void promotePawn(Move move) {
+        move.getPiece().setPieceName(move.getPromotionSnapShot());
+        promotionState = move.getPromotionSnapShot();
     }
 
 

@@ -6,6 +6,8 @@ public class Move implements Cloneable, Serializable {
     private Piece piece;
     private int x;
     private int y;
+    private GameState stateSnapShot = GameState.UNDEFINED;
+    private PieceName promotionSnapShot = PieceName.UNDEFINED;
 
 
     public Move(Piece piece, int x, int y) {
@@ -13,16 +15,34 @@ public class Move implements Cloneable, Serializable {
         this.x = x;
         this.y = y;
     }
+
+    public Move(Piece piece, int x, int y, GameState stateSnapShot, PieceName promotionSnapShot) {
+        this.piece = piece;
+        this.x = x;
+        this.y = y;
+        this.stateSnapShot = stateSnapShot;
+        this.promotionSnapShot = promotionSnapShot;
+    }
+
     @Override
     public Object clone() {
-        Move move = null;
-        try {
-            move = (Move) super.clone();
-        } catch (CloneNotSupportedException e) {
-            move = new Move(piece, x, y);
-        }
-        move.piece = (Piece) piece.clone();
-        return move;
+        return new Move((Piece) piece.clone(), x, y, stateSnapShot, promotionSnapShot);
+    }
+
+    public PieceName getPromotionSnapShot() {
+        return promotionSnapShot;
+    }
+
+    public void setPromotionSnapShot(PieceName promotionSnapShot) {
+        this.promotionSnapShot = promotionSnapShot;
+    }
+
+    public GameState getStateSnapShot() {
+        return stateSnapShot;
+    }
+
+    public void setStateSnapShot(GameState stateSnapShot) {
+        this.stateSnapShot = stateSnapShot;
     }
 
     public String toSFNotation(){
@@ -31,19 +51,36 @@ public class Move implements Cloneable, Serializable {
         return "" + pieceLetter + (piece.getY() + 1) + targetLetter + (y+1);
     }
 
-    public String toPGNNotation(){
+    public String toPGNNotation() {
         String pgnStr = "";
         char pieceLetter = (char) (piece.getX() + 97);
         char targetLetter = (char) (x + 97);
-        pgnStr += piece.getPieceName().getSymbol();
-        pgnStr += targetLetter;
-        pgnStr += y+1;
+        if (stateSnapShot == GameState.CASTLING_LONG){
+            pgnStr += "O-O";
+        }else if(stateSnapShot == GameState.CASTLING_SHORT){
+            pgnStr += "O-O-O";
+        }else if(stateSnapShot == GameState.PIECE_EATEN){
+            pgnStr += piece.getPieceName().getSymbol();
+            pgnStr += "x";
+            pgnStr += targetLetter;
+            pgnStr += y+1;
+        }else if(stateSnapShot == GameState.CHECKMATE){
+            pgnStr += piece.getPieceName().getSymbol();
+            pgnStr += targetLetter;
+            pgnStr += y+1;
+            pgnStr += "#";
+        }else if(stateSnapShot == GameState.PROMOTING_PAWN){
+
+        }
+
         return pgnStr;
     }
 
     @Override
     public String toString() {
-        return piece.toString() + " TO--> " + "(" + x + ", " + y + ")";
+        String str = piece.toString() + " TO--> " + "(" + x + ", " + y + ")";
+        str += promotionSnapShot != PieceName.UNDEFINED ? " " + promotionSnapShot : "";
+        return str;
     }
 
     @Override
