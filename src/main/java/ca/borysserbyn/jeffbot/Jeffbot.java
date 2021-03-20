@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.concurrent.ForkJoinPool;
 
 public class Jeffbot {
-    private int maxDepth = 5;
+    private int maxDepth = 4;
     private static final ForkJoinPool pool = new ForkJoinPool();
     private Game game;
     private Color color;
@@ -105,7 +105,6 @@ public class Jeffbot {
                 resetCurrentNode();
             }
         }
-        resetCurrentNode();
         buildTree(currentNode, false);
     }
 
@@ -113,7 +112,9 @@ public class Jeffbot {
 
         /*int treeSize = node.addNodes(0, (Game) game.clone());
         System.out.println("Tree built with size: " + treeSize);*/
+
         Game clonedGame = (Game) game.clone();
+        resetCurrentNode();
         float[] positionResult = node.testMinimax(0, clonedGame, -10000, 10000);
         float positionScore = positionResult[0];
         float nodeCount = positionResult[1];

@@ -108,9 +108,6 @@ public class Node implements Comparable{
         childNodes.add(childNode);
     }
 
-    public boolean isPromoting(Game game) {
-        return game.getState() == GameState.PROMOTING_AND_EATING || game.getState() == GameState.PROMOTING_PAWN;
-    }
 
     /**
      * Score based on:

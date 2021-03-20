@@ -29,11 +29,6 @@ public class SimpleNode {
         childNodes.add(childNode);
     }
 
-    public boolean isPromoting(Game game) {
-        return game.getState() == GameState.PROMOTING_AND_EATING || game.getState() == GameState.PROMOTING_PAWN;
-    }
-
-
     public int addNodes(int depth, Game game) {
         if (depth >= maxDepth) {
             return 1;
