@@ -2,7 +2,7 @@
 
 Jeff is a chess bot coded in java. You can play against Jeff by dowloading this [jar file](https://github.com/BorysSerbyn/Jeff-bot/tree/master/out/artifacts/chess_jar).
 
-The recursive function in the bot uses a minimax algorithm and alpha beta pruning to create a tree of position stemming from the current position (see fig.1).
+The recursive function in the bot uses a minimax algorithm and alpha beta pruning to create a tree of positions stemming from the current position (see fig.1).
 
 At the moment, jeff can beat stockfish level 4 50% of the time. It spends around 7 seconds per move (your mileage may vary).
 
