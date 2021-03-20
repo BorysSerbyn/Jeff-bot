@@ -6,10 +6,10 @@ import java.util.ArrayList;
 
 public class SimpleNode {
 
-    private int maxDepth;
-    private Move move;
-    private Color color;
-    private ArrayList<SimpleNode> childNodes;
+    protected int maxDepth;
+    protected Move move;
+    protected Color color;
+    protected ArrayList<SimpleNode> childNodes;
 
     public SimpleNode(int maxDepth, Color color, Move move) {
         this.color = color;
@@ -83,24 +83,6 @@ public class SimpleNode {
     }
 
     public static void main(String[] args) {
-//        Game game = FenUtils.createGameFromFen("rnbg1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
-//        SimpleNode node = new SimpleNode(2, Color.WHITE, null);
-//        String moves = node.addNodes2(0, game);
-//        FileUtils.writeToFile(moves);
-
-        //Game game = FenUtils.createGameFromFen("rnbg1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
-
-        /*for (int i = 1; i <= 4; i++) {
-            Game game = FenUtils.createGameFromFen("rnQq1k1r/pp2bppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R b KQ - 1 8");
-            SimpleNode node = new SimpleNode(i, Color.WHITE, null);
-            long start_time = System.nanoTime();
-            int positionsFound = node.addNodes(0, game);
-            long end_time = System.nanoTime();
-            System.out.println("Depth: " + i + " Result: " + positionsFound + " Time: " + (end_time - start_time) / 1e6);
-        }*/
-/*
-        TestPanel testPanel = TestPanel.getSingletonInstance();
-        GameGUI.createJFrame(testPanel);*/
 
         for (int i = 1; i <= 5; i++) {
             Game game = NotationUtils.createGameFromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");

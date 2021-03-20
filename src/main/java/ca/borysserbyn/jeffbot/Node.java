@@ -8,7 +8,6 @@ import java.util.ArrayList;
 public class Node implements Comparable{
 
     private int maxDepth;
-    private int maxBreadth;
     private Move move;
     private Color jeffColor;
     private Color opponentColor;
@@ -18,9 +17,6 @@ public class Node implements Comparable{
     private Node parentNode;
     private float cascadedScore = 1000;
     private float currentScore = 0;
-    private float pieceValue = 0;
-    private int checkmateValue = 0;
-    private int stalemateValue = 0;
 
     public Node(int maxDepth, Color jeffColor, Move move, int turnCount) {
         this.turnCount = turnCount;
@@ -92,10 +88,6 @@ public class Node implements Comparable{
         this.maxDepth = maxDepth;
     }
 
-    public float getPieceValue() {
-        return pieceValue;
-    }
-
     public void setCascadedScore(float cascadedScore) {
         this.cascadedScore = cascadedScore;
     }
@@ -131,18 +123,14 @@ public class Node implements Comparable{
             }else{
                 cascadedScore = Math.min(childNode.cascadedScore, cascadedScore);
             }
-            //cascadedScore = childNode.cascadedScore * childNode.valueSign > cascadedScore * childNode.valueSign ? cascadedScore : childNode.cascadedScore;
         }
     }
 
     public int addNodes(int depth, Game game) {
+        boolean isGameOver = game.isGameOver();
         if (depth >= maxDepth || game.isGameOver()) {//is game over or desired depth reached?
             int moveCount = 0;
-            if (game.getState() == GameState.CHECKMATE) {
-                this.checkmateValue = jeffColor == move.getPiece().getColor() ? 1 : -1;
-            } else if (game.getState() == GameState.STALEMATE) {
-                stalemateValue = 1;
-            }else{
+            if(!isGameOver){
                 moveCount = 1;
             }
             scoreNode(game);
@@ -186,13 +174,10 @@ public class Node implements Comparable{
     }
 
     public float[] testMinimax(int depth, Game game, float alpha, float beta){
-        if (depth >= maxDepth || game.isGameOver()) {//is game over or desired depth reached?
+        boolean isGameOver = game.isGameOver();
+        if (depth >= maxDepth || game.isGameOver()) {//is game over or desired depth reached?s
             float moveCount = 0.f;
-            if (game.getState() == GameState.CHECKMATE) {
-                this.checkmateValue = jeffColor == move.getPiece().getColor() ? 1 : -1;
-            } else if (game.getState() == GameState.STALEMATE) {
-                stalemateValue = 1;
-            }else{
+            if(!isGameOver){
                 moveCount = 1;
             }
             scoreNode(game);
