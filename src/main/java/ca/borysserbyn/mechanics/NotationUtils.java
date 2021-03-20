@@ -194,4 +194,19 @@ public class NotationUtils {
         }
         return pgnStr;
     }
+
+    public static String gameToPGN(Game game, String white, String black){
+        String pgnStr = "";
+        pgnStr += "[White \"" + white + "\"]" + "\n";
+        pgnStr += "[Black \"" + black + "\"]" + "\n";
+        pgnStr += "\n";
+
+        ArrayList<Move> history = game.getHistory();
+        for (int i = 0; i < history.size(); i++) {
+            Move move = history.get(i);
+            pgnStr += i%2 == 0 ? (i/2 + 1)+ ". " : "";
+            pgnStr += move.toPGNNotation() + " ";
+        }
+        return pgnStr;
+    }
 }

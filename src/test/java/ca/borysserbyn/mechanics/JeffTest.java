@@ -28,4 +28,22 @@ public class JeffTest {
 
         Assertions.assertEquals(expectedMove, actualMove);
     }
+
+    @Test
+    void findBestMoveTest(){
+        String fenStr = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        Game game = NotationUtils.createGameFromFen(fenStr);
+        Jeffbot expectedJeff = new Jeffbot(Color.WHITE, game, 5);
+        Jeffbot actualJeff = new Jeffbot(Color.WHITE, game, 5);
+        expectedJeff.resetCurrentNode();
+        actualJeff.resetCurrentNode();
+        expectedJeff.getCurrentNode().addNodes(0, (Game) game.clone(), false);
+        actualJeff.getCurrentNode().testMinimax(0, (Game) game.clone(), -10000, 10000);
+        Move expectedMove = expectedJeff.findBestMove();
+        System.out.println();
+        Move actualMove = actualJeff.findBestMove();
+
+        Assertions.assertEquals(expectedMove, actualMove);
+
+    }
 }

@@ -68,7 +68,6 @@ public class Move implements Cloneable, Serializable {
 
         if(stateSnapShot == GameState.PIECE_EATEN){
             pgnStr += pieceName;
-            //pgnStr += "x";
             pgnStr += targetLetter;
             pgnStr += y+1;
         }else if(stateSnapShot == GameState.CHECKMATE){

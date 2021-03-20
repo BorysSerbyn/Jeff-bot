@@ -126,48 +126,40 @@ public class Node implements Comparable{
         }
     }
 
-    public int addNodes(int depth, Game game) {
+    public int addNodes(int depth, Game game, boolean printBranches) {
         boolean isGameOver = game.isGameOver();
-        if (depth >= maxDepth || game.isGameOver()) {//is game over or desired depth reached?
-            int moveCount = 0;
-            if(!isGameOver){
-                moveCount = 1;
-            }
+        if (depth >= maxDepth || isGameOver) {//is game over or desired depth reached?
             scoreNode(game);
             cascadedScore = currentScore;
-            return moveCount;
+            return 1;
         }
         scoreNode(game);
 
         int positionsFound = 0;
-        //tree traversal
+
         if (!this.getChildNodes().isEmpty()) {//does this node already have children?
             for (Node childNode : this.getChildNodes()) {
                 Game clonedGame = (Game) game.clone();
                 Move clonedMove = clonedGame.getMoveByClone(childNode.move);
                 clonedGame.movePiece(clonedMove);
-                positionsFound += childNode.addNodes(depth + 1, clonedGame);
+                positionsFound += childNode.addNodes(depth + 1, clonedGame, printBranches);
             }
         } else {
             ArrayList<Move> allMovesList = game.generateLegalMovesByColor(game.getTurn());
 
             for (Move possibleMove : allMovesList) {
-                Game clonedGame = (Game) game.clone();
-                Move clonedMove = clonedGame.getMoveByClone(possibleMove);
-                clonedGame.movePiece(clonedMove);
+                Game childGame = (Game) game.clone();
+                Move childClonedMove = childGame.getMoveByClone(possibleMove);
+                childGame.movePiece(childClonedMove);
 
-                if (possibleMove.getPromotionSnapShot() != PieceName.UNDEFINED) {
-                    clonedGame.promotePawn(possibleMove);
-                }
-
-                Node childNode = new Node(maxDepth, jeffColor, possibleMove, clonedGame.getTurnCounter());
+                Node childNode = new Node(maxDepth, jeffColor, possibleMove, childGame.getTurnCounter());
                 childNode.parentNode = this;
                 this.addChild(childNode);
-                positionsFound += childNode.addNodes(depth + 1, clonedGame);
+                positionsFound += childNode.addNodes(depth + 1, childGame, printBranches);
             }
         }
-        if(depth == 1){
-            //System.out.println(move.toSFNotation() + ": " + positionsFound);
+        if(depth == 1 && printBranches){
+            System.out.println(move.toSFNotation() + ": " + positionsFound);
         }
         inheritChildScore();
         return positionsFound;
@@ -175,14 +167,10 @@ public class Node implements Comparable{
 
     public float[] testMinimax(int depth, Game game, float alpha, float beta){
         boolean isGameOver = game.isGameOver();
-        if (depth >= maxDepth || game.isGameOver()) {//is game over or desired depth reached?s
-            float moveCount = 0.f;
-            if(!isGameOver){
-                moveCount = 1;
-            }
+        if (depth >= maxDepth || isGameOver) {//is game over or desired depth reached?s
             scoreNode(game);
             cascadedScore = currentScore;
-            return new float[]{cascadedScore, moveCount};
+            return new float[]{cascadedScore, 1};
         }
 
         int positionsFound = 0;
@@ -193,15 +181,16 @@ public class Node implements Comparable{
 
         float maxChildScore = -10000;
         float minChildScore = 10000;
-        for (Move possibleMove : allMovesList) {
-            Game clonedGame = (Game) game.clone();
-            Move clonedMove = clonedGame.getMoveByClone(possibleMove);
-            clonedGame.movePiece(clonedMove);
 
-            Node childNode = new Node(maxDepth, jeffColor, possibleMove, clonedGame.getTurnCounter());
+        for (Move possibleMove : allMovesList) {
+            Game childGame = (Game) game.clone();
+            Move childClonedMove = childGame.getMoveByClone(possibleMove);
+            childGame.movePiece(childClonedMove);
+
+            Node childNode = new Node(maxDepth, jeffColor, possibleMove, childGame.getTurnCounter());
             childNode.parentNode = this;
             this.addChild(childNode);
-            float[] childResult = childNode.testMinimax(depth + 1, clonedGame, alpha, beta);
+            float[] childResult = childNode.testMinimax(depth + 1, childGame, alpha, beta);
             float childScore = childResult[0];
             positionsFound += childResult[1];
 
@@ -229,7 +218,7 @@ public class Node implements Comparable{
             Game game = new Game(1);
             Node node = new Node(i, Color.WHITE, null, game.getTurnCounter());
             long start_time = System.nanoTime();
-            int positionsFound = node.addNodes(0, game);
+            int positionsFound = node.addNodes(0, game, false);
             long end_time = System.nanoTime();
             System.out.println("Depth: " + i + " Result: " + positionsFound + " Time: " + (end_time - start_time) / 1e6);
         }

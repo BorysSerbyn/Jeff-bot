@@ -67,6 +67,21 @@ public class JeffPanel extends ChessPanel implements Observer {
         }
     }
 
+    @Override
+    public void clickCopyPgn(ActionEvent e) {
+        String black;
+        String white;
+        if(jeffColor == Color.WHITE){
+            white = "Jeffbot";
+            black = "Anonymous";
+        }else{
+            black = "Jeffbot";
+            white = "Anonymous";
+        }
+        String str = NotationUtils.gameToPGN(observableGame.getGame(), white, black);
+        copyToClipBoard(str);
+    }
+
     public void clickSeedButton(ActionEvent e) {
         int newSeed = new Random().nextInt();
         observableGame.getGame().setSeed(newSeed);

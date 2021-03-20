@@ -51,34 +51,6 @@ public class SimpleNodeTest {
     }
 
     @Test
-    void addNodesTest1(){
-        //GameGUI.createJFrame(TestPanel.getSingletonInstance());
-        Game game = NotationUtils.createGameFromFen("rnbg1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
-        SimpleNode node = new SimpleNode(2, Color.WHITE, null);
-        String actualMoves = node.addNodes2(0, game);
-        String expectedMoves = FileUtils.readTreeFile();
-        Assertions.assertEquals(expectedMoves, actualMoves);
-    }
-
-    @Test
-    void addNodesTest2(){
-        Game game = NotationUtils.createGameFromFen("rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R b KQkq - 0 1");
-        SimpleNode node = new SimpleNode(1, Color.WHITE, null);
-        String actualMoves = node.addNodes2(0, game);
-        String expectedMoves = "test";
-        Assertions.assertEquals(expectedMoves, actualMoves);
-    }
-
-    @Test
-    void addNodesTest3(){
-        Game game = NotationUtils.createGameFromFen("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1");
-        SimpleNode node = new SimpleNode(1, Color.WHITE, null);
-        String actualMoves = node.addNodes2(0, game);
-        String expectedMoves = "test";
-        Assertions.assertEquals(expectedMoves, actualMoves);
-    }
-
-    @Test
     void addNodesTest4(){
         Game game = NotationUtils.createGameFromFen("rnbg1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
         SimpleNode node = new SimpleNode(1, Color.WHITE, null);

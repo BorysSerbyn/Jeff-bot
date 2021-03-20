@@ -39,11 +39,6 @@ public class SimpleNode {
             Game clonedGame = (Game) game.clone();
             Move clonedMove = clonedGame.getMoveByClone(possibleMove);
             clonedGame.movePiece(clonedMove);
-
-            if (possibleMove.getPromotionSnapShot() != PieceName.UNDEFINED) {
-                clonedGame.promotePawn(possibleMove);
-            }
-
             SimpleNode childNode = new SimpleNode(maxDepth, color, possibleMove);
             positionsFound += childNode.addNodes(depth + 1, clonedGame);
             this.addChild(childNode);
@@ -56,37 +51,9 @@ public class SimpleNode {
         return positionsFound;
     }
 
-    public String addNodes2(int depth, Game game) {
-        if (depth >= maxDepth) {
-            return move.toString();
-        }
-        ArrayList<Move> allMovesList = game.generateLegalMovesByColor(game.getTurn());
-        String positionsFound = "";
-        if (move != null) {
-            positionsFound += move.toString()+ ":     ";
-        }
-        for (Move possibleMove : allMovesList) {
-            Game clonedGame = (Game) game.clone();
-            Move clonedMove = clonedGame.getMoveByClone(possibleMove);
-            clonedGame.movePiece(clonedMove);
-
-            if (possibleMove.getPromotionSnapShot() != PieceName.UNDEFINED) {
-                clonedGame.promotePawn(possibleMove);
-            }
-            SimpleNode childNode = new SimpleNode(maxDepth, color, possibleMove);
-
-            positionsFound += childNode.addNodes2(depth + 1, clonedGame) + ", ";
-            this.addChild(childNode);
-        }
-        positionsFound += "\n";
-        return positionsFound;
-    }
-
     public static void main(String[] args) {
-
         for (int i = 1; i <= 5; i++) {
             Game game = NotationUtils.createGameFromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-
             SimpleNode node = new SimpleNode(i, Color.WHITE, null);
             long start_time = System.nanoTime();
             int positionsFound = node.addNodes(0, game);
