@@ -6,7 +6,7 @@ The basic idea behind Jeff's algorithm is that it creates a tree of boards stemm
 
 At the moment, im pruning the tree using a very crude approach (see fig. 1). I intend to replace it with proper alpha beta pruning as illustrated in fig. 2.
 
-At the moment, jeff can beat stockfish level 4 50% of the time at 4 seconds calculation time.
+At the moment, jeff can beat stockfish level 4 50% of the time spending 4 seconds to calculate his move each turn.
 
 ![fig. 1](/docs/tree%20building%20sequence%20diagram.png)
 
