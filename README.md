@@ -1,6 +1,6 @@
 # Jeff bot
 
-Jeff is a chess bot coded in java. You can play against Jeff by dowloading this [jar file](https://github.com/BorysSerbyn/Jeff-bot/tree/master/out/artifacts/chess_jar).
+Jeff is a chess bot coded in java. You can play against Jeff by dowloading this [jar file](https://github.com/BorysSerbyn/Jeff-bot/tree/master/out/artifacts/Jeff_bot_jar/Jeff-bot.jar).
 
 The recursive function in the bot uses a minimax algorithm and alpha beta pruning to create a tree of positions stemming from the current position (see fig.1).
 
