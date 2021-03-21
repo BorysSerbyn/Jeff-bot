@@ -8,8 +8,8 @@ import java.awt.event.ActionEvent;
 public class TestPanel extends ChessPanel{
     private static TestPanel singletonInstance;
 
-    public TestPanel(Game game){
-        super(game);
+    public TestPanel(Game game, ca.borysserbyn.mechanics.Color color){
+        super(game, color);
     }
 
     @Override
@@ -31,7 +31,7 @@ public class TestPanel extends ChessPanel{
 
     public static TestPanel getSingletonInstance(){
         if(singletonInstance == null){
-            singletonInstance = new TestPanel(new Game(1));
+            singletonInstance = new TestPanel(new Game(1), ca.borysserbyn.mechanics.Color.WHITE);
         }
         return singletonInstance;
     }

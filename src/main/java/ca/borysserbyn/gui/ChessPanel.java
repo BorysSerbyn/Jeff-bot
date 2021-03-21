@@ -1,5 +1,6 @@
 package ca.borysserbyn.gui;
 import ca.borysserbyn.mechanics.*;
+import ca.borysserbyn.mechanics.Color;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -23,6 +24,7 @@ public class ChessPanel extends JPanel implements Observer {
     protected boolean isGameOver;
     protected final JLabel message = new JLabel("Have fun!");
     protected JToolBar tools;
+    protected int[] yCoords;
 
     public static final String ANSI_RESET = "\u001B[0m";
     public static final String ANSI_BLACK = "\u001B[30m";
@@ -34,8 +36,9 @@ public class ChessPanel extends JPanel implements Observer {
     public static final String ANSI_CYAN = "\u001B[36m";
     public static final String ANSI_WHITE = "\u001B[37m";
 
-    public ChessPanel(Game game) {
+    public ChessPanel(Game game, Color color) {
         super(new BorderLayout(3, 3));
+        yCoords = color == Color.BLACK ? new int[]{0,1,2,3,4,5,6,7} : new int[]{7,6,5,4,3,2,1,0};
         observableGame = new ObservableGame(game);
         observableGame.addObserver(this);
         tools = new JToolBar();
@@ -235,9 +238,9 @@ public class ChessPanel extends JPanel implements Observer {
 
     public final void initializeBoardSquares() {
         Insets buttonMargin = new Insets(0, 0, 0, 0);
-        for (int ii = 0; ii < tileButtons.length; ii++) {
-            for (int jj = 0; jj < tileButtons[ii].length; jj++) {
-                TileButton b = new TileButton(jj, ii);
+        for (int y = 0; y < tileButtons.length; y++) {
+            for (int x = 0; x < tileButtons[y].length; x++) {
+                TileButton b = new TileButton(x, y);
                 b.setMargin(buttonMargin);
                 b.addActionListener(this::clickTile);
                 // our chess pieces are 64x64 px in size, so we'll
@@ -245,34 +248,33 @@ public class ChessPanel extends JPanel implements Observer {
                 ImageIcon icon = new ImageIcon(
                         new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB));
                 b.setIcon(icon);
-                if ((jj % 2 == 1 && ii % 2 == 1)
+                if ((x % 2 == 1 && y % 2 == 1)
                         //) {
-                        || (jj % 2 == 0 && ii % 2 == 0)) {
+                        || (x % 2 == 0 && y % 2 == 0)) {
                     b.setBackground(java.awt.Color.BLACK);
                 } else {
                     b.setBackground(java.awt.Color.WHITE);
                 }
-                tileButtons[jj][ii] = b;
+                tileButtons[x][y] = b;
             }
         }
 
-        //fill the chess board
         chessBoard.add(new JLabel(""));
-        // fill the top row
+
         for (int ii = 0; ii < 8; ii++) {
             chessBoard.add(
                     new JLabel("" + (ii),
                             SwingConstants.CENTER));
         }
-        // fill the black non-pawn piece row
-        for (int ii = 7; ii >= 0; ii--) {
-            for (int jj = 0; jj < 8; jj++) {
-                switch (jj) {
+
+        for (int y: yCoords) {
+            for (int x = 0; x < 8; x++) {
+                switch (x) {
                     case 0:
-                        chessBoard.add(new JLabel("" + Math.abs(ii),
+                        chessBoard.add(new JLabel("" + Math.abs(y),
                                 SwingConstants.CENTER));
                     default:
-                        chessBoard.add(tileButtons[jj][ii]);
+                        chessBoard.add(tileButtons[x][y]);
                         chessBoard.repaint();
                 }
             }
@@ -280,11 +282,11 @@ public class ChessPanel extends JPanel implements Observer {
     }
 
     public final void initializePieces() {
-        for (int i = 0; i < tileButtons.length; i++) {
-            for (int j = 0; j < tileButtons[i].length; j++) {
-                TileButton pieceButton = tileButtons[i][j];
+        for (int x = 0; x < tileButtons.length; x++) {
+            for (int y = 0; y < tileButtons[x].length; y++) {
+                TileButton pieceButton = tileButtons[x][y];
                 //Piece piece = game.getBoard()[i][j];
-                Piece piece = observableGame.getGame().getPieceByTile(i, j);
+                Piece piece = observableGame.getGame().getPieceByTile(x, y);
                 if (piece != null) {
                     pieceButton.setPiece(piece);
                 } else {

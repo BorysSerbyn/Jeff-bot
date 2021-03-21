@@ -13,11 +13,14 @@ import java.util.Random;
 
 public class JeffPanel extends ChessPanel implements Observer {
     private Jeffbot jeff;
-    private Color jeffColor = Color.WHITE;
+    private Color jeffColor;
+    private int maxDepth;
 
-    public JeffPanel(Game game) {
-        super(game);
-        addSeedButton();
+    public JeffPanel(Game game, Color playerColor, int maxDepth) {
+        super(game, playerColor);
+        jeffColor = playerColor == Color.WHITE ? Color.BLACK : Color.WHITE;
+        this.maxDepth = maxDepth;
+        //addSeedButton();
         initializeJeff();
         chessBoard.removeAll();
         initializeBoardSquares();
@@ -97,7 +100,7 @@ public class JeffPanel extends ChessPanel implements Observer {
 
     public void initializeJeff(){
         if(jeff == null){
-            jeff = new Jeffbot(jeffColor, observableGame.getGame());
+            jeff = new Jeffbot(jeffColor, observableGame.getGame(), maxDepth);
         }
 
         if (jeffColor == observableGame.getGame().getTurn() && !observableGame.getGame().isGameOver()) {

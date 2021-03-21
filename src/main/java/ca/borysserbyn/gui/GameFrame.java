@@ -1,7 +1,7 @@
 package ca.borysserbyn.gui;
 
+import ca.borysserbyn.mechanics.Color;
 import ca.borysserbyn.mechanics.Game;
-import ca.borysserbyn.mechanics.NotationUtils;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -9,6 +9,10 @@ import java.awt.event.ActionEvent;
 public class GameFrame extends JFrame{
 
     JPanel newGamePanel = new JPanel();
+    private Color color;
+    private int difficulty;
+    private JComboBox difficultyDropDown;
+    private JComboBox colorDropDown;
 
     public GameFrame(String title){
         super(title);
@@ -22,12 +26,16 @@ public class GameFrame extends JFrame{
 
 
     public void jeffButtonClick(ActionEvent e){
-        JeffPanel jeffPanel = new JeffPanel(new Game(1));
+        setColor();
+        setDifficulty();
+        JeffPanel jeffPanel = new JeffPanel(new Game(1), color, difficulty);
         changePanel(jeffPanel);
     }
 
     public void overTheButtonClick(ActionEvent e){
-        ChessPanel chessPanel = new ChessPanel(new Game(1));
+        setColor();
+        setDifficulty();
+        ChessPanel chessPanel = new ChessPanel(new Game(1), color);
         changePanel(chessPanel);
     }
 
@@ -48,7 +56,36 @@ public class GameFrame extends JFrame{
         overTheButton.addActionListener(this::overTheButtonClick);
         newGamePanel.add(jeffButton);
         newGamePanel.add(overTheButton);
+
+        String[] colorsArray = {"White", "Black"};
+        colorDropDown = new JComboBox(colorsArray);
+        colorDropDown.setSelectedIndex(0);
+
+
+        String[] difficultiesArray = {"4 depth", "5 depth"};
+        difficultyDropDown = new JComboBox(difficultiesArray);
+        difficultyDropDown.setSelectedIndex(0);
+
+
+        newGamePanel.add(colorDropDown);
+        newGamePanel.add(difficultyDropDown);
+
+
         this.add(newGamePanel);
+    }
+
+    public void setColor(){
+        String colorStr = (String) colorDropDown.getSelectedItem();
+        if(colorStr.equals("White")){
+            color = Color.WHITE;
+        }else{
+            color = Color.BLACK;
+        }
+    }
+
+    public void setDifficulty(){
+        String diffStr =  ((String) difficultyDropDown.getSelectedItem()).substring(0,1);
+        difficulty = Integer.valueOf(diffStr);
     }
 
     public static final void createJFrame(JComponent jComponent){
