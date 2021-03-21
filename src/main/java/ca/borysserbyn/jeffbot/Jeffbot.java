@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.concurrent.ForkJoinPool;
 
 public class Jeffbot {
-    private int maxDepth = 5;
+    private int maxDepth = 4;
     private static final ForkJoinPool pool = new ForkJoinPool();
     private Game game;
     private Color color;

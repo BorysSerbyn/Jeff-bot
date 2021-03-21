@@ -1075,6 +1075,8 @@ public class Game implements Cloneable, Serializable, Comparable {
         castleCondition = signedXMove < 0 ? castlingConditions[0] : castlingConditions[2];
         castleX = signedXMove < 0 ? 0 : 7;
 
+        Move inTheWayMove = (Move) move.clone();
+        inTheWayMove.setX(castleX);
 
         if (yMove != 0) {
             return false;
@@ -1091,7 +1093,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (getPieceByTile(move.getX(), move.getY()) != null) { //is there a piece where king is trying to move
             return false;
         }
-        if (isPieceInTheWay(move)) {//is a piece between the king and the rook
+        if (isPieceInTheWay(inTheWayMove)) {//is a piece between the king and the rook
             return false;
         }
         if (isPieceThreatened(piece)) { //is king checked

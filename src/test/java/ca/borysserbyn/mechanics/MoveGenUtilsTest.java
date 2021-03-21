@@ -119,6 +119,20 @@ public class MoveGenUtilsTest {
     }
 
     @Test
+    void generateCastlingMovesTest2() {
+        Piece testKing = new Piece(Color.WHITE, PieceName.KING,4, 0);
+        String fenStr = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RN2K2R w KQkq - 0 1";
+        int[][] expectedMoveArray = new int[][]{{3,0},{5,0},{6,0}};
+        ArrayList<Move> expectedMovesList = new ArrayList<>();
+        ArrayList<Move> moveList = testKing.generateMoves(NotationUtils.createGameFromFen(fenStr));
+
+        for(int[] move : expectedMoveArray){
+            expectedMovesList.add(new Move(testKing, move[0], move[1]));
+        }
+        Assertions.assertEquals(expectedMovesList, moveList);
+    }
+
+    @Test
     void generatePawnMovesTestGaming() {
         Piece testPawn = new Piece(Color.WHITE, PieceName.PAWN,3, 1);
         String fenStr = "rnb1kbnr/pp1ppppp/8/q1p5/8/P7/RPPPPPPP/1NBQKBNR w Kkq - 0 1";

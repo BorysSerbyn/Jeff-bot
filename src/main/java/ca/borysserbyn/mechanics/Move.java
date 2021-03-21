@@ -29,6 +29,14 @@ public class Move implements Cloneable, Serializable {
         return new Move((Piece) piece.clone(), x, y, stateSnapShot, promotionSnapShot);
     }
 
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
     public PieceName getPromotionSnapShot() {
         return promotionSnapShot;
     }
