@@ -46,4 +46,20 @@ public class JeffTest {
         Assertions.assertEquals(expectedMove, actualMove);
 
     }
+
+    @Test
+    void findBestMoveTest2(){
+        Game game = FileUtils.readGameByPath("saved_games/checkmated jeff easily 2");
+        Jeffbot expectedJeff = new Jeffbot(Color.WHITE, game, 1);
+        Jeffbot actualJeff = new Jeffbot(Color.WHITE, game, 1);
+        expectedJeff.resetCurrentNode();
+        actualJeff.resetCurrentNode();
+        expectedJeff.getCurrentNode().addNodes(0, (Game) game.clone(), false);
+        actualJeff.getCurrentNode().testMinimax(0, (Game) game.clone(), -10000, 10000);
+        Move expectedMove = expectedJeff.findBestMove();
+        System.out.println();
+        Move actualMove = actualJeff.findBestMove();
+
+        Assertions.assertEquals(expectedMove, actualMove);
+    }
 }

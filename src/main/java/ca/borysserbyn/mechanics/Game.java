@@ -106,6 +106,10 @@ public class Game implements Cloneable, Serializable, Comparable {
         float pieceValue = getGameValueByColor(color);
         float checkmateValue = state == GameState.CHECKMATE ? 1 : 0;
         float stalemateValue = state == GameState.STALEMATE ? 1 : 0;
+        if(turn == color){
+            checkmateValue = checkmateValue * -1;
+            stalemateValue = stalemateValue * -1;
+        }
         float score = pieceValue + checkmateValue * 20 + castlingValue/8;
         score -= score > 0 ? stalemateValue * 20 : 0;
         return score;
