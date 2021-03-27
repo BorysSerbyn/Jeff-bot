@@ -1,19 +1,20 @@
 package ca.borysserbyn.jeffbot;
 
 import ca.borysserbyn.gui.ChessPanel;
-import ca.borysserbyn.mechanics.ObservableGame;
-import ca.borysserbyn.mechanics.*;
+import ca.borysserbyn.mechanics.Color;
+import ca.borysserbyn.mechanics.Game;
+import ca.borysserbyn.mechanics.Move;
+
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.concurrent.ForkJoinPool;
 
 public class Jeffbot {
     private int maxDepth = 4;
-    private static final ForkJoinPool pool = new ForkJoinPool();
     private Game game;
     private Color color;
     private Node currentNode;
+    private boolean debugMode = true;
 
     public Jeffbot(Color color, Game game) {
         this.color = color;
@@ -26,7 +27,22 @@ public class Jeffbot {
         this.game = (Game) game.clone();
     }
 
-    public void setGame(Game game) {
+    public Jeffbot(Color color, Game game, int maxDepth, boolean debugMode) {
+        this.debugMode = debugMode;
+        this.maxDepth = maxDepth;
+        this.color = color;
+        this.game = (Game) game.clone();
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
+    }
+
+    public void setMaxDepth(int maxDepth) {
+        this.maxDepth = maxDepth;
+    }
+
+    public void searchGame(Game game) {
         this.game = game;
         updateTree();
     }
@@ -53,7 +69,9 @@ public class Jeffbot {
     public Move findBestMove() {
         Collections.sort(currentNode.getChildNodes());
         Node bestMoveNode = currentNode.getChildNodes().get(0);
-        printThoughtProcess(bestMoveNode);
+        if(debugMode){
+            printThoughtProcess(bestMoveNode);
+        }
         return bestMoveNode.getMove();
     }
 
@@ -101,7 +119,7 @@ public class Jeffbot {
                 opponentMove = game.getMoveByIndex(0);
                 currentNode = new Node(maxDepth, color, (Move) opponentMove.clone(), game.getTurnCounter());
             }catch(Exception e2){
-                System.out.println("Couldnt find node");
+                //System.out.println("Couldnt find node");
                 resetCurrentNode();
             }
         }
@@ -115,13 +133,29 @@ public class Jeffbot {
         System.out.println("Tree built with size: " + treeSize);*/
 
         Game clonedGame = (Game) game.clone();
+
+
+        long start_time = System.nanoTime();
         float[] positionResult = node.testMinimax(0, clonedGame, -10000, 10000);
-        float positionScore = positionResult[0];
-        float nodeCount = positionResult[1];
-        System.out.println("Positions evaluated: " + nodeCount);
-        System.out.println("Base score: " + positionScore + "\n");
+        long end_time = System.nanoTime();
+
+        if(debugMode){
+            float positionScore = positionResult[0];
+            float nodeCount = positionResult[1];
+            System.out.println("calculation time: " + (end_time - start_time) / 1e6);
+            System.out.println("Positions evaluated: " + nodeCount);
+            System.out.println("Base score: " + positionScore + "\n");
+        }
 
         node.setParentNode(null);
         System.gc();
+    }
+
+    public static void main(String[] args) {
+        Game game = new Game(1);
+        Color color = Color.WHITE;
+        int difficulty = 6;
+        Jeffbot jeff = new Jeffbot(color, game, difficulty, true);
+        jeff.searchGame(game);
     }
 }

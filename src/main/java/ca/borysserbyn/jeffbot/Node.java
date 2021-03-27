@@ -2,7 +2,6 @@ package ca.borysserbyn.jeffbot;
 
 import ca.borysserbyn.mechanics.*;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class Node implements Comparable{
@@ -159,7 +158,7 @@ public class Node implements Comparable{
             }
         }
         if(depth == 1 && printBranches){
-            System.out.println(move.toSFNotation() + ": " + positionsFound);
+            System.out.println(move.toUciNotation() + ": " + positionsFound);
         }
         inheritChildScore();
         return positionsFound;
@@ -178,6 +177,10 @@ public class Node implements Comparable{
         ArrayList<Move> allMovesList = game.generateLegalMovesByColor(game.getTurn());
         MoveComparator moveComparator = new MoveComparator(game);
         allMovesList.sort(moveComparator);
+
+        if(depth == 1 && allMovesList.size() >= 20){
+            //maxDepth = 5;
+        }
 
         float maxChildScore = -10000;
         float minChildScore = 10000;

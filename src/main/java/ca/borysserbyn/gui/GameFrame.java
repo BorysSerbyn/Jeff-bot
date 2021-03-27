@@ -2,6 +2,7 @@ package ca.borysserbyn.gui;
 
 import ca.borysserbyn.mechanics.Color;
 import ca.borysserbyn.mechanics.Game;
+import ca.borysserbyn.mechanics.NotationUtils;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -28,7 +29,8 @@ public class GameFrame extends JFrame{
     public void jeffButtonClick(ActionEvent e){
         setColor();
         setDifficulty();
-        JeffPanel jeffPanel = new JeffPanel(new Game(1), color, difficulty);
+        Game game = new Game(1);
+        JeffPanel jeffPanel = new JeffPanel(game, color, difficulty);
         changePanel(jeffPanel);
     }
 
@@ -62,7 +64,7 @@ public class GameFrame extends JFrame{
         colorDropDown.setSelectedIndex(0);
 
 
-        String[] difficultiesArray = {"4 depth", "5 depth"};
+        String[] difficultiesArray = {"4 depth", "5 depth", "6 depth"};
         difficultyDropDown = new JComboBox(difficultiesArray);
         difficultyDropDown.setSelectedIndex(0);
 

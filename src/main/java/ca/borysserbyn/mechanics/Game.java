@@ -100,21 +100,6 @@ public class Game implements Cloneable, Serializable, Comparable {
         return (int) Math.signum(scorePosition - otherScore);
     }
 
-    public float scorePosition(Color color){
-        Color otherColor = color == Color.WHITE ? Color.BLACK : Color.WHITE;
-        float castlingValue = castlingValue(color) - castlingValue(otherColor);
-        float pieceValue = getGameValueByColor(color);
-        float checkmateValue = state == GameState.CHECKMATE ? 1 : 0;
-        float stalemateValue = state == GameState.STALEMATE ? 1 : 0;
-        if(turn == color){
-            checkmateValue = checkmateValue * -1;
-            stalemateValue = stalemateValue * -1;
-        }
-        float score = pieceValue + checkmateValue * 20 + castlingValue/8;
-        score -= score > 0 ? stalemateValue * 20 : 0;
-        return score;
-    }
-
     //copys an array of bools (conditions) for the clone function
     public boolean[] copyArrayOfBools(boolean[] targetArray) {
         boolean[] copiedArray = new boolean[targetArray.length];
@@ -199,13 +184,14 @@ public class Game implements Cloneable, Serializable, Comparable {
             return null;
         }
         return board[x][y];
+    }
 
-        /*for (Piece piece : pieces) {
-            if (piece.getX() == x && piece.getY() == y) {
-                return piece;
-            }
+    public Piece getColoredPieceByTile(int x, int y, Color color) {
+        if (x == -1) {
+            return null;
         }
-        return null;*/
+        Piece piece = board[x][y];
+        return piece == null || piece.getColor() != color ? null : piece;
     }
 
     public Piece getPieceByClone(Piece clonedPiece) {
@@ -260,7 +246,6 @@ public class Game implements Cloneable, Serializable, Comparable {
         return moveHistory;
     }
 
-
     public ArrayList<Move> getHistory() {
         return moveHistory;
     }
@@ -271,6 +256,14 @@ public class Game implements Cloneable, Serializable, Comparable {
 
     public Move getLastMove() {
         return moveHistory.get(moveHistory.size() - 1);
+    }
+
+    public int getCastleStateByColor(Color color){
+        return color == Color.WHITE ? whiteCastleState : blackCastleState;
+    }
+
+    public boolean[] getCaslingConditions(Color color){
+        return color == Color.WHITE ? castlingConditionsWhite : castlingConditionsBlack;
     }
 
     public void setState(GameState state) {
@@ -344,9 +337,47 @@ public class Game implements Cloneable, Serializable, Comparable {
         turnCounter++;
     }
 
+    public GameStage getGameStage(){
+        float score = 0;
+        for (Piece piece : pieces) {
+            if(piece.getX() == -1){
+                continue;
+            }
+            score += piece.getValue(orientation);
+        }
+        if(score < 16){
+            return GameStage.LATE;
+        }else if(turnCounter > 8){
+            return GameStage.MIDDLE;
+        }else{
+            return GameStage.EARLY;
+        }
+    }
+
     /**
      * the following methods are used by the scoring function in node class
      */
+
+    public float scorePosition(Color color){
+        Color otherColor = color == Color.WHITE ? Color.BLACK : Color.WHITE;
+        float castlingValue = castlingValue(color) - castlingValue(otherColor);
+        float kingProtectionValue = kingProtectionByColor(color) - kingProtectionByColor(otherColor);
+        float pieceValue = getGameValueByColor(color);
+
+        float checkmateValue = state == GameState.CHECKMATE ? 1 : 0;
+        float stalemateValue = state == GameState.STALEMATE ? 1 : 0;
+        if(turn == color){
+            checkmateValue = checkmateValue * -1;
+            stalemateValue = stalemateValue * -1;
+        }
+        float score = pieceValue
+                + checkmateValue * 20
+                + castlingValue/12
+                + kingProtectionValue/12;
+
+        score -= score > 0 ? stalemateValue * 20 : 0;
+        return score;
+    }
 
     public int castlingValue(Color targetColor) {
         int value = 0;
@@ -359,30 +390,9 @@ public class Game implements Cloneable, Serializable, Comparable {
                 }
             }
         } else {
-            value = 4;
+            value = 6;
         }
         return value;
-    }
-
-    //evaluates the protection of the king for a given color
-    public int kingProtectionValue(Color targetColor) {
-        Piece king = getPieceByName(PieceName.KING, targetColor);
-        int kingProtectionValue = 0;
-        int kingX = king.getX();
-        int kingY = king.getY();
-
-        //go through surrounding pieces
-        for (int i = kingX - 1; i <= kingX + 1; i++) {
-            for (int j = kingY - 1; j <= kingY + 1; j++) {
-                if (i > 7 || i < 0 || j > 7 || j < 0) {
-                    kingProtectionValue++;
-                } else if (getPieceByTile(i, j) != null && getPieceByTile(i, j).getColor() == targetColor) {
-                    kingProtectionValue++;
-                }
-            }
-        }
-
-        return kingProtectionValue;
     }
 
     //evaluates whether you have the right colored bishop to fight against opponents castling.
@@ -390,7 +400,12 @@ public class Game implements Cloneable, Serializable, Comparable {
         int targetCastleState = targetColor == Color.WHITE ? blackCastleState : whiteCastleState;
         if (targetCastleState != 0) {
             Color bishopTileColor = !(!(orientation == 1 ^ targetColor == Color.WHITE) ^ targetCastleState == 1) ? Color.BLACK : Color.WHITE;
-            for (Piece piece : getUneatenPiecesByColor(targetColor)) {
+            for (Piece piece : pieces) {
+
+                if(piece.getColor() != targetColor || piece.getX() == -1){
+                    continue;
+                }
+
                 int tileColorToInt = bishopTileColor == Color.WHITE ? 0 : -1;
                 if (piece.getPieceName() == PieceName.BISHOP && (piece.getX() + piece.getY()) % 2 == tileColorToInt) {
                     return 1;
@@ -400,47 +415,41 @@ public class Game implements Cloneable, Serializable, Comparable {
         return 0;
     }
 
+    public float kingProtectionByColor(Color color){
+        int castleState = getCastleStateByColor(color);
+        int increment = color == Color.WHITE ? 1 : -1;
+        Piece king = getPieceByName(PieceName.KING, color);
+        int kingY = king.getY();
+        int pawnRow = color == Color.WHITE ? 1 : 6;
+        int kingSafeY = color == Color.WHITE ? 0 : 7;
+        float score = 0;
 
-    /**
-     * The following methods are useful for the AI
-     */
-    public ArrayList<Game> generateLegalGamesByColor(Color color) {
-        ArrayList<Move> legalMoves = this.generateLegalMovesByColor(color);
-        ArrayList<Game> legalGames = new ArrayList<>();
-        for (Move legalMove : legalMoves) {
-            Game clonedGame = (Game) this.clone();
-            Piece clonedPiece = clonedGame.getPieceByClone(legalMove.getPiece());
-            clonedGame.movePiece(new Move(clonedPiece, legalMove.getX(), legalMove.getY()));
-            legalGames.add(clonedGame);
-        }
-        return legalGames;
-    }
-
-    public ArrayList<Move> generateLegalMovesByColor(Color color) {
-        ArrayList<Move> legalMovesList = new ArrayList<>();
-        for (Piece piece : getUneatenPiecesByColor(color)) {
-            legalMovesList.addAll(piece.generateMoves(this));
-            //legalMovesList.addAll(getLegalMovesByPiece(piece));
-        }
-        return legalMovesList;
-    }
-
-    public ArrayList<Move> getLegalMovesByPiece(Piece piece) {
-        ArrayList<Move> legalMovesList = new ArrayList<>();
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                Move move = new Move(piece, i, j);
-                if (isMoveLegal(move)) {
-                    legalMovesList.add(move);
-                }
+        if(castleState == 1){
+            if(kingY != kingSafeY){
+                return -1f;
             }
+            score += getColoredPieceByTile(5, pawnRow, color) == null ? -1 : 1;
+            score += getColoredPieceByTile(6, pawnRow, color) == null ? -1.5 : 1.5;
+            score += getColoredPieceByTile(7, pawnRow, color) == null ? -0.5 : 0.5;
+            score += getColoredPieceByTile(5, pawnRow+increment, color) == null ? -0.5 : 0.5;
+        }else if(castleState == 2){
+            if(kingY != kingSafeY){
+                return -1f;
+            }
+            score += getColoredPieceByTile(1, pawnRow, color) == null ? -1.5 : 1.5;
+            score += getColoredPieceByTile(2, pawnRow, color) == null ? -0.5 : 0.5;
+            score += getColoredPieceByTile(2, pawnRow+increment, color) == null ? -0.5 : 0.5;
+            score += getColoredPieceByTile(3, pawnRow+increment, color) == null ? -0.5 : 0.5;
         }
-        return legalMovesList;
+        return score;
     }
 
     public float getGameValueByColor(Color color) {
         float value = 0;
-        for (Piece piece : getUneatenPieces()) {
+        for (Piece piece : pieces) {
+            if(piece.getX() == -1){
+                continue;
+            }
             if (piece.getColor() == color) {
                 value += piece.getValue(orientation);
             } else {
@@ -464,13 +473,55 @@ public class Game implements Cloneable, Serializable, Comparable {
 
 
     /**
+     * The following methods are useful for the AI
+     */
+    public ArrayList<Game> generateLegalGamesByColor(Color color) {
+        ArrayList<Move> legalMoves = this.generateLegalMovesByColor(color);
+        ArrayList<Game> legalGames = new ArrayList<>();
+        for (Move legalMove : legalMoves) {
+            Game clonedGame = (Game) this.clone();
+            Piece clonedPiece = clonedGame.getPieceByClone(legalMove.getPiece());
+            clonedGame.movePiece(new Move(clonedPiece, legalMove.getX(), legalMove.getY()));
+            legalGames.add(clonedGame);
+        }
+        return legalGames;
+    }
+
+    public ArrayList<Move> generateLegalMovesByColor(Color color) {
+        ArrayList<Move> legalMovesList = new ArrayList<>();
+        for (Piece piece : pieces) {
+            if(piece.getColor() != color || piece.getX() == -1){
+                continue;
+            }
+            legalMovesList.addAll(piece.generateMoves(this));
+            //legalMovesList.addAll(getLegalMovesByPiece(piece));
+        }
+        return legalMovesList;
+    }
+
+    public ArrayList<Move> getLegalMovesByPiece(Piece piece) {
+        ArrayList<Move> legalMovesList = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                Move move = new Move(piece, i, j);
+                if (isMoveLegal(move)) {
+                    legalMovesList.add(move);
+                }
+            }
+        }
+        return legalMovesList;
+    }
+
+
+    /**
      * End game detection.
      */
     public boolean isGameOver() {
-        if (isGameInCheckMate()) {
-            setState(GameState.CHECKMATE);
-            return true;
-        } else if (isGameInStaleMate()) {
+        if (isGameInStaleMate()) {
+            if (isGameInCheckMate()) {
+                setState(GameState.CHECKMATE);
+                return true;
+            }
             setState(GameState.STALEMATE);
             return true;
         }
@@ -485,7 +536,12 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (canPieceMove(king)) {
             return false;
         }
-        for (Piece piece : getUneatenPiecesByColor(turn)) {
+        for (Piece piece : pieces) {
+
+            if(piece.getColor() != turn || piece.getX() == -1){
+                continue;
+            }
+
             if (canPieceMove(piece)) {
                 return false;
             }
@@ -515,11 +571,12 @@ public class Game implements Cloneable, Serializable, Comparable {
 
     //first way to stalemate
     public boolean noLegalMovesCheck() {
-        Piece king = getPieceByName(PieceName.KING, turn);
-        if (canPieceMove(king)) {
-            return false;
-        }
-        for (Piece piece : getUneatenPiecesByColor(turn)) {
+        for (Piece piece : pieces) {
+
+            if(piece.getColor() != turn || piece.getX() == -1){
+                continue;
+            }
+
             if (canPieceMove(piece)) {
                 return false;
             }
@@ -943,7 +1000,12 @@ public class Game implements Cloneable, Serializable, Comparable {
         int xMove = Math.abs(signedXMove);
         int yMove = Math.abs(signedYMove);
 
-        for (Piece uneatenPiece : getUneatenPieces()) {
+        for (Piece uneatenPiece : pieces) {
+
+            if(uneatenPiece.getX() == -1){
+                continue;
+            }
+
             if (uneatenPiece.getX() == move.getX() && uneatenPiece.getY() == move.getY()) {
                 return false;
             }
@@ -1114,19 +1176,6 @@ public class Game implements Cloneable, Serializable, Comparable {
         for (int i = 1; i < Math.abs(delta); i++) {
             int y = piece.getY() + i * (int) Math.signum(deltaY);
             int x = piece.getX() + i * (int) Math.signum(deltaX);
-
-            /*if(piece.getPieceName() == PieceName.KING && piece.getColor() == Color.WHITE){
-                TestPanel testPanel = TestPanel.getSingletonInstance();
-                testPanel.setGame(this);
-                testPanel.hilightTileRed(piece.getX(), piece.getY());
-                testPanel.hilightTileBlue(move.getX(), move.getY());
-                try{
-                    Thread.sleep(2000);
-                }catch(Exception e){
-                    System.out.println("fuckie");
-                }
-            }*/
-
             if (getPieceByTile(x, y) != null) {
                 return true;
             }
@@ -1138,7 +1187,10 @@ public class Game implements Cloneable, Serializable, Comparable {
     public boolean isPieceThreatened(Piece piece) {
         Color color = piece.getColor() == Color.WHITE ? Color.BLACK : Color.WHITE;
 
-        for (Piece enemyPiece : getUneatenPiecesByColor(color)) {
+        for (Piece enemyPiece : pieces) {
+            if(enemyPiece.getColor() != color || enemyPiece.getX() == -1){
+                continue;
+            }
             Move move = new Move(enemyPiece, piece.getX(), piece.getY());
             if (enemyPiece.getPieceName() == PieceName.QUEEN && isQueenMoveLegal(move)) {
                 return true;
@@ -1162,6 +1214,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         return false;
     }
 
+
     public boolean isKingChecked() {
         Piece king = this.getPieceByName(PieceName.KING, turn);
         if (this.isPieceThreatened(king)) {
@@ -1175,11 +1228,13 @@ public class Game implements Cloneable, Serializable, Comparable {
         Game clonedGame = (Game) this.clone();
         Move clonedMove = clonedGame.getMoveByClone(move);
         Piece clonedPiece = clonedMove.getPiece();
+
         if (move.getX() == -1) {
             clonedGame.discardPiece(clonedPiece);
         } else {
             clonedGame.movePiece(clonedMove);
         }
+
         Piece clonedKing = clonedGame.getPieceByName(PieceName.KING, clonedPiece.getColor());
         return clonedGame.isPieceThreatened(clonedKing);
     }

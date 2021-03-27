@@ -209,4 +209,20 @@ public class NotationUtils {
         }
         return pgnStr;
     }
+
+    public static Move movefromUciNotation(String uciStr, Game game){
+        int pieceX =  uciStr.charAt(0) - 97;
+        int pieceY = Character.getNumericValue(uciStr.charAt(1)) -1;
+
+        int targetX = uciStr.charAt(2) - 97;
+        int targetY = Character.getNumericValue(uciStr.charAt(3)) - 1;
+        Piece piece = game.getPieceByTile(pieceX, pieceY);
+
+        if(uciStr.length() > 4){
+            PieceName promotedPieceName = PieceName.getPieceNameBySymbol(Character.toString(uciStr.charAt(4)));
+            return new Move(piece, targetX, targetY, GameState.UNDEFINED, promotedPieceName);
+        }
+
+        return new Move(piece, targetX, targetY);
+    }
 }

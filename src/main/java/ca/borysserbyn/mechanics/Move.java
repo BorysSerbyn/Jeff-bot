@@ -1,6 +1,7 @@
 package ca.borysserbyn.mechanics;
 
 import java.io.Serializable;
+import java.util.Locale;
 
 public class Move implements Cloneable, Serializable {
     private Piece piece;
@@ -53,10 +54,14 @@ public class Move implements Cloneable, Serializable {
         this.stateSnapShot = stateSnapShot;
     }
 
-    public String toSFNotation(){
+    public String toUciNotation(){
         char pieceLetter = (char) (piece.getX() + 97);
         char targetLetter = (char) (x + 97);
-        return "" + pieceLetter + (piece.getY() + 1) + targetLetter + (y+1);
+        String uciStr = "" + pieceLetter + (piece.getY() + 1) + targetLetter + (y+1);
+        if(promotionSnapShot != PieceName.UNDEFINED){
+            uciStr += promotionSnapShot.getSymbol().toLowerCase(Locale.ROOT);
+        }
+        return uciStr;
     }
 
     public String toPGNNotation() {

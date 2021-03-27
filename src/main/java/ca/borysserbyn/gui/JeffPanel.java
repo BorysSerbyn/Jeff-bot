@@ -21,16 +21,16 @@ public class JeffPanel extends ChessPanel implements Observer {
         jeffColor = playerColor == Color.WHITE ? Color.BLACK : Color.WHITE;
         this.maxDepth = maxDepth;
         //addSeedButton();
-        initializeJeff();
         chessBoard.removeAll();
         initializeBoardSquares();
         initializePieces();
         revalidate();
         repaint();
+        initializeJeff();
     }
 
     @Override
-    public void update(Observable source, Object arg1){
+    public void update(Observable source, Object arg1) {
         initializeJeff();
         chessBoard.removeAll();
         initializeBoardSquares();
@@ -74,10 +74,10 @@ public class JeffPanel extends ChessPanel implements Observer {
     public void clickCopyPgn(ActionEvent e) {
         String black;
         String white;
-        if(jeffColor == Color.WHITE){
+        if (jeffColor == Color.WHITE) {
             white = "Jeffbot";
             black = "Anonymous";
-        }else{
+        } else {
             black = "Jeffbot";
             white = "Anonymous";
         }
@@ -91,25 +91,22 @@ public class JeffPanel extends ChessPanel implements Observer {
         jeff.getGame().setSeed(newSeed);
     }
 
-    public void addSeedButton(){
+    public void addSeedButton() {
         JButton changeSeedButton = new JButton("Change Seed");
         changeSeedButton.addActionListener(this::clickSeedButton);
         tools.add(changeSeedButton);
         tools.addSeparator();
     }
 
-    public void initializeJeff(){
-        if(jeff == null){
+    public void initializeJeff() {
+        if (jeff == null) {
             jeff = new Jeffbot(jeffColor, observableGame.getGame(), maxDepth);
         }
 
         if (jeffColor == observableGame.getGame().getTurn() && !observableGame.getGame().isGameOver()) {
-            long start_time = System.nanoTime();
-            jeff.setGame(observableGame.getGame());
+            jeff.searchGame(observableGame.getGame());
             Move bestMove = observableGame.getGame().getMoveByClone(jeff.findBestMove());
             observableGame.getGame().movePiece(bestMove);
-            long end_time = System.nanoTime();
-            System.out.println("calculation time: " + (end_time - start_time) / 1e6);
         }
     }
 }

@@ -23,7 +23,7 @@ public class MoveComparator implements Comparator<Move> {
         float value = 0.f;
         Piece targetPiece = game.getPieceByTile(move.getX(), move.getY());
         if(targetPiece != null){
-            value = 3*targetPiece.getValue(game.getOrientation()) - move.getPiece().getValue(game.getOrientation());
+            value = 10*targetPiece.getValue(game.getOrientation()) - move.getPiece().getValue(game.getOrientation());
         }
         return value;
     }

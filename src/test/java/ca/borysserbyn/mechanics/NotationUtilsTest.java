@@ -40,4 +40,23 @@ public class NotationUtilsTest {
         String actualFen = NotationUtils.createFenFromBoard(boardToTranslate);
         Assertions.assertEquals(expectedFen, actualFen);
     }
+
+    @Test
+    void moveFromUci(){
+        String uciStr = "d2d4";
+        Move expectedMove = new Move(new Piece(Color.WHITE, PieceName.PAWN, 3,1), 3,3);
+        Game game = new Game(1);
+        Move actualMove = NotationUtils.movefromUciNotation(uciStr, game);
+        String actulaUciStr = actualMove.toUciNotation();
+        Assertions.assertEquals(uciStr, actulaUciStr);
+    }
+
+    @Test
+    void moveFromUci2(){
+        String uciStr = "d2d4q";
+        Game game = new Game(1);
+        Move actualMove = NotationUtils.movefromUciNotation(uciStr, game);
+        String actulaUciStr = actualMove.toUciNotation();
+        Assertions.assertEquals(uciStr, actulaUciStr);
+    }
 }

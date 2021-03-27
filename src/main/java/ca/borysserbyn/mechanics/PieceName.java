@@ -1,6 +1,7 @@
 package ca.borysserbyn.mechanics;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 public enum PieceName {
     PAWN,
@@ -30,7 +31,7 @@ public enum PieceName {
             {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f},
             {3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f,3.00f}};
     private static final float[][] kingPositionValue = new float[][]{
-            {0.25f,0.50f,0.01f,0.25f,0.01f,0.025f,0.3f,0.25f},
+            {0.10f,0.50f,0.15f,0.25f,0.10f,0.025f,0.3f,0.10f},
             {0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f},
             {0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f},
             {0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f,0.00f},
@@ -99,6 +100,26 @@ public enum PieceName {
                 return "K";
             case QUEEN:
                 return "Q";
+            default:
+                return null;
+        }
+    }
+
+    public static PieceName getPieceNameBySymbol(String symbol){
+        symbol = symbol.toLowerCase(Locale.ROOT);
+        switch (symbol) {
+            case "b":
+                return BISHOP;
+            case "n":
+                return KNIGHT;
+            case "":
+                return PAWN;
+            case "r":
+                return ROOK;
+            case "k":
+                return KING;
+            case "q":
+                return QUEEN;
             default:
                 return null;
         }
