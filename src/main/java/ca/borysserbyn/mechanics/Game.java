@@ -1,11 +1,9 @@
 package ca.borysserbyn.mechanics;
 
 
-import ca.borysserbyn.gui.TestPanel;
-
 import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 
 import static java.util.stream.Collectors.toCollection;
@@ -30,6 +28,7 @@ public class Game implements Cloneable, Serializable, Comparable {
 
 
     private ArrayList<Move> moveHistory;
+    private ArrayList<String> positionHistory;
     private GameState state;
     private PieceName promotionState;
     private int seed;
@@ -48,6 +47,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         seed = new Random().nextInt();
         initializePieces();
         this.moveHistory = new ArrayList<>();
+        this.positionHistory = new ArrayList<>();
         this.castlingConditionsWhite = new boolean[]{true, true, true};
         this.castlingConditionsBlack = new boolean[]{true, true, true};
         this.enPassantConditionsWhite = new boolean[]{false, false, false, false, false, false, false, false};
@@ -79,6 +79,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         ArrayList<Move> clonedHistory = new ArrayList();
         for (Move move : moveHistory) clonedHistory.add((Move) move.clone());
 
+        clonedGame.positionHistory = (ArrayList<String>) positionHistory.clone();
         clonedGame.moveHistory = clonedHistory;
         clonedGame.castlingConditionsWhite = copyArrayOfBools(castlingConditionsWhite);
         clonedGame.castlingConditionsBlack = copyArrayOfBools(castlingConditionsBlack);
@@ -312,6 +313,7 @@ public class Game implements Cloneable, Serializable, Comparable {
 
     //adds last move to appropriate array to track threefold repetitions
     public void addLastMove(Move move) {
+        positionHistory.add(NotationUtils.createFenFromBoard(board));
         Move archivedMove = (Move) move.clone();
         archivedMove.setStateSnapShot(state);
         moveHistory.add(archivedMove);
@@ -560,7 +562,7 @@ public class Game implements Cloneable, Serializable, Comparable {
             //System.out.println("insufficient material");
             return true;
         }
-        if (threefoldRepetitionCheck()) {
+        if (threeFoldRepetitionCheck()) {
             //System.out.println("threefold repetition");
             return true;
         }
@@ -618,16 +620,14 @@ public class Game implements Cloneable, Serializable, Comparable {
         return true;
     }
 
-    public boolean threefoldRepetitionCheck() {
-        if (moveHistory.size() < 8) {
+    public boolean threeFoldRepetitionCheck() {
+        if(positionHistory.isEmpty()){
             return false;
         }
-        for (int i = moveHistory.size() - 8; i < moveHistory.size()-4; i++) {
-            if (!moveHistory.get(i).equals(moveHistory.get(i+4))) {
-                return false;
-            }
-        }
-        return true;
+
+        int occurrences = Collections.frequency(positionHistory, positionHistory.get(positionHistory.size()-1));
+
+        return occurrences > 2;
     }
 
     public boolean canPieceMove(Piece piece) {
