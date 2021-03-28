@@ -66,7 +66,7 @@ public class GameFrame extends JFrame{
 
         String[] difficultiesArray = {"4 depth", "5 depth", "6 depth"};
         difficultyDropDown = new JComboBox(difficultiesArray);
-        difficultyDropDown.setSelectedIndex(0);
+        difficultyDropDown.setSelectedIndex(1);
 
 
         newGamePanel.add(colorDropDown);

@@ -142,6 +142,22 @@ public class ChessPanel extends JPanel implements Observer {
         originButton = null;
     }
 
+
+    public void clickLoadStringButton(ActionEvent e){
+        String notationStr = (String) JOptionPane.showInputDialog(this, "Paste FEN here.",
+                "Load String", JOptionPane.PLAIN_MESSAGE, null, null, "");
+        String sampleStr = notationStr.substring(0, 10);
+        Game newGame;
+        if(sampleStr.contains("/")){
+            newGame = NotationUtils.createGameFromFen(notationStr);
+            setGame(newGame);
+            isGameOver = false;
+            originButton = null;
+        }else{
+            //if i decide to implement pgn
+        }
+    }
+
     public void clickCopyFen(ActionEvent e) {
         String str = NotationUtils.createFenFromGame(observableGame.getGame());
         copyToClipBoard(str);
@@ -203,12 +219,16 @@ public class ChessPanel extends JPanel implements Observer {
         JButton loadButton = new JButton("Load");
         loadButton.addActionListener(this::clickLoadButton);
         tools.add(loadButton);
+        JButton loadStringButton = new JButton("Load String");
+        loadStringButton.addActionListener(this::clickLoadStringButton);
+        tools.add(loadStringButton);
         JButton copyFENButton = new JButton("Copy FEN");
         copyFENButton.addActionListener(this::clickCopyFen);
         tools.add(copyFENButton);
         JButton copyPGNButton = new JButton("Copy PGN");
         copyPGNButton.addActionListener(this::clickCopyPgn);
         tools.add(copyPGNButton);
+
 
 
         tools.addSeparator();

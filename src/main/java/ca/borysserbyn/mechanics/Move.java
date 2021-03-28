@@ -4,11 +4,11 @@ import java.io.Serializable;
 import java.util.Locale;
 
 public class Move implements Cloneable, Serializable {
-    private Piece piece;
-    private int x;
-    private int y;
-    private GameState stateSnapShot = GameState.UNDEFINED;
-    private PieceName promotionSnapShot = PieceName.UNDEFINED;
+    protected Piece piece;
+    protected int x;
+    protected int y;
+    protected GameState stateSnapShot = GameState.UNDEFINED;
+    protected PieceName promotionSnapShot = PieceName.UNDEFINED;
 
 
     public Move(Piece piece, int x, int y) {

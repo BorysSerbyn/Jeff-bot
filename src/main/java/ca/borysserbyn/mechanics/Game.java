@@ -368,6 +368,8 @@ public class Game implements Cloneable, Serializable, Comparable {
         float stalemateValue = state == GameState.STALEMATE ? 1 : 0;
         if(turn == color){
             checkmateValue = checkmateValue * -1;
+        }
+        if(pieceValue > 1){
             stalemateValue = stalemateValue * -1;
         }
         float score = pieceValue
@@ -375,7 +377,7 @@ public class Game implements Cloneable, Serializable, Comparable {
                 + castlingValue/12
                 + kingProtectionValue/12;
 
-        score -= score > 0 ? stalemateValue * 20 : 0;
+        score += score > 0 ? stalemateValue * 20 : 0;
         return score;
     }
 
