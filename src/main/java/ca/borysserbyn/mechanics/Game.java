@@ -16,7 +16,7 @@ public class Game implements Cloneable, Serializable, Comparable {
     private int turnCounter;
     private int fiftyMoveClock;
     private Piece[][] board = new Piece[8][8];
-    private long[] bitBoardArray = new long[14];
+    private long[] bitBoardArray = new long[15];
 
     private int[] graveyard;
     private int whiteCastleState; // 0: not castled, 1: short, 2: long
@@ -57,7 +57,7 @@ public class Game implements Cloneable, Serializable, Comparable {
 
 
         initializePieces();
-        bitBoardArray = new long[14];
+        bitBoardArray = new long[15];
         BitBoard.initializeBitBoardArray(pieces, bitBoardArray);
         bitBoardHistory.add(bitBoardArray);
         buildBoard();
@@ -91,7 +91,7 @@ public class Game implements Cloneable, Serializable, Comparable {
             clonedGame.bitBoardArray = BitBoard.cloneArray(bitBoardArray);
             clonedGame.bitBoardHistory = (ArrayList<long[]>) bitBoardHistory.clone();
         }else{
-            long[] clonedBitBoardArray = new long[14];
+            long[] clonedBitBoardArray = new long[15];
             BitBoard.initializeBitBoardArray(pieces, clonedBitBoardArray);
             clonedGame.bitBoardArray = clonedBitBoardArray;
             clonedGame.bitBoardHistory = new ArrayList<>();
@@ -736,8 +736,8 @@ public class Game implements Cloneable, Serializable, Comparable {
         updateCastlingConditions(piece);
         addLastMove(move);
         executeMove(move);
+        BitBoard.updateBitBoard(bitBoardArray);
         toggleTurn();
-        //buildBoard();
     }
 
     public void discardPiece(Piece piece) {
@@ -829,8 +829,8 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (piece.getColor() != turn) {//is it the colors turn to move?
             return false;
         }
-        Piece targetPiece = getPieceByTile(destinationX, destinationY);
-        if (targetPiece != null) {
+        if (BitBoard.isPieceInBitBoard(destinationX, destinationY, bitBoardArray)) {
+            Piece targetPiece = getPieceByTile(destinationX, destinationY);
             if (targetPiece.getColor() == piece.getColor()) { //is it trying to eat its own color?
                 return false;
             }

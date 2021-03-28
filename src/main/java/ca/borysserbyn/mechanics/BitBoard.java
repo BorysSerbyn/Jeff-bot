@@ -5,21 +5,21 @@ import java.util.ArrayList;
 public class BitBoard {
 
 
-    public long[] bitBoardArray = new long[14];
+    public long[] bitBoardArray = new long[15];
 
     public BitBoard() {
         zeroOutBitBoard();
     }
 
     public void zeroOutBitBoard(){
-        for (int i = 0; i < 14; i++) {
+        for (int i = 0; i < 15; i++) {
             bitBoardArray[i] = 0;
         }
     }
 
 
     public static void initializeBitBoardArray(ArrayList<Piece> pieces, long[] bitBoardArray){
-        for (int i = 0; i < 14; i++) {
+        for (int i = 0; i < 15; i++) {
             bitBoardArray[i] = 0;
         }
         for (Piece piece : pieces) {
@@ -28,24 +28,16 @@ public class BitBoard {
             }
             turnOnBitByPiece(piece, bitBoardArray);
         }
+        updateBitBoard(bitBoardArray);
     }
 
-    public static boolean isPieceInArray(int x, int y, long[] bitBoardArray){
-        for (int i = 0; i < 12; i++) {
-            if(isPieceInBitBoard(x, y, bitBoardArray[i])){
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean isPieceInBitBoard(int x, int y, long bitBoard){
-        return bitBoard == (bitBoard & (1 << (y * 8 + x)));
+    public static boolean isPieceInBitBoard(int x, int y, long[] bitBoardArray){
+        return bitBoardArray[14] == (bitBoardArray[14] | (1 << (y * 8 + x)));
     }
 
     public static long[] cloneArray(long[] bitBoardArray){
-        long[] newArray = new long[14];
-        for (int i = 0; i < 14; i++) {
+        long[] newArray = new long[15];
+        for (int i = 0; i < 15; i++) {
             newArray[i] = bitBoardArray[i];
         }
         return newArray;
@@ -61,12 +53,18 @@ public class BitBoard {
         bitBoardArray[index] = bitBoardArray[index] & ~(1 << (piece.getY() * 8 + piece.getX()));
     }
 
+    public static void updateBitBoard(long[] bitBoardArray){
+        updateWhitePieces(bitBoardArray);
+        updateBlackPieces(bitBoardArray);
+        bitBoardArray[14] = bitBoardArray[12] | bitBoardArray[13];
+    }
+
     public static void updateWhitePieces(long[] bitBoardArray){
-        bitBoardArray[12] = bitBoardArray[0] & bitBoardArray[1] & bitBoardArray[2] & bitBoardArray[3] & bitBoardArray[4] & bitBoardArray[5];
+        bitBoardArray[12] = bitBoardArray[0] | bitBoardArray[1] | bitBoardArray[2] | bitBoardArray[3] | bitBoardArray[4] | bitBoardArray[5];
     }
 
     public static void updateBlackPieces(long[] bitBoardArray){
-        bitBoardArray[13] = bitBoardArray[6] & bitBoardArray[7] & bitBoardArray[8] & bitBoardArray[9] & bitBoardArray[10] & bitBoardArray[11];
+        bitBoardArray[13] = bitBoardArray[6] | bitBoardArray[7] | bitBoardArray[8] | bitBoardArray[9] | bitBoardArray[10] | bitBoardArray[11];
     }
 
     public long[] getBitBoardArray() {
