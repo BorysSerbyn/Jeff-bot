@@ -35,6 +35,14 @@ public class BitBoard {
         return bitBoardArray[14] == (bitBoardArray[14] | (1 << (y * 8 + x)));
     }
 
+    public static boolean isColoredPieceInBitBoard(Color color ,int x, int y, long[] bitBoardArray){
+        if(color == Color.WHITE){
+            return bitBoardArray[12] == (bitBoardArray[12] | (1 << (y * 8 + x)));
+        }else{
+            return bitBoardArray[13] == (bitBoardArray[13] | (1 << (y * 8 + x)));
+        }
+    }
+
     public static long[] cloneArray(long[] bitBoardArray){
         long[] newArray = new long[15];
         for (int i = 0; i < 15; i++) {

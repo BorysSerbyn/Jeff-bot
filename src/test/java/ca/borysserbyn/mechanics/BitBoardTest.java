@@ -62,4 +62,19 @@ public class BitBoardTest {
         Assertions.assertEquals(0b100100000, actualBitBoard);
         Assertions.assertTrue(BitBoard.isPieceInBitBoard(5,0,bitBoard.getBitBoardArray()));
     }
+
+    @Test
+    void isPieceThereTest2(){
+        BitBoard bitBoard = new BitBoard();
+        Piece whitePawn = new Piece(Color.WHITE, PieceName.PAWN, 5, 0);
+        Piece whitePawn2 = new Piece(Color.WHITE, PieceName.PAWN, 0, 1);
+        bitBoard.turnOnBitByPiece(whitePawn, bitBoard.getBitBoardArray());
+        bitBoard.turnOnBitByPiece(whitePawn2, bitBoard.getBitBoardArray());
+        BitBoard.updateBitBoard(bitBoard.getBitBoardArray());
+
+
+        long actualBitBoard = bitBoard.getBitBoardArray()[12];
+        Assertions.assertEquals(0b100100000, actualBitBoard);
+        Assertions.assertTrue(BitBoard.isColoredPieceInBitBoard(Color.WHITE, 0,1,bitBoard.getBitBoardArray()));
+    }
 }

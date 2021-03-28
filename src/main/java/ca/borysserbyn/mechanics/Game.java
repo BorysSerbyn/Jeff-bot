@@ -415,7 +415,7 @@ public class Game implements Cloneable, Serializable, Comparable {
                 + castlingValue/12
                 + kingProtectionValue/12;
 
-        score += score > 0 ? stalemateValue * 20 : 0;
+        score += score > 0 ? stalemateValue * 3 : 0;
         return score;
     }
 
@@ -709,25 +709,29 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (piece.getPieceName() == PieceName.PAWN || targetPiece != null) { //reset 50 move clock if rules are met
             fiftyMoveClock = 0;
         }
+
         if (piece.getPieceName() == PieceName.PAWN && isPawnPromotionLegal(move)) {
             promotePawn(move);
         }
+
         if (targetPiece != null) {//if a piece is to be eaten
             if (targetPiece.getPieceName() == PieceName.ROOK) {//cant castle on that side if piece is eaten
                 updateCastlingConditions(targetPiece);
             }
-            BitBoard.turnOffBitByPiece(targetPiece, bitBoardArray);
             discardPiece(targetPiece);
             setState(GameState.PIECE_EATEN);
         }
+
         if (piece.getPieceName() == PieceName.PAWN && isPawnMove2Legal(move)) {//is this piece a pawn moving up 2?
             boolean[] targetConditions = piece.getColor() == Color.WHITE ? enPassantConditionsWhite : enPassantConditionsBlack;
             targetConditions[piece.getX()] = true;
         }
+
         if (piece.getPieceName() == PieceName.PAWN && isPawnEnPassantLegal(move)) {//is en passant legal?
             discardPiece(getPieceByTile(destinationX, piece.getY()));
             setState(GameState.EN_PASSANT);
         }
+
         if (piece.getPieceName() == PieceName.KING && isCastlingLegal(move)) {//is the piece a king and castling?
             castlingMove(move);
         }
@@ -829,8 +833,8 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (piece.getColor() != turn) {//is it the colors turn to move?
             return false;
         }
-        if (BitBoard.isPieceInBitBoard(destinationX, destinationY, bitBoardArray)) {
-            Piece targetPiece = getPieceByTile(destinationX, destinationY);
+        Piece targetPiece = getPieceByTile(destinationX, destinationY);
+        if (targetPiece != null) {
             if (targetPiece.getColor() == piece.getColor()) { //is it trying to eat its own color?
                 return false;
             }
