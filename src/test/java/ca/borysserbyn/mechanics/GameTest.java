@@ -143,4 +143,36 @@ public class GameTest {
 
         Assertions.assertTrue(whiteScore < blackScore);
     }
+
+    @Test
+    void bitBoardMoveTest() {
+        String fenStr = "7k/8/8/8/p7/p7/1P6/7K w - - 0 1";
+        Game game = NotationUtils.createGameFromFen(fenStr);
+
+        Piece whitePawn = game.getPieceByTile(1, 1);
+        Piece blackPawn = game.getPieceByTile(0, 2);
+        Piece blackPawn2 = game.getPieceByTile(0, 3);
+
+        game.movePiece(new Move(whitePawn, 1, 2));
+
+        long expectedValue = 0b100000000000000000;
+
+        Assertions.assertEquals(expectedValue, game.getBitBoardArray()[0]);
+    }
+
+    @Test
+    void bitBoardMoveTest2() {
+        String fenStr = "7k/8/8/8/p7/p7/1P6/7K w - - 0 1";
+        Game game = NotationUtils.createGameFromFen(fenStr);
+
+        Piece whitePawn = game.getPieceByTile(1, 1);
+        Piece blackPawn = game.getPieceByTile(0, 2);
+        Piece blackPawn2 = game.getPieceByTile(0, 3);
+
+        game.movePiece(new Move(whitePawn, 0, 2));
+
+        long expectedValue = 0b1000000000000000000000000;
+
+        Assertions.assertEquals(expectedValue, game.getBitBoardArray()[6]);
+    }
 }

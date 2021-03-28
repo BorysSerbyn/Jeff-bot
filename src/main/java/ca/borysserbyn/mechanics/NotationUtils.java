@@ -66,6 +66,7 @@ public class NotationUtils {
         int turnCount = game.getTurn() == Color.WHITE ? (fullMoves-1)/2 : fullMoves/2;
         game.setTurnCounter(turnCount);
         game.buildBoard();
+        BitBoard.initializeBitBoardArray(pieces, game.getBitBoardArray());
         return game;
     }
 
