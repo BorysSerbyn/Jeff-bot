@@ -21,12 +21,12 @@ public class JeffPanel extends ChessPanel implements Observer {
         jeffColor = playerColor == Color.WHITE ? Color.BLACK : Color.WHITE;
         this.maxDepth = maxDepth;
         //addSeedButton();
+        initializeJeff();
         chessBoard.removeAll();
         initializeBoardSquares();
         initializePieces();
         revalidate();
         repaint();
-        initializeJeff();
     }
 
     @Override

@@ -226,4 +226,35 @@ public class NotationUtils {
 
         return new Move(piece, targetX, targetY);
     }
+
+    public static void moveFromPgn(String pgnStr, Game game){
+        PieceName pieceName = PieceName.getPieceNameBySymbol(pgnStr.substring(0));
+        Color color = pgnStr.substring(0) == pgnStr.substring(0).toUpperCase(Locale.ROOT) ? Color.WHITE : Color.BLACK;
+        PieceName promotionSnapShot = PieceName.UNDEFINED;
+        GameState stateSnapShot = GameState.UNDEFINED;
+
+        if(pgnStr.contains("=")){
+            String promotionStr = pgnStr.substring(pgnStr.indexOf("=")+1);
+            promotionSnapShot = PieceName.getPieceNameBySymbol(promotionStr);
+        }
+
+        if(pgnStr.contains("O-O-O")){
+            stateSnapShot = GameState.CASTLING_LONG;
+        }else if(pgnStr.contains("O-O")){
+            stateSnapShot = GameState.CASTLING_SHORT;
+        }
+
+        //return new Move(new Piece(color, pieceName, ))
+    }
+
+    public static void createGameFromPGN(String pgnStr){
+        pgnStr = pgnStr.replace("+", "");
+        pgnStr = pgnStr.replace("x", "");
+        pgnStr = pgnStr.replace("#", "");
+        String[] pgnMoveArray = pgnStr.split("\\w+\\.+\\ \\w");
+        for(String pgnMove : pgnMoveArray){
+            //Move halfMove1 =
+        }
+
+    }
 }

@@ -42,7 +42,7 @@ public class EngineApp {
         }else if(line.hasOption("isready")){
             sendResponse("readyok");
         }else if(line.hasOption("position") && line.hasOption("startpos")){
-            game = NotationUtils.createGameFromFen("8/8/R3N3/1n2N3/k7/8/5PPP/7K b - - 10 55");
+            game = new Game(1);
         }else if(line.hasOption("position") && line.hasOption("fen")){
             String[] fenArray = Arrays.copyOfRange(args, 2, args.length);
             String fenStr = "";
@@ -75,7 +75,7 @@ public class EngineApp {
                 Move move = NotationUtils.movefromUciNotation(uciMove, game);
                 game.movePiece(move);
             }
-            game.getMoveHistory().forEach(System.out::println);
+            //game.getMoveHistory().forEach(System.out::println);
         }
     }
 
