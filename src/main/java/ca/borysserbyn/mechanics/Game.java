@@ -1198,10 +1198,10 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (!kingCondition || !castleCondition) {//has the king or the tower moved
             return false;
         }
-        if (getPieceByTile(castleX, y) == null) {
+        if(!BitBoard.isPieceInBitBoard(castleX, y, bitBoardArray)){
             return false;
         }
-        if (getPieceByTile(move.getX(), move.getY()) != null) { //is there a piece where king is trying to move
+        if(!BitBoard.isPieceInBitBoard(move.getX(), move.getY(), bitBoardArray)){
             return false;
         }
         if (isPieceInTheWay(inTheWayMove)) {//is a piece between the king and the rook
