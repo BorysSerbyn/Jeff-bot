@@ -80,11 +80,10 @@ public abstract class MoveGenUtils {
                 if (isOutOfBounds(tempX, tempY)) {
                     break;
                 }
-                Piece targetPiece = game.getPieceByTile(tempX, tempY);
-                if (targetPiece != null && targetPiece.getColor() == piece.getColor()) { //is friendly piece on square
+
+                if(BitBoard.isColoredPieceInBitBoard(piece.getColor(), tempX, tempY, game.getBitBoardArray())){
                     break;
                 }
-
                 Move currentMove = new Move(piece, tempX, tempY);
                 if (isDangerous) {
                     if (!game.willKingBeChecked(currentMove)) {
@@ -96,7 +95,8 @@ public abstract class MoveGenUtils {
                 if (limitedMobibilty) {
                     break;
                 }
-                if (targetPiece != null && targetPiece.getColor() != piece.getColor()) { //is enemy piece on square? then stop
+                Color opponentColor = piece.getColor() == Color.WHITE ? Color.BLACK : Color.WHITE;
+                if (BitBoard.isColoredPieceInBitBoard(opponentColor, tempX, tempY, game.getBitBoardArray())) { //is enemy piece on square? then stop
                     break;
                 }
             }
@@ -118,7 +118,6 @@ public abstract class MoveGenUtils {
             if(tempY == 7 || tempY == 0){
                 move.setPromotionSnapShot(PieceName.QUEEN);
             }
-            boolean pawnTest = game.isPawnMove1Legal(move);
             boolean moveCheck = Math.abs(transformation[1]) == 1 ? game.isPawnMove1Legal(move) : game.isPawnMove2Legal(move);
             if (moveCheck) {
                 if (isDangerous) {

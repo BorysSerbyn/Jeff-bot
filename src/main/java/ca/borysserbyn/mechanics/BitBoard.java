@@ -32,14 +32,18 @@ public class BitBoard {
     }
 
     public static boolean isPieceInBitBoard(int x, int y, long[] bitBoardArray){
-        return bitBoardArray[14] == (bitBoardArray[14] | (1 << (y * 8 + x)));
+        return bitBoardArray[14] == (bitBoardArray[14] | (1L << (y * 8 + x)));
+    }
+
+    public static boolean isPieceInBitBoard(int x, int y, long bitBoard){
+        return bitBoard == (bitBoard | (1L << (y * 8 + x)));
     }
 
     public static boolean isColoredPieceInBitBoard(Color color ,int x, int y, long[] bitBoardArray){
         if(color == Color.WHITE){
-            return bitBoardArray[12] == (bitBoardArray[12] | (1 << (y * 8 + x)));
+            return bitBoardArray[12] == (bitBoardArray[12] | (1L << (y * 8 + x)));
         }else{
-            return bitBoardArray[13] == (bitBoardArray[13] | (1 << (y * 8 + x)));
+            return bitBoardArray[13] == (bitBoardArray[13] | (1L << (y * 8 + x)));
         }
     }
 
@@ -53,12 +57,12 @@ public class BitBoard {
 
     public static void turnOnBitByPiece(Piece piece, long[] bitBoardArray) {
         int index = getIndexByPiece(piece.getPieceName(), piece.getColor());
-        bitBoardArray[index] = bitBoardArray[index] ^ (1 << (piece.getY() * 8 + piece.getX()));
+        bitBoardArray[index] = bitBoardArray[index] ^ (1L << (piece.getY() * 8 + piece.getX()));
     }
 
     public static void turnOffBitByPiece(Piece piece, long[] bitBoardArray) {
         int index = getIndexByPiece(piece.getPieceName(), piece.getColor());
-        bitBoardArray[index] = bitBoardArray[index] & ~(1 << (piece.getY() * 8 + piece.getX()));
+        bitBoardArray[index] = bitBoardArray[index] & ~(1L << (piece.getY() * 8 + piece.getX()));
     }
 
     public static void updateBitBoard(long[] bitBoardArray){

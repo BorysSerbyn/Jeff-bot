@@ -136,7 +136,7 @@ public class Jeffbot {
 
 
         long start_time = System.nanoTime();
-        float[] positionResult = node.testMinimax(0, clonedGame, -10000, 10000);
+        float[] positionResult = node.miniMaxSearch(0, clonedGame, -10000, 10000);
         long end_time = System.nanoTime();
 
         if(debugMode){

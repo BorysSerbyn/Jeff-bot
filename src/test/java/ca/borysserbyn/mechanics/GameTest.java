@@ -175,4 +175,12 @@ public class GameTest {
 
         Assertions.assertEquals(expectedValue, game.getBitBoardArray()[6]);
     }
+
+    @Test
+    void bitBoardTest() {
+        Game game = new Game(1);
+
+        System.out.println(game.getBitBoardArray()[13]);
+        Assertions.assertEquals(65536, game.getBitBoardArray()[13]);
+    }
 }

@@ -410,6 +410,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         if(pieceValue > 1){
             stalemateValue = stalemateValue * -1;
         }
+
         float score = pieceValue
                 + checkmateValue * 20
                 + castlingValue/12
@@ -1100,6 +1101,7 @@ public class Game implements Cloneable, Serializable, Comparable {
     //checks if normal eat is legal
     public boolean isPawnEatLegal(Move move) {
         Piece piece = move.getPiece();
+        Color opponentColor = piece.getColor() == Color.WHITE ? Color.BLACK : Color.WHITE;
         int x = piece.getX();
         int y = piece.getY();
         int signedYMove = move.getY() - y;
@@ -1114,10 +1116,8 @@ public class Game implements Cloneable, Serializable, Comparable {
         } else {
             return false;
         }
-        Piece target = getPieceByTile(move.getX(), move.getY());
-        if (target == null) {
-            return false;
-        } else if (target.getColor() == piece.getColor()) {
+
+        if(!BitBoard.isColoredPieceInBitBoard(opponentColor, move.getX(), move.getY(), bitBoardArray)){
             return false;
         }
 
@@ -1135,25 +1135,23 @@ public class Game implements Cloneable, Serializable, Comparable {
         int yMove = Math.abs(signedYMove);
 
         int expectedY = !(orientation == 1 ^ piece.getColor() == Color.WHITE) ? 4 : 3; //orientation 1 xnor white
-        boolean[] targetConditions = piece.getColor() == Color.WHITE ? enPassantConditionsBlack : enPassantConditionsWhite;
-        boolean targetCondition = targetConditions[move.getX()];
-        Piece targetPiece = getPieceByTile(move.getX(), y);
 
-        if (getPieceByTile(move.getX(), move.getY()) != null) { //is there a piece at the destination tile
-            return false;
-        }
         if (xMove != 1 || yMove != 1) { //is the move 1 square in each direction
             return false;
         }
+
+        boolean[] targetConditions = piece.getColor() == Color.WHITE ? enPassantConditionsBlack : enPassantConditionsWhite;
+        boolean targetCondition = targetConditions[move.getX()];
+
         if (!targetCondition) { //has the target pawn moved 2 squares last turn
             return false;
         }
         if (expectedY != y) { //is the piece at its expected y position
             return false;
         }
-        if (targetPiece == null) {
-            return false;
-        } else if (targetPiece.getPieceName() != PieceName.PAWN) {
+
+        int bitBoardIndex = piece.getColor() == Color.WHITE ? 6 : 0;
+        if(!BitBoard.isPieceInBitBoard(move.getX(), y, bitBoardArray[bitBoardIndex])){
             return false;
         }
 
@@ -1359,4 +1357,3 @@ public class Game implements Cloneable, Serializable, Comparable {
         pieces.add(new Piece(Color.WHITE, PieceName.ROOK, 6, 2));
     }
 }
-

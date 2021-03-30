@@ -164,7 +164,7 @@ public class Node implements Comparable{
         return positionsFound;
     }
 
-    public float[] testMinimax(int depth, Game game, float alpha, float beta){
+    public float[] miniMaxSearch(int depth, Game game, float alpha, float beta){
         boolean isGameOver = game.isGameOver();
         if (depth >= maxDepth || isGameOver) {//is game over or desired depth reached?s
             scoreNode(game);
@@ -193,7 +193,7 @@ public class Node implements Comparable{
             Node childNode = new Node(maxDepth, jeffColor, possibleMove, childGame.getTurnCounter());
             childNode.parentNode = this;
             this.addChild(childNode);
-            float[] childResult = childNode.testMinimax(depth + 1, childGame, alpha, beta);
+            float[] childResult = childNode.miniMaxSearch(depth + 1, childGame, alpha, beta);
             float childScore = childResult[0];
             positionsFound += childResult[1];
 

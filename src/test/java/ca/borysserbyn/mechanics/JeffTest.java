@@ -38,7 +38,7 @@ public class JeffTest {
         expectedJeff.resetCurrentNode();
         actualJeff.resetCurrentNode();
         expectedJeff.getCurrentNode().addNodes(0, (Game) game.clone(), false);
-        actualJeff.getCurrentNode().testMinimax(0, (Game) game.clone(), -10000, 10000);
+        actualJeff.getCurrentNode().miniMaxSearch(0, (Game) game.clone(), -10000, 10000);
         Move expectedMove = expectedJeff.findBestMove();
         System.out.println();
         Move actualMove = actualJeff.findBestMove();
@@ -55,7 +55,7 @@ public class JeffTest {
         expectedJeff.resetCurrentNode();
         actualJeff.resetCurrentNode();
         expectedJeff.getCurrentNode().addNodes(0, (Game) game.clone(), false);
-        actualJeff.getCurrentNode().testMinimax(0, (Game) game.clone(), -10000, 10000);
+        actualJeff.getCurrentNode().miniMaxSearch(0, (Game) game.clone(), -10000, 10000);
         Move expectedMove = expectedJeff.findBestMove();
         System.out.println();
         Move actualMove = actualJeff.findBestMove();
