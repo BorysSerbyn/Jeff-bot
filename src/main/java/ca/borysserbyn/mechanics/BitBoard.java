@@ -17,6 +17,28 @@ public class BitBoard {
         }
     }
 
+    public static void printBitBoard(long bitBoard){
+
+        System.out.print("      ");
+        for (int j = 0; j < 8; j++) {
+            System.out.print(j+".  ");
+        }
+        System.out.println();
+        for (int i = 0; i < 8; i++) {
+            System.out.print(i + ".  ");
+            for (int j = 0; j < 8; j++) {
+                if(bitBoard == (bitBoard | (1L << (i * 8 + j)))){
+                    System.out.print("| o ");
+                }else{
+                    System.out.print("|   ");
+                }
+                //System.out.print(bitBoard == (bitBoard | (1L << (i * 8 + j))) ? 1 : 0);
+            }
+            System.out.print("|");
+            System.out.println();
+        }
+    }
+
 
     public static void initializeBitBoardArray(ArrayList<Piece> pieces, long[] bitBoardArray){
         for (int i = 0; i < 15; i++) {
@@ -29,6 +51,15 @@ public class BitBoard {
             turnOnBitByPiece(piece, bitBoardArray);
         }
         updateBitBoard(bitBoardArray);
+    }
+
+    public static int getPieceByTile(int x, int y, long[] bitBoardArray){
+        for (int i = 0; i < 12; i++) {
+            if(isPieceInBitBoard(x, y, bitBoardArray[i])){
+                return i;
+            }
+        }
+        return -1;
     }
 
     public static boolean isPieceInBitBoard(int x, int y, long[] bitBoardArray){

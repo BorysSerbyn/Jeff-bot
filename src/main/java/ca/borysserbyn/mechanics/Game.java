@@ -1,6 +1,8 @@
 package ca.borysserbyn.mechanics;
 
 
+import ca.borysserbyn.gui.TestPanel;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,10 +89,10 @@ public class Game implements Cloneable, Serializable, Comparable {
         ArrayList<Move> clonedHistory = new ArrayList();
         for (Move move : moveHistory) clonedHistory.add((Move) move.clone());
 
-        if(bitBoardArray != null){
+        if (bitBoardArray != null) {
             clonedGame.bitBoardArray = BitBoard.cloneArray(bitBoardArray);
             clonedGame.bitBoardHistory = (ArrayList<long[]>) bitBoardHistory.clone();
-        }else{
+        } else {
             long[] clonedBitBoardArray = new long[15];
             BitBoard.initializeBitBoardArray(pieces, clonedBitBoardArray);
             clonedGame.bitBoardArray = clonedBitBoardArray;
@@ -275,18 +277,18 @@ public class Game implements Cloneable, Serializable, Comparable {
     }
 
     public Move getMoveByIndex(int index) {
-        return moveHistory.get(moveHistory.size()-index-1);
+        return moveHistory.get(moveHistory.size() - index - 1);
     }
 
     public Move getLastMove() {
         return moveHistory.get(moveHistory.size() - 1);
     }
 
-    public int getCastleStateByColor(Color color){
+    public int getCastleStateByColor(Color color) {
         return color == Color.WHITE ? whiteCastleState : blackCastleState;
     }
 
-    public boolean[] getCaslingConditions(Color color){
+    public boolean[] getCaslingConditions(Color color) {
         return color == Color.WHITE ? castlingConditionsWhite : castlingConditionsBlack;
     }
 
@@ -334,7 +336,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         this.enPassantConditionsBlack = enPassantConditionsBlack;
     }
 
-    public void executeMove(Move move){
+    public void executeMove(Move move) {
         Piece piece = move.getPiece();
         int x = move.getX();
         int y = move.getY();
@@ -375,19 +377,19 @@ public class Game implements Cloneable, Serializable, Comparable {
         turnCounter++;
     }
 
-    public GameStage getGameStage(){
+    public GameStage getGameStage() {
         float score = 0;
         for (Piece piece : pieces) {
-            if(piece.getX() == -1){
+            if (piece.getX() == -1) {
                 continue;
             }
             score += piece.getValue(orientation);
         }
-        if(score < 16){
+        if (score < 16) {
             return GameStage.LATE;
-        }else if(turnCounter > 8){
+        } else if (turnCounter > 8) {
             return GameStage.MIDDLE;
-        }else{
+        } else {
             return GameStage.EARLY;
         }
     }
@@ -396,7 +398,7 @@ public class Game implements Cloneable, Serializable, Comparable {
      * the following methods are used by the scoring function in node class
      */
 
-    public float scorePosition(Color color){
+    public float scorePosition(Color color) {
         Color otherColor = color == Color.WHITE ? Color.BLACK : Color.WHITE;
         float castlingValue = castlingValue(color) - castlingValue(otherColor);
         float kingProtectionValue = kingProtectionByColor(color) - kingProtectionByColor(otherColor);
@@ -404,17 +406,17 @@ public class Game implements Cloneable, Serializable, Comparable {
 
         float checkmateValue = state == GameState.CHECKMATE ? 1 : 0;
         float stalemateValue = state == GameState.STALEMATE ? 1 : 0;
-        if(turn == color){
+        if (turn == color) {
             checkmateValue = checkmateValue * -1;
         }
-        if(pieceValue > 1){
+        if (pieceValue > 1) {
             stalemateValue = stalemateValue * -1;
         }
 
         float score = pieceValue
                 + checkmateValue * 20
-                + castlingValue/12
-                + kingProtectionValue/12;
+                + castlingValue / 12
+                + kingProtectionValue / 12;
 
         score += score > 0 ? stalemateValue * 3 : 0;
         return score;
@@ -443,7 +445,7 @@ public class Game implements Cloneable, Serializable, Comparable {
             Color bishopTileColor = !(!(orientation == 1 ^ targetColor == Color.WHITE) ^ targetCastleState == 1) ? Color.BLACK : Color.WHITE;
             for (Piece piece : pieces) {
 
-                if(piece.getColor() != targetColor || piece.getX() == -1){
+                if (piece.getColor() != targetColor || piece.getX() == -1) {
                     continue;
                 }
 
@@ -456,7 +458,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         return 0;
     }
 
-    public float kingProtectionByColor(Color color){
+    public float kingProtectionByColor(Color color) {
         int castleState = getCastleStateByColor(color);
         int increment = color == Color.WHITE ? 1 : -1;
         Piece king = getPieceByName(PieceName.KING, color);
@@ -465,22 +467,22 @@ public class Game implements Cloneable, Serializable, Comparable {
         int kingSafeY = color == Color.WHITE ? 0 : 7;
         float score = 0;
 
-        if(castleState == 1){
-            if(kingY != kingSafeY){
+        if (castleState == 1) {
+            if (kingY != kingSafeY) {
                 return -1f;
             }
             score += getColoredPieceByTile(5, pawnRow, color) == null ? -1 : 1;
             score += getColoredPieceByTile(6, pawnRow, color) == null ? -1.5 : 1.5;
             score += getColoredPieceByTile(7, pawnRow, color) == null ? -0.5 : 0.5;
-            score += getColoredPieceByTile(5, pawnRow+increment, color) == null ? -0.5 : 0.5;
-        }else if(castleState == 2){
-            if(kingY != kingSafeY){
+            score += getColoredPieceByTile(5, pawnRow + increment, color) == null ? -0.5 : 0.5;
+        } else if (castleState == 2) {
+            if (kingY != kingSafeY) {
                 return -1f;
             }
             score += getColoredPieceByTile(1, pawnRow, color) == null ? -1.5 : 1.5;
             score += getColoredPieceByTile(2, pawnRow, color) == null ? -0.5 : 0.5;
-            score += getColoredPieceByTile(2, pawnRow+increment, color) == null ? -0.5 : 0.5;
-            score += getColoredPieceByTile(3, pawnRow+increment, color) == null ? -0.5 : 0.5;
+            score += getColoredPieceByTile(2, pawnRow + increment, color) == null ? -0.5 : 0.5;
+            score += getColoredPieceByTile(3, pawnRow + increment, color) == null ? -0.5 : 0.5;
         }
         return score;
     }
@@ -488,7 +490,7 @@ public class Game implements Cloneable, Serializable, Comparable {
     public float getGameValueByColor(Color color) {
         float value = 0;
         for (Piece piece : pieces) {
-            if(piece.getX() == -1){
+            if (piece.getX() == -1) {
                 continue;
             }
             if (piece.getColor() == color) {
@@ -531,7 +533,7 @@ public class Game implements Cloneable, Serializable, Comparable {
     public ArrayList<Move> generateLegalMovesByColor(Color color) {
         ArrayList<Move> legalMovesList = new ArrayList<>();
         for (Piece piece : pieces) {
-            if(piece.getColor() != color || piece.getX() == -1){
+            if (piece.getColor() != color || piece.getX() == -1) {
                 continue;
             }
             legalMovesList.addAll(piece.generateMoves(this));
@@ -579,7 +581,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         }
         for (Piece piece : pieces) {
 
-            if(piece.getColor() != turn || piece.getX() == -1){
+            if (piece.getColor() != turn || piece.getX() == -1) {
                 continue;
             }
 
@@ -614,7 +616,7 @@ public class Game implements Cloneable, Serializable, Comparable {
     public boolean noLegalMovesCheck() {
         for (Piece piece : pieces) {
 
-            if(piece.getColor() != turn || piece.getX() == -1){
+            if (piece.getColor() != turn || piece.getX() == -1) {
                 continue;
             }
 
@@ -658,13 +660,13 @@ public class Game implements Cloneable, Serializable, Comparable {
     }
 
     public boolean threeFoldRepetitionCheck() {
-        if(bitBoardHistory.isEmpty()){
+        if (bitBoardHistory.isEmpty()) {
             return false;
         }
         int occurrences = 0;
-        for (long[] archivedBitBoard:bitBoardHistory) {
+        for (long[] archivedBitBoard : bitBoardHistory) {
 
-            if(Arrays.equals(archivedBitBoard, bitBoardArray)){
+            if (Arrays.equals(archivedBitBoard, bitBoardArray)) {
                 occurrences++;
             }
         }
@@ -748,6 +750,7 @@ public class Game implements Cloneable, Serializable, Comparable {
     public void discardPiece(Piece piece) {
         board[piece.getX()][piece.getY()] = null;
         BitBoard.turnOffBitByPiece(piece, bitBoardArray);
+        BitBoard.updateBitBoard(bitBoardArray);
         piece.discardPiece();
     }
 
@@ -793,7 +796,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (piece.getPieceName() == PieceName.ROOK) {//turns off castling condition for a specific rook if it moves.
             if (piece.getX() == 0) {
                 castlingConditions[0] = false;
-            } else if(piece.getX() == 7) {
+            } else if (piece.getX() == 7) {
 
                 castlingConditions[2] = false;
             }
@@ -1054,7 +1057,7 @@ public class Game implements Cloneable, Serializable, Comparable {
 
         for (Piece uneatenPiece : pieces) {
 
-            if(uneatenPiece.getX() == -1){
+            if (uneatenPiece.getX() == -1) {
                 continue;
             }
 
@@ -1117,7 +1120,7 @@ public class Game implements Cloneable, Serializable, Comparable {
             return false;
         }
 
-        if(!BitBoard.isColoredPieceInBitBoard(opponentColor, move.getX(), move.getY(), bitBoardArray)){
+        if (!BitBoard.isColoredPieceInBitBoard(opponentColor, move.getX(), move.getY(), bitBoardArray)) {
             return false;
         }
 
@@ -1151,9 +1154,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         }
 
         int bitBoardIndex = piece.getColor() == Color.WHITE ? 6 : 0;
-        if(!BitBoard.isPieceInBitBoard(move.getX(), y, bitBoardArray[bitBoardIndex])){
-            return false;
-        }
+        //!BitBoard.isPieceInBitBoard(move.getX(), y, bitBoardArray[bitBoardIndex])
 
         return true;
     }
@@ -1198,10 +1199,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         if (!kingCondition || !castleCondition) {//has the king or the tower moved
             return false;
         }
-        if(!BitBoard.isPieceInBitBoard(castleX, y, bitBoardArray)){
-            return false;
-        }
-        if(!BitBoard.isPieceInBitBoard(move.getX(), move.getY(), bitBoardArray)){
+        if (BitBoard.isPieceInBitBoard(move.getX(), move.getY(), bitBoardArray)) { //if theres a piece where the king is landing
             return false;
         }
         if (isPieceInTheWay(inTheWayMove)) {//is a piece between the king and the rook
@@ -1225,7 +1223,9 @@ public class Game implements Cloneable, Serializable, Comparable {
         for (int i = 1; i < Math.abs(delta); i++) {
             int y = piece.getY() + i * (int) Math.signum(deltaY);
             int x = piece.getX() + i * (int) Math.signum(deltaX);
-            if (getPieceByTile(x, y) != null) {
+
+            //board[x][y] != null
+            if (BitBoard.isPieceInBitBoard(x, y, bitBoardArray)) {
                 return true;
             }
         }
@@ -1237,7 +1237,7 @@ public class Game implements Cloneable, Serializable, Comparable {
         Color color = piece.getColor() == Color.WHITE ? Color.BLACK : Color.WHITE;
 
         for (Piece enemyPiece : pieces) {
-            if(enemyPiece.getColor() != color || enemyPiece.getX() == -1){
+            if (enemyPiece.getColor() != color || enemyPiece.getX() == -1) {
                 continue;
             }
             Move move = new Move(enemyPiece, piece.getX(), piece.getY());

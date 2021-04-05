@@ -83,4 +83,15 @@ public class BitBoardTest {
         BitBoard.updateBitBoard(bitBoard.getBitBoardArray());
         Assertions.assertTrue(BitBoard.isColoredPieceInBitBoard(Color.BLACK, 7,7, bitBoard.getBitBoardArray()));
     }
+
+    @Test
+    void printTest(){
+        BitBoard bitBoard = new BitBoard();
+        //Piece blackPawn = new Piece(Color.BLACK, PieceName.PAWN, 7, 7);
+        Piece blackPawn2 = new Piece(Color.BLACK, PieceName.PAWN, 0, 7);
+        BitBoard.turnOnBitByPiece(blackPawn2, bitBoard.getBitBoardArray());
+        BitBoard.updateBitBoard(bitBoard.getBitBoardArray());
+        long actualBitBoard = bitBoard.getBitBoardArray()[14];
+        BitBoard.printBitBoard(actualBitBoard);
+    }
 }
